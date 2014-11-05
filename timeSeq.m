@@ -35,6 +35,14 @@ classdef timeSeq < handle
         parent.addSubSeqs(self, toffset);
       end
     end
+
+    function avail = globChannelAvailable(self, cid, t)
+      if self.hasParent()
+        avail = self.parent.globChannelAvailable(cid, t + self.tOffset);
+      else
+        avail = self.channelAvailable(cid, t);
+      end
+    end
   end
 
   methods(Access=private)
@@ -58,14 +66,6 @@ classdef timeSeq < handle
           avail = 0;
           break;
         end
-      end
-    end
-
-    function avail = globChannelAvailable(self, cid, t)
-      if self.hasParent()
-        avail = self.parent.globChannelAvailable(cid, t + self.tOffset);
-      else
-        avail = self.channelAvailable(cid, t);
       end
     end
   end
