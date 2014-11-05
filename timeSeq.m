@@ -59,8 +59,8 @@ classdef timeSeq < handle
     function avail = channelAvailable(self, cid, t)
       avail = 1;
       for seq_t = self.subSeqs
-        toffset = set_t{1};
-        sub_seq = set_t{2};
+        toffset = seq_t{1};
+        sub_seq = seq_t{2};
         sub_t = t - toffset;
         if sub_t >= 0 && sub_seq.channelAvailable(cid, sub_t)
           avail = 0;
