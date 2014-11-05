@@ -20,15 +20,17 @@ classdef nacsLogger < handle
     function self = nacsLogger(name)
       global nacsLogDir
       nacsConfig();
-      log_dir = datestr(now, 'yyyy-mm-dd');
-      mkdir(nacsLogDir, log_dir);
+      log_dir = fullfile(nacsLogDir, datestr(now, 'yyyy-mm-dd'));
+      if ~isdir(log_dir)
+        mkdir(log_dir);
+      end
 
       if nargin < 1
         name = 'nacs-log';
       end
       timestamp = datestr(now, 'yyyy-mm-dd_HH-MM-SS');
       fname = strcat(name, timestamp, '.log');
-      fpath = fullfile(nacsLogDir, log_dir, fname);
+      fpath = fullfile(log_dir, fname);
 
       self.fd = fopen(fpath, 'a');
     end
@@ -39,12 +41,13 @@ classdef nacsLogger < handle
       end
     end
 
-    function nbytes = printf(self, varargin)
-      nbytes = fprintf(self.fd, varargin);
+    function nbytes = printf(self, fmt, varargin)
+      fmt = strcat(fmt, '\n');
+      nbytes = fprintf(self.fd, fmt, varargin{:});
     end
 
-    function nbytes = write(self, varargin)
-      nbytes = fwrite(self.fd, varargin);
+    function log(self, s)
+      self.printf('%s', s);
     end
   end
 end
