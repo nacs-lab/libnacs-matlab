@@ -62,7 +62,7 @@ classdef timeSeq < handle
         toffset = seq_t{1};
         sub_seq = seq_t{2};
         sub_t = t - toffset;
-        if sub_t >= 0 && sub_seq.channelAvailable(cid, sub_t)
+        if sub_t >= 0 && ~sub_seq.channelAvailable(cid, sub_t)
           avail = 0;
           break;
         end
