@@ -11,22 +11,24 @@
 %% You should have received a copy of the GNU Lesser General Public
 %% License along with this library.
 
-tseq = timeSeq();
-subseq1 = timeSeq(tseq, 0);
-subseq2 = timeSeq(tseq, 2);
+function test_timeseq()
+  tseq = timeSeq();
+  subseq1 = timeSeq(tseq, 0);
+  subseq2 = timeSeq(tseq, 2);
 
-assert(tseq.globChannelAvailable('', 2) == 1);
-assert(tseq.globChannelAvailable('', 1) == 1);
-assert(tseq.globChannelAvailable('', 0) == 1);
+  assert(tseq.globChannelAvailable('', 2) == 1);
+  assert(tseq.globChannelAvailable('', 1) == 1);
+  assert(tseq.globChannelAvailable('', 0) == 1);
 
-assert(subseq1.globChannelAvailable('', 2) == 1);
-assert(subseq1.globChannelAvailable('', 1) == 1);
-assert(subseq1.globChannelAvailable('', 0) == 1);
+  assert(subseq1.globChannelAvailable('', 2) == 1);
+  assert(subseq1.globChannelAvailable('', 1) == 1);
+  assert(subseq1.globChannelAvailable('', 0) == 1);
 
-assert(subseq2.globChannelAvailable('', 2) == 1);
-assert(subseq2.globChannelAvailable('', 1) == 1);
-assert(subseq2.globChannelAvailable('', 0) == 1);
+  assert(subseq2.globChannelAvailable('', 2) == 1);
+  assert(subseq2.globChannelAvailable('', 1) == 1);
+  assert(subseq2.globChannelAvailable('', 0) == 1);
 
-assert(tseq.getPulses('') == []);
-assert(subseq1.getPulses('') == []);
-assert(subseq2.getPulses('') == []);
+  assert(tseq.getPulses('') == []);
+  assert(subseq1.getPulses('') == []);
+  assert(subseq2.getPulses('') == []);
+end
