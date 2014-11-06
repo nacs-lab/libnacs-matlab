@@ -79,7 +79,7 @@ classdef timeSeq < handle
         seq_toffset = seq_t{1};
         sub_seq = seq_t{2};
 
-        for sub_tuple = sub_seq.getPulses(cid);
+        for sub_tuple = sub_seq.getPulses(cid)
           pulse_toffset = sub_tuple{1};
           pulse_len = sub_tuple{2};
           pulse_func = sub_tuple{3};
