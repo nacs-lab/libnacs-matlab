@@ -70,7 +70,10 @@ classdef timeSeq < handle
     end
 
     function res = getPulses(self, cid)
-      %% Return a array of tuples (toffset, length, generator function)
+      %% Return a array of tuples (toffset, length, generator_function)
+      %% the generator function should take 3 parameters:
+      %%     time_in_pulse, length, old_val_before_pulse
+      %% and should return the new value @time_in_pulse after the pulse starts.
       res = [];
       for seq_t = self.subSeqs
         seq_toffset = seq_t{1};
