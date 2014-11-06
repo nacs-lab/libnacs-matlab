@@ -36,7 +36,9 @@ classdef timeStep < timeSeq
 
       %% TODO, check if cid is valid. (chaining to parent)
       ret = self;
-      if ~self.globChannelAvailable(cid, 0, self.length())
+      if ~self.checkChannel(cid)
+        error('Invalid Channel ID.');
+      elseif ~self.globChannelAvailable(cid, 0, self.length())
         error('Overlaping pulses.');
       end
       self.pulses(cid) = func;

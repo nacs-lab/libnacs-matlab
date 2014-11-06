@@ -62,13 +62,15 @@ classdef timeSeq < handle
     end
   end
 
-  methods(Access=private)
+  methods(Access=protected)
     function res = hasParent(self)
       res = isobject(self.parent);
     end
-  end
 
-  methods(Access=protected)
+    function parent = getParent(self)
+      parent = self.parent;
+    end
+
     function len = length(self)
       len = self.len;
     end
@@ -85,6 +87,9 @@ classdef timeSeq < handle
         elseif toffset + sub_len > len
           error('Too long sub-sequence.');
         end
+      end
+      if sub_seq.hasParent() && sub_seq.getParent() ~= self
+        error('Reparenting time sequence is not allowed.');
       end
       self.subSeqs = [self.subSeqs, {toffset; sub_seq}];
     end
@@ -126,6 +131,16 @@ classdef timeSeq < handle
 
           res = [res, {pulse_toffset + seq_toffset; pulse_len; pulse_func}];
         end
+      end
+    end
+
+    function res = checkChannel(self, cid)
+      if self.hasParent()
+        res = self.parent.checkChannel(cid);
+      else
+        %% Mainly for testing.
+        %% The top level time sequence should implement proper check.
+        res = 1;
       end
     end
   end
