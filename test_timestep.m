@@ -14,7 +14,7 @@
 %% tseq:
 %% step1: [0, 2] cid1, cid3
 %% step2:     [2, 5] cid1
-%% step3:   [1, 3] cid2
+%% step3:   [1, 3]   [6, 8] cid2
 
 function test_timestep()
   tseq = timeSeq();
@@ -28,22 +28,41 @@ function test_timestep()
   timeStep(tseq, 1, 2) ...
           .addPulse('2', linearRamp(2, 3));
 
+  timeStep(tseq, 6, 2) ...
+          .addPulse('2', 4);
+
   pulses1 = tseq.getPulses('1');
   pulses2 = tseq.getPulses('2');
   pulses3 = tseq.getPulses('3');
 
   assert(size(pulses1, 1) == 2);
-  assert(size(pulses2, 1) == 1);
+  assert(size(pulses2, 1) == 2);
   assert(size(pulses3, 1) == 1);
 
   assert(pulses1{1, 1} == 0);
   assert(pulses1{1, 2} == 2);
+  assert(pulses1{1, 4} == 0);
+  assert(pulses1{1, 5} == 2);
+
   assert(pulses1{2, 1} == 2);
   assert(pulses1{2, 2} == 3);
+  assert(pulses1{2, 4} == 2);
+  assert(pulses1{2, 5} == 3);
+
 
   assert(pulses2{1, 1} == 1);
   assert(pulses2{1, 2} == 2);
+  assert(pulses2{1, 4} == 1);
+  assert(pulses2{1, 5} == 2);
+
+  assert(pulses2{2, 1} == 6);
+  assert(pulses2{2, 2} == 0);
+  assert(pulses2{2, 4} == 6);
+  assert(pulses2{2, 5} == 2);
+
 
   assert(pulses3{1, 1} == 0);
   assert(pulses3{1, 2} == 2);
+  assert(pulses3{1, 4} == 0);
+  assert(pulses3{1, 5} == 2);
 end
