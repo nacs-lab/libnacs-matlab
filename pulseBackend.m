@@ -12,10 +12,19 @@
 %% License along with this library.
 
 classdef(Abstract) pulseBackend < handle
-  methods(Access=public, Abstract=true)
-    prepare(seq); % Prepare channels, connect clock etc.
+  methods(Abstract=true)
+    initDev(did); % Check and add device
+    initChannel(cid); % Check and add channel
     generate(seq); % Generate sequence.
     run(rep); % Start sequence.
-    wait(rep); % Wait for the sequence to finish.
+  end
+
+  methods
+    function prepare(seq)
+      %% Prepare channels, connect clock etc.
+    end
+    function wait(rep)
+      %% Wait for the sequence to finish.
+    end
   end
 end
