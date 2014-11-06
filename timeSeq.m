@@ -52,6 +52,14 @@ classdef timeSeq < handle
       end
     end
 
+    function log(self, s)
+      self.logger.log(s);
+    end
+
+    function logf(self, varargin)
+      self.logger.logf(varargin{:});
+    end
+
     function res = getPulses(self, cid)
       %% Return a array of tuples (toffset, length, generator_function)
       %% the generator function should take 3 parameters:
