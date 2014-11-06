@@ -28,7 +28,7 @@ function test_timeseq()
   assert(subseq2.globChannelAvailable('', 1) == 1);
   assert(subseq2.globChannelAvailable('', 0) == 1);
 
-  assert(tseq.getPulses('') == []);
-  assert(subseq1.getPulses('') == []);
-  assert(subseq2.getPulses('') == []);
+  assert(isempty(tseq.getPulses('')));
+  assert(isempty(subseq1.getPulses('')));
+  assert(isempty(subseq2.getPulses('')));
 end

@@ -58,7 +58,10 @@ classdef timeSeq < handle
       %%     time_in_pulse, length, old_val_before_pulse
       %% and should return the new value @time_in_pulse after the pulse starts.
       %% The returned value should be sorted with toffset.
-      res = sortrows(self.getPulses(cid), 1);
+      res = self.getPulsesRaw(cid);
+      if ~isempty(res)
+        res = sortrows(res, 1);
+      end
     end
   end
 
@@ -80,8 +83,8 @@ classdef timeSeq < handle
       if len > 0
         sub_len = sub_seq.length();
         if sub_len <= 0
-          error('Cannot add a variable length sequence to' ...
-                  'a fixed length sequence');
+          error(['Cannot add a variable length sequence to' ...
+                 'a fixed length sequence']);
         elseif toffset > len
           error('Too big sub-sequence time offset.');
         elseif toffset + sub_len > len
@@ -124,7 +127,7 @@ classdef timeSeq < handle
         seq_toffset = seq_t{1};
         sub_seq = seq_t{2};
 
-        for sub_tuple = sub_seq.getPulses(cid)
+        for sub_tuple = sub_seq.getPulsesRaw(cid)
           pulse_toffset = sub_tuple{1};
           pulse_len = sub_tuple{2};
           pulse_func = sub_tuple{3};
