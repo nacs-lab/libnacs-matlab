@@ -58,8 +58,7 @@ classdef timeStep < timeSeq
       if t >= self.length() || t + dt <= 0
         avail = 1;
         return;
-      end
-      if self.pulses.isKey(cid)
+      elseif self.pulses.isKey(cid)
         avail = 0;
         return;
       end
