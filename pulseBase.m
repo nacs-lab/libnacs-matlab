@@ -13,6 +13,7 @@
 
 classdef(Abstract) pulseBase < handle
   methods(Abstract=true)
+    %% Old value is the value of the channel at tstart returned by timeSpan.
     val = calcValue(self, t, len, old_val);
   end
 
