@@ -12,22 +12,21 @@
 %% License along with this library.
 
 %% tseq:
-%% subseq1: [0, 2] cid1, cid3
-%% subseq2:     [2, 5] cid1
-%% subseq3:   [1, 3] cid2
+%% step1: [0, 2] cid1, cid3
+%% step2:     [2, 5] cid1
+%% step3:   [1, 3] cid2
 
 function test_timestep()
   tseq = timeSeq();
-  step1 = timeStep(tseq, 0, 2);
-  step2 = timeStep(tseq, 2, 3);
-  step3 = timeStep(tseq, 1, 2);
+  timeStep(tseq, 0, 2) ...
+          .addPulse('1', linearRamp(1, 2)) ...
+          .addPulse('3', linearRamp(0, 1));
 
-  step1.addPulse('1', linearRamp(1, 2)) ...
-       .addPulse('3', linearRamp(0, 1));
+  timeStep(tseq, 2, 3) ...
+          .addPulse('1', rampTo(10));
 
-  step2.addPulse('1', rampTo(10));
-
-  step3.addPulse('2', linearRamp(2, 3));
+  timeStep(tseq, 1, 2) ...
+          .addPulse('2', linearRamp(2, 3));
 
   pulses1 = tseq.getPulses('1');
   pulses2 = tseq.getPulses('2');
