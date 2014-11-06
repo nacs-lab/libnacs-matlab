@@ -42,7 +42,7 @@ classdef timeSeq < handle
     end
 
     function avail = globChannelAvailable(self, cid, t, dt)
-      if nargin < 4
+      if nargin < 4 || dt < 0
         dt = 0;
       end
       if self.hasParent()
@@ -81,19 +81,19 @@ classdef timeSeq < handle
     end
 
     function avail = channelAvailable(self, cid, t, dt)
-      if nargin < 4
+      if nargin < 4 || dt < 0
         dt = 0;
       end
       avail = 1;
       len = self.length();
-      if len > 0 && t < len
+      if len > 0 && t >= len
         return;
       end
       for seq_t = self.subSeqs
         toffset = seq_t{1};
         sub_seq = seq_t{2};
         sub_t = t - toffset;
-        if sub_t >= 0 && ~sub_seq.channelAvailable(cid, sub_t, dt)
+        if sub_t + dt > 0 && ~sub_seq.channelAvailable(cid, sub_t, dt)
           avail = 0;
           return;
         end
