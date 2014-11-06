@@ -27,7 +27,7 @@ classdef jumpTo < handle
       self.val = v;
       self.time = t;
     end
-    function [tstart, tlen] = timeSpan(self, len, old_val)
+    function [tstart, tlen] = timeSpan(self, len)
       tstart = self.time;
       tlen = 0;
     end

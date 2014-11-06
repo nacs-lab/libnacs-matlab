@@ -17,7 +17,13 @@ classdef(Abstract) pulseBase < handle
   end
 
   methods
-    function [tstart, tlen] = timeSpan(self, len, old_val)
+    function avail = available(self, t, len)
+      [tstart, tlen] = self.timeSpan(len);
+      %% The time availability check (in general) might miss the case when
+      %% two jump want to happen at the same time. Ignore this issue for now.
+      avail = ~(tstart < t && tstart + tlen > t);
+    end
+    function [tstart, tlen] = timeSpan(self, len)
       tstart = 0;
       tlen = len;
     end
