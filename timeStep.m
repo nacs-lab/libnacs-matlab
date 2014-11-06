@@ -25,28 +25,28 @@ classdef timeStep < timeSeq
       end
     end
 
-    function ret = addPulse(self, cid, func)
-      %% @func has to be a function or number now, which will span the whole
-      %% duration of the time step.
-
-      %% TODO: also accept @func to be an object of certain class with
-      %% methods to query values and the time period which it happens.
-      %% This can also be implemented with nisted timeSeq's although it might
-      %% be too much for this purpose and hard to support zero length pulse
-      %% (jump value).
+    function ret = addPulse(self, cid, pulse)
       ret = self;
       if ~self.checkChannel(cid)
         error('Invalid Channel ID.');
       elseif ~self.globChannelAvailable(cid, 0, self.length())
         error('Overlaping pulses.');
-      elseif isnumeric(func)
-        if ~isscalar(func)
+      elseif isnumeric(pulse)
+        if ~isscalar(pulse)
           error('Pulse cannot be a non-scalar value.');
         end
-        val = func;
-        func = @(t, len, old_val) val;
+        pulse = jumpTo(pulse, 0);
+      elseif ~isa(pulse, @pulseBase)
+        %% Treat as function
+        pulse = funcPulse(pulse);
       end
-      self.pulses(cid) = func;
+      if self.pulses.isKey(cid)
+        pulse_list = self.pulses(cid);
+      else
+        pulse_list = [];
+      end
+      pulse_list = [pulse_list, pulse];
+      self.pulses(cid) = pulse_list;
     end
   end
 
@@ -55,24 +55,29 @@ classdef timeStep < timeSeq
       if nargin < 4 || dt < 0
         dt = 0;
       end
-      if t >= self.length() || t + dt <= 0
+      len = self.length();
+      if t >= len || t + dt <= 0
         avail = 1;
         return;
       elseif self.pulses.isKey(cid)
-        avail = 0;
-        return;
+        for pulse = self.pulses(cid)
+          if ~pulse.available(len)
+            avail = 0;
+            return;
+          end
+        end
       end
       avail = channelAvailable@timeSeq(self, cid, t, dt);
     end
 
     function res = getPulsesRaw(self, cid)
-      %% Return a array of tuples (toffset, length, generator_function)
-      %% the generator function should take 3 parameters:
-      %%     time_in_pulse, length, old_val_before_pulse
-      %% and should return the new value @time_in_pulse after the pulse starts.
       res = getPulsesRaw@timeSeq(self, cid);
       if self.pulses.isKey(cid)
-        res = [res; {0, self.length(), self.pulses(cid)}];
+        step_len = self.length();
+        for pulse = self.pulses(cid)
+          [tstart, tlen] = pulse.timeSpan(step_len);
+          res = [res; {tstart, tlen, pulse, 0, step_len}];
+        end
       end
     end
   end

@@ -61,10 +61,11 @@ classdef timeSeq < handle
     end
 
     function res = getPulses(self, cid)
-      %% Return a array of tuples (toffset, length, generator_function)
-      %% the generator function should take 3 parameters:
+      %% Return a array of tuples (toffset, length, pulse_obj,
+      %%                           step_start, step_len)
+      %% the pulse_obj should have a method calcValue that take 3 parameters:
       %%     time_in_pulse, length, old_val_before_pulse
-      %% and should return the new value @time_in_pulse after the pulse starts.
+      %% and should return the new value @time_in_pulse after the step_start.
       %% The returned value should be sorted with toffset.
       res = self.getPulsesRaw(cid);
       if ~isempty(res)
@@ -126,10 +127,6 @@ classdef timeSeq < handle
     end
 
     function res = getPulsesRaw(self, cid)
-      %% Return a array of tuples (toffset, length, generator_function)
-      %% the generator function should take 3 parameters:
-      %%     time_in_pulse, length, old_val_before_pulse
-      %% and should return the new value @time_in_pulse after the pulse starts.
       res = {};
       for seq_t = self.subSeqs
         seq_toffset = seq_t{1};
@@ -141,8 +138,11 @@ classdef timeSeq < handle
           pulse_toffset = sub_tuple{1};
           pulse_len = sub_tuple{2};
           pulse_func = sub_tuple{3};
+          step_toffset = sub_tuple{4};
+          step_len = sub_tuple{5};
 
-          res = [res; {pulse_toffset + seq_toffset, pulse_len, pulse_func}];
+          res = [res; {pulse_toffset + seq_toffset, pulse_len, pulse_func, ...
+                       step_toffset + seq_toffset, step_len}];
         end
       end
     end
