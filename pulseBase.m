@@ -13,8 +13,16 @@
 
 classdef(Abstract) pulseBase < handle
   methods(Abstract=true)
-    val = calcValue(t, len, old_val);
-    [tstart, tlen] = timeSpan();
-    times = dirtyTime();
+    val = calcValue(self, t, len, old_val);
+  end
+
+  methods
+    function [tstart, tlen] = timeSpan(self, len, old_val)
+      tstart = 0;
+      tlen = len;
+    end
+    function times = dirtyTime(self)
+      times = [];
+    end
   end
 end
