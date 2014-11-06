@@ -15,14 +15,16 @@ classdef timeSeq < handle
   properties(Hidden, Access=protected)
     logger;
   end
+
   properties(Hidden, Access=private)
     subSeqs = [];
     tOffset;
     parent = 0;
+    len = 0;
   end
 
   methods
-    function self = timeSeq(parent, toffset)
+    function self = timeSeq(parent, toffset, len)
       if nargin < 1
         self.logger = nacsLogger('seq');
       elseif nargin < 2
@@ -33,6 +35,9 @@ classdef timeSeq < handle
 
         self.logger = parent.logger;
         parent.addSubSeqs(self, toffset);
+        if nargin >= 3
+          self.len = len;
+        end
       end
     end
 
@@ -52,19 +57,39 @@ classdef timeSeq < handle
   end
 
   methods(Access=protected)
+    function len = length(self)
+      len = self.len;
+    end
+
     function addSubSeqs(self, sub_seq, toffset)
+      len = self.length();
+      if len > 0
+        sub_len = sub_seq.length();
+        if sub_len <= 0
+          error('Cannot add a variable length sequence to' ...
+                  'a fixed length sequence');
+        elseif toffset > len
+          error('Too big sub-sequence time offset.');
+        elseif toffset + sub_len > len
+          error('Too long sub-sequence.');
+        end
+      end
       self.subSeqs = [self.subSeqs, {toffset; sub_seq}];
     end
 
     function avail = channelAvailable(self, cid, t)
       avail = 1;
+      len = self.length();
+      if len > 0 && t < len
+        return;
+      end
       for seq_t = self.subSeqs
         toffset = seq_t{1};
         sub_seq = seq_t{2};
         sub_t = t - toffset;
         if sub_t >= 0 && ~sub_seq.channelAvailable(cid, sub_t)
           avail = 0;
-          break;
+          return;
         end
       end
     end
