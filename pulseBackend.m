@@ -13,17 +13,17 @@
 
 classdef(Abstract) pulseBackend < handle
   methods(Abstract=true)
-    initDev(did); % Check and add device
-    initChannel(cid); % Check and add channel
-    generate(seq); % Generate sequence.
-    run(rep); % Start sequence.
+    initDev(self, did); % Check and add device
+    initChannel(self, cid); % Check and add channel
+    generate(self, seq); % Generate sequence.
+    run(self, rep); % Start sequence.
   end
 
   methods
-    function prepare(seq)
+    function prepare(self, seq)
       %% Prepare channels, connect clock etc.
     end
-    function wait(rep)
+    function wait(self, rep)
       %% Wait for the sequence to finish.
     end
   end
