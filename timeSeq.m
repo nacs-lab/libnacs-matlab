@@ -115,7 +115,7 @@ classdef timeSeq < handle
           pulse_len = sub_tuple{2};
           pulse_func = sub_tuple{3};
 
-          res = [res, {pulse_toffset + seq_toffset; pulse_len, pulse_func}];
+          res = [res, {pulse_toffset + seq_toffset; pulse_len; pulse_func}];
         end
       end
     end
