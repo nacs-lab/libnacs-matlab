@@ -59,7 +59,7 @@ classdef timeStep < timeSeq
       avail = channelAvailable@timeSeq(self, cid, t, dt);
     end
 
-    function res = getPulses(self, cid)
+    function res = getPulsesRaw(self, cid)
       %% Return a array of tuples (toffset, length, generator_function)
       %% the generator function should take 3 parameters:
       %%     time_in_pulse, length, old_val_before_pulse

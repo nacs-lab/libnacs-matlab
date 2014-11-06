@@ -51,6 +51,15 @@ classdef timeSeq < handle
         avail = self.channelAvailable(cid, t, dt);
       end
     end
+
+    function res = getPulses(self, cid)
+      %% Return a array of tuples (toffset, length, generator_function)
+      %% the generator function should take 3 parameters:
+      %%     time_in_pulse, length, old_val_before_pulse
+      %% and should return the new value @time_in_pulse after the pulse starts.
+      %% The returned value should be sorted with toffset.
+      res = sortrows(self.getPulses(cid), 1);
+    end
   end
 
   methods(Access=private)
@@ -100,7 +109,7 @@ classdef timeSeq < handle
       end
     end
 
-    function res = getPulses(self, cid)
+    function res = getPulsesRaw(self, cid)
       %% Return a array of tuples (toffset, length, generator_function)
       %% the generator function should take 3 parameters:
       %%     time_in_pulse, length, old_val_before_pulse
