@@ -26,20 +26,25 @@ classdef timeStep < timeSeq
     end
 
     function ret = addPulse(self, cid, func)
-      %% @func has to be a function now, which will span the whole duration
-      %% of the time step.
+      %% @func has to be a function or number now, which will span the whole
+      %% duration of the time step.
+
       %% TODO: also accept @func to be an object of certain class with
       %% methods to query values and the time period which it happens.
       %% This can also be implemented with nisted timeSeq's although it might
       %% be too much for this purpose and hard to support zero length pulse
       %% (jump value).
-
-      %% TODO, check if cid is valid. (chaining to parent)
       ret = self;
       if ~self.checkChannel(cid)
         error('Invalid Channel ID.');
       elseif ~self.globChannelAvailable(cid, 0, self.length())
         error('Overlaping pulses.');
+      elseif isnumeric(func)
+        if ~isscalar(func)
+          error('Pulse cannot be a non-scalar value.');
+        end
+        val = func;
+        func = @(t, len, old_val) val;
       end
       self.pulses(cid) = func;
     end
