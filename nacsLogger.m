@@ -41,13 +41,13 @@ classdef nacsLogger < handle
       end
     end
 
-    function nbytes = printf(self, fmt, varargin)
+    function nbytes = logf(self, fmt, varargin)
       fmt = strcat(fmt, '\n');
       nbytes = fprintf(self.fd, fmt, varargin{:});
     end
 
     function log(self, s)
-      self.printf('%s', s);
+      self.logf('%s', s);
     end
   end
 end
