@@ -29,3 +29,6 @@
     1. Generate data
     2. Connect clock
     3. Start run
+
+## Misc
+1. Error code?
