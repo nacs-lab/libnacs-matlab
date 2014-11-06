@@ -18,8 +18,8 @@ classdef timeStep < timeSeq
 
   methods
     function self = timeStep(varargin)
-      self.pulses = containers.Map();
       self = self@timeSeq(varargin{:});
+      self.pulses = containers.Map();
       if self.length() <= 0
         error('Time steps should have a fixed and positive length');
       end
@@ -70,10 +70,9 @@ classdef timeStep < timeSeq
       %% the generator function should take 3 parameters:
       %%     time_in_pulse, length, old_val_before_pulse
       %% and should return the new value @time_in_pulse after the pulse starts.
-      res = getPulses@timeSeq(self, cid);
-      len = self.length();
-      for key = self.pulses.keys()
-        res = [res, {0; len; self.pulses(key)}]
+      res = getPulsesRaw@timeSeq(self, cid);
+      if self.pulses.isKey(cid)
+        res = [res; {0, self.length(), self.pulses(cid)}];
       end
     end
   end

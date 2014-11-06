@@ -122,17 +122,19 @@ classdef timeSeq < handle
       %% the generator function should take 3 parameters:
       %%     time_in_pulse, length, old_val_before_pulse
       %% and should return the new value @time_in_pulse after the pulse starts.
-      res = [];
+      res = {};
       for seq_t = self.subSeqs
         seq_toffset = seq_t{1};
         sub_seq = seq_t{2};
+        sub_pulses = sub_seq.getPulsesRaw(cid);
 
-        for sub_tuple = sub_seq.getPulsesRaw(cid)
+        for i = 1:size(sub_pulses, 1)
+          sub_tuple = sub_pulses(i, :);
           pulse_toffset = sub_tuple{1};
           pulse_len = sub_tuple{2};
           pulse_func = sub_tuple{3};
 
-          res = [res, {pulse_toffset + seq_toffset; pulse_len; pulse_func}];
+          res = [res; {pulse_toffset + seq_toffset, pulse_len, pulse_func}];
         end
       end
     end

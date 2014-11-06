@@ -18,12 +18,12 @@
 
 function test_timestep()
   tseq = timeSeq();
+  timeStep(tseq, 2, 3) ...
+          .addPulse('1', rampTo(10));
+
   timeStep(tseq, 0, 2) ...
           .addPulse('1', linearRamp(1, 2)) ...
           .addPulse('3', linearRamp(0, 1));
-
-  timeStep(tseq, 2, 3) ...
-          .addPulse('1', rampTo(10));
 
   timeStep(tseq, 1, 2) ...
           .addPulse('2', linearRamp(2, 3));
@@ -32,9 +32,9 @@ function test_timestep()
   pulses2 = tseq.getPulses('2');
   pulses3 = tseq.getPulses('3');
 
-  assert(length(pulses1) == 2);
-  assert(length(pulses2) == 1);
-  assert(length(pulses3) == 1);
+  assert(size(pulses1, 1) == 2);
+  assert(size(pulses2, 1) == 1);
+  assert(size(pulses3, 1) == 1);
 
   assert(pulses1{1, 1} == 0);
   assert(pulses1{1, 2} == 2);
