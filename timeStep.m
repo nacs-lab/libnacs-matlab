@@ -25,7 +25,7 @@ classdef timeStep < timeSeq
       end
     end
 
-    function addPulse(self, cid, func)
+    function ret = addPulse(self, cid, func)
       %% @func has to be a function now, which will span the whole duration
       %% of the time step.
       %% TODO: also accept @func to be an object of certain class with
@@ -34,7 +34,8 @@ classdef timeStep < timeSeq
       %% be too much for this purpose and hard to support zero length pulse
       %% (jump value).
 
-      %% TODO, check if cid is valid.
+      %% TODO, check if cid is valid. (chaining to parent)
+      ret = self;
       if ~self.globChannelAvailable(cid, 0, self.length())
         error('Overlaping pulses.');
       end
