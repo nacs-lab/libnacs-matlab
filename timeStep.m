@@ -76,7 +76,7 @@ classdef timeStep < timeSeq
         step_len = self.length();
         for pulse = self.pulses(cid)
           [tstart, tlen] = pulse.timeSpan(step_len);
-          res = [res; {tstart, tlen, pulse, 0, step_len}];
+          res = [res; {tstart, tlen, pulse, 0, step_len, cid}];
         end
       end
     end

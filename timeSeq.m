@@ -62,7 +62,7 @@ classdef timeSeq < handle
 
     function res = getPulses(self, cid)
       %% Return a array of tuples (toffset, length, pulse_obj,
-      %%                           step_start, step_len)
+      %%                           step_start, step_len, cid)
       %% the pulse_obj should have a method calcValue that take 3 parameters:
       %%     time_in_pulse, length, old_val_before_pulse
       %% and should return the new value @time_in_pulse after the step_start.
@@ -142,7 +142,7 @@ classdef timeSeq < handle
           step_len = sub_tuple{5};
 
           res = [res; {pulse_toffset + seq_toffset, pulse_len, pulse_func, ...
-                       step_toffset + seq_toffset, step_len}];
+                       step_toffset + seq_toffset, step_len, cid}];
         end
       end
     end
