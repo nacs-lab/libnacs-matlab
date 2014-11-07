@@ -22,11 +22,11 @@ classdef(Abstract) pulseBase < handle
       %% TODO? cache
       res = ~isempty(self.dirtyTime(len));
     end
-    function avail = available(self, t, len)
+    function avail = available(self, t, dt, len)
       [tstart, tlen] = self.timeSpan(len);
       %% The time availability check (in general) might miss the case when
       %% two jump want to happen at the same time. Ignore this issue for now.
-      avail = ~(tstart < t && tstart + tlen > t);
+      avail = (t + dt <= tstart || t >= tstart + tlen);
     end
     function [tstart, tlen] = timeSpan(self, len)
       tstart = 0;
