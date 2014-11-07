@@ -6,12 +6,7 @@
 1. main sequence
 
     1. name
-    2. addStep(len, toffset, [class, args])
-       Imaginary toffset for absolute time (-1j for starting time)
-       Optional toffset, mandatory len without class
-       Optional len and toffset with class. Interpret single number as toffset.
-    3. curTime
-    4. findDriver
+    2. findDriver
 
 2. config
 
