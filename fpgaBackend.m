@@ -141,7 +141,7 @@ classdef fpgaBackend < pulseBackend
     end
   end
 
-  methods
+  methods(Access=private)
       function val = getTTLDefault(self)
       %% FIXME
       val = 0;
