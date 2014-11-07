@@ -18,7 +18,10 @@ classdef expSeqBase < timeSeq
 
   methods
     function self = expSeqBase(varargin)
-      self = self@timeSeq(varargin{:2});
+      if nargin >= 3
+        error('Too many arguments for expSeqBase.');
+      end
+      self = self@timeSeq(varargin{:});
     end
 
     function step = addStep(self, first_arg, varargin)
@@ -31,7 +34,7 @@ classdef expSeqBase < timeSeq
       %%     forward @self.curTime by the length of the step.
       if nargin <= 1
         error('addStep called with too few arguments.');
-      elseif ~isnumerical(first_arg)
+      elseif ~isnumeric(first_arg)
         %% If first arg is not a number, assume to be a custom step.
         %% What fall through should be (number, *arg)
 
@@ -42,7 +45,7 @@ classdef expSeqBase < timeSeq
         %% If we only have one numerical argument it must be a simple time step.
         %% What fall through should be (number, at_least_another_arg, *arg)
         step = self.addTimeStep(first_arg, 0);
-      elseif isnumerical(varargin{1})
+      elseif isnumeric(varargin{1})
         %% If we only have two numerical argument it must be a simple time step
         %% with custom offset.
         %% What fall through should be (number, not_number, *arg)
@@ -71,9 +74,12 @@ classdef expSeqBase < timeSeq
         cls = str2func(cls);
       end
       self.curTime = self.curTime + offset;
-      proxy = expSeqBase(self, self.curTime);
-      step = cls(proxy, varargin{:});
-      self.curTime = self.curTime + proxy.curTime;
+      step = expSeqBase(self, self.curTime);
+      %% return proxy since I'm not sure there's a good way to forward
+      %% return values in matlab, especially since the return value can
+      %% depend on the number of return values.
+      cls(step, varargin{:});
+      self.curTime = self.curTime + step.curTime;
     end
   end
 

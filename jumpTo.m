@@ -27,14 +27,14 @@ classdef jumpTo < pulseBase
       self.val = v;
       self.time = t;
     end
-    function [tstart, tlen] = timeSpan(self, len)
+    function [tstart, tlen] = timeSpan(self, ~)
       tstart = self.time;
       tlen = 0;
     end
-    function times = dirtyTime(self, len)
+    function times = dirtyTime(self, ~)
       times = [self.time];
     end
-    function val = calcValue(self, t, len, old_val)
+    function val = calcValue(self, t, ~, old_val)
       if t < self.time
         val = old_val;
       else

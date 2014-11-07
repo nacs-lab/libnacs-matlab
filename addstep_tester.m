@@ -13,7 +13,7 @@
 
 function addstep_tester(seq, len)
   if nargin < 2
-    len = 1
+    len = 1;
   end
   seq.addStep(len) ...
      .addPulse('1', 3) ...
