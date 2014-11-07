@@ -12,6 +12,8 @@
 
 3. device/channel id translator/loader
 
+4. default/initial value
+
 ## Backend
 1. fpgaBackend
 

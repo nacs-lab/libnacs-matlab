@@ -15,6 +15,7 @@ classdef fpgaBackend < pulseBackend
   properties(Hidden, Access=private)
     url = '';
     clock_div = 0;
+    cmd = '';
   end
 
   methods
@@ -64,6 +65,7 @@ classdef fpgaBackend < pulseBackend
     end
 
     function enableClockOut(self, div)
+      %% TODO, add check
       self.clock_div = div;
     end
 
@@ -84,13 +86,16 @@ classdef fpgaBackend < pulseBackend
           dirty_times = pulse_obj.dirtyTimes(step_len);
           if ~isempty(dirty_times)
             for t = dirty_times
-              crit_ts = [crit_ts; {t + toffset, DIRTY_TIME, pulse_obj}];
+              crit_ts = [crit_ts; {t + toffset, DIRTY_TIME, pulse_obj, ...
+                                   toffset, step_len}];
             end
           else
             tstart = pulse{1} + toffset;
             tlen = pulse{2};
-            crit_ts = [crit_ts; {tstart, START_TIME, pulse_obj}];
-            crit_ts = [crit_ts; {tstart + tlen, END_TIME, pulse_obj}];
+            crit_ts = [crit_ts; {tstart, START_TIME, pulse_obj, ...
+                                 toffset, step_len}];
+            crit_ts = [crit_ts; {tstart + tlen, END_TIME, pulse_obj, ...
+                                 toffset, step_len}];
           end
         end
       end
@@ -98,36 +103,43 @@ classdef fpgaBackend < pulseBackend
         crit_ts = sortrows(crit_ts, 1);
       end
 
-      %% WIP
       ntime = size(crit_ts, 1);
+      %% FIXME hard code
+      t = 100e-6;
+      self.cmd = sprintf('t=100,TTL(all)=%x\n', self.getTTLDefault());
+      if self.clock_div > 0
+        %% FIXME hard code
+        self.cmd = strcat(self.cmd, ...
+                          sprintf('t=200,CLOCK_OUT(%d)\n', self.clock_div));
+        t = 200e-6;
+      end
+      start_t = t;
+
+      %% WIP
       i = 0;
-      t = 0;
-      cmd = '';
       while i < ntime
         i = i + 1;
       end
 
-      for i = 1:size(crit_ts, 1)
-        pulse = pulses(i, :);
-        pulse_obj = pulse{3};
-        toffset = pulse{4};
-        step_len = pulse{5};
-        dirty_times = pulse_obj.dirtyTimes(step_len);
-        if ~isempty(dirty_times)
-          for t = dirty_times
-            crit_ts = [crit_ts; {t + toffset, DIRTY_TIME, pulse_obj}];
-          end
-        else
-          tstart = pulse{1} + toffset;
-          tlen = pulse{2};
-          crit_ts = [crit_ts; {tstart, START_TIME, pulse_obj}];
-          crit_ts = [crit_ts; {tstart + tlen, END_TIME, pulse_obj}];
-        end
+      if self.clock_div > 0
+        %% FIXME hard code
+        t = t + 1e-6
+        self.cmd = strcat(self.cmd, sprintf('t=%f,CLOCK_OUT(100)\n', t));
+        %% FIXME hard code
+        t = t + 100e-6
+        self.cmd = strcat(self.cmd, sprintf('t=%f,CLOCK_OUT(off)\n', t));
       end
     end
 
     function run(self, rep)
       %% TODO
+    end
+  end
+
+  methods
+    function getTTLDefault(self)
+      %% FIXME
+      return 0;
     end
   end
 end
