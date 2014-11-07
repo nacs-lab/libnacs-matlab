@@ -1,0 +1,133 @@
+%% Copyright (c) 2014-2014, Yichao Yu <yyc1992@gmail.com>
+%%
+%% This library is free software; you can redistribute it and/or
+%% modify it under the terms of the GNU Lesser General Public
+%% License as published by the Free Software Foundation; either
+%% version 3.0 of the License, or (at your option) any later version.
+%% This library is distributed in the hope that it will be useful,
+%% but WITHOUT ANY WARRANTY; without even the implied warranty of
+%% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+%% Lesser General Public License for more details.
+%% You should have received a copy of the GNU Lesser General Public
+%% License along with this library.
+
+classdef fpgaBackend < pulseBackend
+  properties(Hidden, Access=private)
+    url = '';
+    clock_div = 0;
+  end
+
+  methods
+    function self = fpgaBackend(varargin)
+      self = self@pulseBackend(varargin{:});
+      global fpgaUrls;
+      nacsConfig();
+      self.url = fpgaUrls('FPGA1');
+    end
+
+    function initDev(self, did)
+      if strcmp('FPGA1', did) ~= 0
+        error('Unknown FPGA device.');
+      end
+    end
+
+    function initChannel(self, cid)
+      cpath = strsplit(cid, '/');
+      if strncmpi(cpath(1), 'TTL', 3)
+        if size(cpath, 1) ~= 1
+          error('Invalid TTL channel id.');
+        end
+        matches = regexpi(cpath, '^ttl([1-9]\d*)$');
+        if isempty(matches)
+          error('No TTL channel number');
+        end
+        chn = str2num(matches{1});
+        if chn < 0 || chn > 24 || mod(chn, 4) == 0
+          error('Unconnected TTL channel.');
+        end
+      elseif strncmpi(cpath(1), 'DDS', 3)
+        if size(cpath, 1) ~= 2
+          error('Invalid DDS channel id.');
+        end
+        matches = regexpi(cpath, '^ddl([1-9]\d*)$');
+        if isempty(matches)
+          error('No DDS channel number');
+        end
+        chn = str2num(matches{1});
+        if chn < 0 || chn > 22
+          error('DDS channel number out of range.');
+        end
+        if ~(strcmpi(cpath(2), 'freq') || strcmpi(cpath(2), 'amp'))
+          error('Invalid DDS parameter name.');
+        end
+      end
+    end
+
+    function enableClockOut(self, div)
+      self.clock_div = div;
+    end
+
+    function generate(self, seq, cids)
+      %% TODO
+      %% use clock_div
+      crit_ts = {};
+      DIRTY_TIME = 0;
+      START_TIME = 1;
+      END_TIME = 2;
+      for cid = cids
+        pulses = seq.getPulses(cid);
+        for i = 1:size(pulses, 1)
+          pulse = pulses(i, :);
+          pulse_obj = pulse{3};
+          toffset = pulse{4};
+          step_len = pulse{5};
+          dirty_times = pulse_obj.dirtyTimes(step_len);
+          if ~isempty(dirty_times)
+            for t = dirty_times
+              crit_ts = [crit_ts; {t + toffset, DIRTY_TIME, pulse_obj}];
+            end
+          else
+            tstart = pulse{1} + toffset;
+            tlen = pulse{2};
+            crit_ts = [crit_ts; {tstart, START_TIME, pulse_obj}];
+            crit_ts = [crit_ts; {tstart + tlen, END_TIME, pulse_obj}];
+          end
+        end
+      end
+      if ~isempty(crit_ts)
+        crit_ts = sortrows(crit_ts, 1);
+      end
+
+      %% WIP
+      ntime = size(crit_ts, 1);
+      i = 0;
+      t = 0;
+      cmd = '';
+      while i < ntime
+        i = i + 1;
+      end
+
+      for i = 1:size(crit_ts, 1)
+        pulse = pulses(i, :);
+        pulse_obj = pulse{3};
+        toffset = pulse{4};
+        step_len = pulse{5};
+        dirty_times = pulse_obj.dirtyTimes(step_len);
+        if ~isempty(dirty_times)
+          for t = dirty_times
+            crit_ts = [crit_ts; {t + toffset, DIRTY_TIME, pulse_obj}];
+          end
+        else
+          tstart = pulse{1} + toffset;
+          tlen = pulse{2};
+          crit_ts = [crit_ts; {tstart, START_TIME, pulse_obj}];
+          crit_ts = [crit_ts; {tstart + tlen, END_TIME, pulse_obj}];
+        end
+      end
+    end
+
+    function run(self, rep)
+      %% TODO
+    end
+  end
+end
