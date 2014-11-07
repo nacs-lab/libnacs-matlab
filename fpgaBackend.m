@@ -16,14 +16,14 @@ classdef fpgaBackend < pulseBackend
     url = '';
     clock_div = 0;
     cmd = '';
+    config;
   end
 
   methods
     function self = fpgaBackend(varargin)
       self = self@pulseBackend(varargin{:});
-      global fpgaUrls;
-      loadConfig();
-      self.url = fpgaUrls('FPGA1');
+      self.config = loadConfig();
+      self.url = self.config.fpgaUrls('FPGA1');
     end
 
     function initDev(self, did)
