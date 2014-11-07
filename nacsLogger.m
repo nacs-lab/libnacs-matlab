@@ -19,7 +19,7 @@ classdef nacsLogger < handle
   methods
     function self = nacsLogger(name)
       global nacsLogDir
-      nacsConfig();
+      loadConfig();
       log_dir = fullfile(nacsLogDir, datestr(now, 'yyyy-mm-dd'));
       if ~isdir(log_dir)
         mkdir(log_dir);

@@ -22,7 +22,7 @@ classdef fpgaBackend < pulseBackend
     function self = fpgaBackend(varargin)
       self = self@pulseBackend(varargin{:});
       global fpgaUrls;
-      nacsConfig();
+      loadConfig();
       self.url = fpgaUrls('FPGA1');
     end
 
