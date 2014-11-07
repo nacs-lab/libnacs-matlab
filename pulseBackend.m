@@ -14,7 +14,7 @@
 classdef(Abstract) pulseBackend < handle
   methods(Abstract=true)
     initDev(self, did); % Check and add device
-    initChannel(self, cid); % Check and add channel
+    initChannel(self, did, cid); % Check and add channel
     generate(self, seq, cids); % Generate sequence.
     run(self, rep); % Start sequence.
   end

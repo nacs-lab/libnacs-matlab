@@ -14,13 +14,13 @@
 function test_fpgabackend()
   backend = fpgaBackend();
   backend.initDev('FPGA1');
-  backend.initChannel('TTL1');
-  backend.initChannel('TTL2');
-  backend.initChannel('ttl3');
-  backend.initChannel('ttl5');
+  backend.initChannel('FPGA1', 'TTL1');
+  backend.initChannel('FPGA1', 'TTL2');
+  backend.initChannel('FPGA1', 'ttl3');
+  backend.initChannel('FPGA1', 'ttl5');
 
-  backend.initChannel('DDS5/freq');
-  backend.initChannel('dds5/AMP');
+  backend.initChannel('FPGA1', 'DDS5/freq');
+  backend.initChannel('FPGA1', 'dds5/AMP');
 
   seq = expSeqBase();
   seq.addStep(1) ...

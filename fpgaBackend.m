@@ -32,7 +32,8 @@ classdef fpgaBackend < pulseBackend
       end
     end
 
-    function initChannel(self, cid)
+    function initChannel(self, did, cid)
+      self.initDev(did);
       cpath = strsplit(cid, '/');
       if strncmpi(cpath(1), 'TTL', 3)
         if size(cpath, 1) ~= 1
