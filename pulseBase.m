@@ -32,7 +32,7 @@ classdef(Abstract) pulseBase < handle
       tstart = 0;
       tlen = len;
     end
-    function times = dirtyTime(self, len)
+    function times = dirtyTime(self, ~)
       times = [];
     end
   end

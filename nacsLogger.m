@@ -29,7 +29,7 @@ classdef nacsLogger < handle
         name = 'nacs-log';
       end
       timestamp = datestr(now, 'yyyy-mm-dd_HH-MM-SS');
-      fname = strcat(name, '-', timestamp, '.log');
+      fname = [name, '-', timestamp, '.log'];
       fpath = fullfile(log_dir, fname);
 
       self.fd = fopen(fpath, 'a');
@@ -42,7 +42,7 @@ classdef nacsLogger < handle
     end
 
     function logf(self, fmt, varargin)
-      fmt = strcat(fmt, '\n');
+      fmt = [fmt, '\n'];
       fprintf(self.fd, fmt, varargin{:});
     end
 

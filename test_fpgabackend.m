@@ -35,6 +35,7 @@ function test_fpgabackend()
      .addPulse('FPGA1/dds1/freq', rampTo(0)) ...
      .addPulse('FPGA1/dds3/freq', rampTo(10));
 
+  backend.enableClockOut(100);
   backend.generate(seq, ['FPGA1/dds1/freq', 'FPGA1/dds2/freq', ...
                          'FPGA1/dds3/freq']);
   backend.getCmd()

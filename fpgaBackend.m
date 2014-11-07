@@ -27,8 +27,8 @@ classdef fpgaBackend < pulseBackend
     end
 
     function initDev(self, did)
-      if strcmp('FPGA1', did) ~= 0
-        error('Unknown FPGA device.');
+      if ~strcmpi('FPGA1', did)
+        error('Unknown FPGA device "%s".', did);
       end
     end
 
@@ -36,31 +36,31 @@ classdef fpgaBackend < pulseBackend
       self.initDev(did);
       cpath = strsplit(cid, '/');
       if strncmpi(cpath(1), 'TTL', 3)
-        if size(cpath, 1) ~= 1
-          error('Invalid TTL channel id.');
+        if size(cpath, 2) ~= 1
+          error('Invalid TTL channel id "%s".', cid);
         end
-        matches = regexpi(cpath, '^ttl([1-9]\d*)$');
+        matches = regexpi(cpath, '^ttl([1-9]\d*)$', 'tokens');
         if isempty(matches)
           error('No TTL channel number');
         end
-        chn = str2num(matches{1});
-        if chn < 0 || chn > 24 || mod(chn, 4) == 0
-          error('Unconnected TTL channel.');
+        chn = str2double(matches{1}{1});
+        if ~isfinite(chn) || chn < 0 || chn > 24 || (mod(chn, 4) == 0)
+          error('Unconnected TTL channel %d.', chn);
         end
       elseif strncmpi(cpath(1), 'DDS', 3)
-        if size(cpath, 1) ~= 2
-          error('Invalid DDS channel id.');
+        if size(cpath, 2) ~= 2
+          error('Invalid DDS channel id "%s".', cid);
         end
-        matches = regexpi(cpath, '^ddl([1-9]\d*)$');
+        matches = regexpi(cpath, '^dds([1-9]\d*)$', 'tokens');
         if isempty(matches)
           error('No DDS channel number');
         end
-        chn = str2num(matches{1});
-        if chn < 0 || chn > 22
-          error('DDS channel number out of range.');
+        chn = str2double(matches{1}{1});
+        if ~isfinite(chn) || chn < 0 || chn > 22
+          error('DDS channel number %d out of range.', chn);
         end
         if ~(strcmpi(cpath(2), 'freq') || strcmpi(cpath(2), 'amp'))
-          error('Invalid DDS parameter name.');
+          error('Invalid DDS parameter name "%s".', cpath(2));
         end
       end
     end
@@ -110,8 +110,8 @@ classdef fpgaBackend < pulseBackend
       self.cmd = sprintf('t=100,TTL(all)=%x\n', self.getTTLDefault());
       if self.clock_div > 0
         %% FIXME hard code
-        self.cmd = strcat(self.cmd, ...
-                          sprintf('t=200,CLOCK_OUT(%d)\n', self.clock_div));
+        self.cmd = [self.cmd, ...
+                    sprintf('t=200,CLOCK_OUT(%d)\n', self.clock_div)];
         t = 200e-6;
       end
       start_t = t;
@@ -124,11 +124,11 @@ classdef fpgaBackend < pulseBackend
 
       if self.clock_div > 0
         %% FIXME hard code
-        t = t + 1e-6
-        self.cmd = strcat(self.cmd, sprintf('t=%f,CLOCK_OUT(100)\n', t));
+        t = t + 1e-6;
+        self.cmd = [self.cmd, sprintf('t=%.2f,CLOCK_OUT(100)\n', t * 1e6)];
         %% FIXME hard code
-        t = t + 100e-6
-        self.cmd = strcat(self.cmd, sprintf('t=%f,CLOCK_OUT(off)\n', t));
+        t = t + 100e-6;
+        self.cmd = [self.cmd, sprintf('t=%.2f,CLOCK_OUT(off)\n', t * 1e6)];
       end
     end
 
@@ -142,9 +142,10 @@ classdef fpgaBackend < pulseBackend
   end
 
   methods
-    function getTTLDefault(self)
+      function val = getTTLDefault(self)
       %% FIXME
-      return 0;
+      val = 0;
+      return;
     end
   end
 end
