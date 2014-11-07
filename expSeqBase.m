@@ -67,6 +67,9 @@ classdef expSeqBase < timeSeq
       self.curTime = self.curTime + len;
     end
     function step = addCustomStep(self, offset, cls, varargin)
+      if ischar(cls)
+        cls = str2func(cls);
+      end
       self.curTime = self.curTime + offset;
       proxy = expSeqBase(self, self.curTime);
       step = cls(proxy, varargin{:});
