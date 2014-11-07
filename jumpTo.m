@@ -31,7 +31,7 @@ classdef jumpTo < pulseBase
       tstart = self.time;
       tlen = 0;
     end
-    function times = dirtyTime(self)
+    function times = dirtyTime(self, len)
       times = [self.time];
     end
     function val = calcValue(self, t, len, old_val)

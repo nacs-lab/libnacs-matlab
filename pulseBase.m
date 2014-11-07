@@ -18,6 +18,10 @@ classdef(Abstract) pulseBase < handle
   end
 
   methods
+    function res = hasDirtyTime(self, len)
+      %% TODO? cache
+      res = ~isempty(self.dirtyTime(len));
+    end
     function avail = available(self, t, len)
       [tstart, tlen] = self.timeSpan(len);
       %% The time availability check (in general) might miss the case when
@@ -28,7 +32,7 @@ classdef(Abstract) pulseBase < handle
       tstart = 0;
       tlen = len;
     end
-    function times = dirtyTime(self)
+    function times = dirtyTime(self, len)
       times = [];
     end
   end
