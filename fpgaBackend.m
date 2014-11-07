@@ -131,6 +131,10 @@ classdef fpgaBackend < pulseBackend
       end
     end
 
+    function res = getCmd(self)
+      res = self.cmd;
+    end
+
     function run(self, rep)
       %% TODO
     end
