@@ -20,7 +20,7 @@ classdef timeStep < timeSeq
     function self = timeStep(varargin)
       self = self@timeSeq(varargin{:});
       self.pulses = containers.Map();
-      if self.length() <= 0
+      if self.len <= 0
         error('Time steps should have a fixed and positive length');
       end
     end
@@ -29,7 +29,7 @@ classdef timeStep < timeSeq
       ret = self;
       if ~self.checkChannel(cid)
         error('Invalid Channel ID.');
-      elseif ~self.globChannelAvailable(cid, 0, self.length())
+      elseif ~self.globChannelAvailable(cid, 0, self.len)
         error('Overlaping pulses.');
       elseif isnumeric(pulse)
         if ~isscalar(pulse)
@@ -55,7 +55,7 @@ classdef timeStep < timeSeq
       if nargin < 4 || dt < 0
         dt = 0;
       end
-      len = self.length();
+      len = self.len;
       if t >= len || t + dt <= 0
         avail = 1;
         return;
@@ -73,7 +73,7 @@ classdef timeStep < timeSeq
     function res = getPulsesRaw(self, cid)
       res = getPulsesRaw@timeSeq(self, cid);
       if self.pulses.isKey(cid)
-        step_len = self.length();
+        step_len = self.len;
         for pulse = self.pulses(cid)
           [tstart, tlen] = pulse.timeSpan(step_len);
           res = [res; {tstart, tlen, pulse, 0, step_len, cid}];

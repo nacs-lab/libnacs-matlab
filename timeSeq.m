@@ -83,14 +83,10 @@ classdef timeSeq < handle
       parent = self.parent;
     end
 
-    function len = length(self)
-      len = self.len;
-    end
-
     function addSubSeq(self, sub_seq, toffset)
-      len = self.length();
+      len = self.len;
       if len > 0
-        sub_len = sub_seq.length();
+        sub_len = sub_seq.len;
         if sub_len <= 0
           error(['Cannot add a variable length sequence to' ...
                  'a fixed length sequence']);
@@ -111,7 +107,7 @@ classdef timeSeq < handle
         dt = 0;
       end
       avail = 1;
-      len = self.length();
+      len = self.len;
       if len > 0 && t >= len
         return;
       end
