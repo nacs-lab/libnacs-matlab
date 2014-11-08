@@ -72,6 +72,24 @@ classdef timeSeq < handle
         res = sortrows(res, 1);
       end
     end
+
+    function res = length(self)
+      if self.len > 0
+        res = self.len;
+        return;
+      else
+        res = 0;
+        for seq_t = self.subSeqs
+          toffset = seq_t{1};
+          sub_seq = seq_t{2};
+
+          sub_end = sub_seq.length() + toffset;
+          if sub_end > res
+            res = sub_end;
+          end
+        end
+      end
+    end
   end
 
   methods(Access=protected)
@@ -89,7 +107,7 @@ classdef timeSeq < handle
         sub_len = sub_seq.len;
         if sub_len <= 0
           error(['Cannot add a variable length sequence to' ...
-                 'a fixed length sequence']);
+                   'a fixed length sequence']);
         elseif toffset > len
           error('Too big sub-sequence time offset.');
         elseif toffset + sub_len > len
