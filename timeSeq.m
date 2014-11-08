@@ -90,9 +90,26 @@ classdef timeSeq < handle
         end
       end
     end
+
+    function vals = getDefaults(self, cids)
+      if ischar(cids)
+        vals = self.getDefault(cids);
+      else
+        nchn = size(cids, 1);
+        vals = zeros(1, nchn);
+        for i = 1:nchn
+          vals(i) = self.getDefault(cids{i});
+        end
+      end
+    end
   end
 
   methods(Access=protected)
+    function val = getDefault(self, cid)
+      val = 0;
+      return;
+    end
+
     function res = hasParent(self)
       res = isobject(self.parent);
     end
