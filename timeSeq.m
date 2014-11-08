@@ -102,6 +102,39 @@ classdef timeSeq < handle
         end
       end
     end
+
+    function res = getPulseTimes(self, cids)
+      if ischar(cids)
+        cids = {cids};
+      end
+      res = {};
+      for cid = cids
+        pulses = self.getPulses(cid);
+        for i = 1:size(pulses, 1)
+          pulse = pulses(i, :);
+          pulse_obj = pulse{3};
+          toffset = pulse{4};
+          step_len = pulse{5};
+          dirty_times = pulse_obj.dirtyTimes(step_len);
+          if ~isempty(dirty_times)
+            for t = dirty_times
+              res = [res; {t + toffset, timeType.Dirty, pulse_obj, ...
+                           toffset, step_len, cid, pulse_obj.getID()}];
+            end
+          else
+            tstart = pulse{1} + toffset;
+            tlen = pulse{2};
+            res = [res; {tstart, timeType.Start, pulse_obj, ...
+                         toffset, step_len, cid, pulse_obj.getID()}];
+            res = [res; {tstart + tlen, timeType.End, pulse_obj, ...
+                         toffset, step_len, cid, pulse_obj.getID()}];
+          end
+        end
+      end
+      if ~isempty(res)
+        res = sortrows(res, [1, 2, 7]);
+      end
+    end
   end
 
   methods(Access=protected)

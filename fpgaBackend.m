@@ -73,7 +73,7 @@ classdef fpgaBackend < pulseBackend
     function generate(self, seq, cids)
       %% TODO
       %% use clock_div
-      crit_ts = extractPulseTime(seq, cids);
+      crit_ts = seq.getPulseTimes(cids);
 
       ntime = size(crit_ts, 1);
       %% FIXME hard code
