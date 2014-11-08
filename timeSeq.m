@@ -34,7 +34,7 @@ classdef timeSeq < handle
         self.tOffset = toffset;
 
         self.logger = parent.logger;
-        parent.addSubSeqs(self, toffset);
+        parent.addSubSeq(self, toffset);
         if nargin >= 3
           self.len = len;
         end
@@ -87,7 +87,7 @@ classdef timeSeq < handle
       len = self.len;
     end
 
-    function addSubSeqs(self, sub_seq, toffset)
+    function addSubSeq(self, sub_seq, toffset)
       len = self.length();
       if len > 0
         sub_len = sub_seq.length();
