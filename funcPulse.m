@@ -18,6 +18,7 @@ classdef funcPulse < pulseBase
 
   methods
     function self = funcPulse(func)
+      self = self@pulseBase();
       self.func = func;
     end
     function val = calcValue(self, t, len, old_val)

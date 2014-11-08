@@ -19,6 +19,7 @@ classdef jumpTo < pulseBase
 
   methods
     function self = jumpTo(v, t)
+      self = self@pulseBase();
       if nargin <= 1
         t = 0;
       elseif t < 0;
