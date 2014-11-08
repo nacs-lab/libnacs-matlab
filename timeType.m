@@ -11,10 +11,10 @@
 %% You should have received a copy of the GNU Lesser General Public
 %% License along with this library.
 
-classdef timeType
+classdef timeType < int32
   enumeration
-    Start
-    End
-    Dirty
+    End(0)
+    Dirty(1)
+    Start(2)
   end
 end
