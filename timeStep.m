@@ -57,12 +57,12 @@ classdef timeStep < timeSeq
       end
       len = self.len;
       if t >= len || t + dt <= 0
-        avail = 1;
+        avail = true;
         return;
       elseif self.pulses.isKey(cid)
         for pulse = self.pulses(cid)
           if ~pulse.available(t, dt, len)
-            avail = 0;
+            avail = false;
             return;
           end
         end

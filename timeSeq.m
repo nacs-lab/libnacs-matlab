@@ -174,7 +174,7 @@ classdef timeSeq < handle
       if nargin < 4 || dt < 0
         dt = 0;
       end
-      avail = 1;
+      avail = true;
       len = self.len;
       if len > 0 && t >= len
         return;
@@ -184,7 +184,7 @@ classdef timeSeq < handle
         sub_seq = seq_t{2};
         sub_t = t - toffset;
         if sub_t + dt > 0 && ~sub_seq.channelAvailable(cid, sub_t, dt)
-          avail = 0;
+          avail = false;
           return;
         end
       end
@@ -217,7 +217,7 @@ classdef timeSeq < handle
       else
         %% Mainly for testing.
         %% The top level time sequence should implement proper check.
-        res = 1;
+        res = true;
       end
     end
   end
