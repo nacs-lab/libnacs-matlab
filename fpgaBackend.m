@@ -74,9 +74,6 @@ classdef fpgaBackend < pulseBackend
       %% TODO
       %% use clock_div
       crit_ts = {};
-      DIRTY_TIME = 0;
-      START_TIME = 1;
-      END_TIME = 2;
       for cid = cids
         pulses = seq.getPulses(cid);
         for i = 1:size(pulses, 1)
@@ -87,15 +84,15 @@ classdef fpgaBackend < pulseBackend
           dirty_times = pulse_obj.dirtyTimes(step_len);
           if ~isempty(dirty_times)
             for t = dirty_times
-              crit_ts = [crit_ts; {t + toffset, DIRTY_TIME, pulse_obj, ...
+              crit_ts = [crit_ts; {t + toffset, timeType.Dirty, pulse_obj, ...
                                    toffset, step_len}];
             end
           else
             tstart = pulse{1} + toffset;
             tlen = pulse{2};
-            crit_ts = [crit_ts; {tstart, START_TIME, pulse_obj, ...
+            crit_ts = [crit_ts; {tstart, timeType.Start, pulse_obj, ...
                                  toffset, step_len}];
-            crit_ts = [crit_ts; {tstart + tlen, END_TIME, pulse_obj, ...
+            crit_ts = [crit_ts; {tstart + tlen, timeType.End, pulse_obj, ...
                                  toffset, step_len}];
           end
         end
