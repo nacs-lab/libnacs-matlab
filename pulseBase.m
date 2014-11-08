@@ -26,7 +26,7 @@ classdef(Abstract) pulseBase < handle
       %% (when porting to a real programming language)
       global nacsPulseBaseID;
       if isempty(nacsPulseBaseID)
-        nacsPulseBaseID = 1;
+        nacsPulseBaseID = uint64(1);
       else
         nacsPulseBaseID = nacsPulseBaseID + 1;
       end
