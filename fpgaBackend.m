@@ -73,33 +73,7 @@ classdef fpgaBackend < pulseBackend
     function generate(self, seq, cids)
       %% TODO
       %% use clock_div
-      crit_ts = {};
-      for cid = cids
-        pulses = seq.getPulses(cid);
-        for i = 1:size(pulses, 1)
-          pulse = pulses(i, :);
-          pulse_obj = pulse{3};
-          toffset = pulse{4};
-          step_len = pulse{5};
-          dirty_times = pulse_obj.dirtyTimes(step_len);
-          if ~isempty(dirty_times)
-            for t = dirty_times
-              crit_ts = [crit_ts; {t + toffset, timeType.Dirty, pulse_obj, ...
-                                   toffset, step_len}];
-            end
-          else
-            tstart = pulse{1} + toffset;
-            tlen = pulse{2};
-            crit_ts = [crit_ts; {tstart, timeType.Start, pulse_obj, ...
-                                 toffset, step_len}];
-            crit_ts = [crit_ts; {tstart + tlen, timeType.End, pulse_obj, ...
-                                 toffset, step_len}];
-          end
-        end
-      end
-      if ~isempty(crit_ts)
-        crit_ts = sortrows(crit_ts, 1);
-      end
+      crit_ts = extractPulseTime(seq, cids);
 
       ntime = size(crit_ts, 1);
       %% FIXME hard code
