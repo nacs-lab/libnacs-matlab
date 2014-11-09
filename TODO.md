@@ -13,6 +13,8 @@
 
 4. default/initial value
 
+5. run sequence, priority.
+
 ## Backend
 1. fpgaBackend
 
