@@ -19,6 +19,13 @@ classdef fpgaBackend < pulseBackend
     config;
   end
 
+  properties(Constant, Hidden, Access=private)
+    START_DELAY = 100e-6;
+    CLOCK_DELAY = 100e-6;
+    MIN_DELAY = 1e-6;
+    FIN_CLOCK_DELAY = 100e-6;
+  end
+
   methods
     function self = fpgaBackend(varargin)
       self = self@pulseBackend(varargin{:});
@@ -76,14 +83,12 @@ classdef fpgaBackend < pulseBackend
       crit_ts = seq.getPulseTimes(cids);
 
       ntime = size(crit_ts, 1);
-      %% FIXME hard code
-      t = 100e-6;
-      self.cmd = sprintf('t=100,TTL(all)=%x\n', self.getTTLDefault());
+      t = self.START_DELAY;
+      self.cmd = '';
+      self.appendCmdFmt('TTL(all)=%x', t, self.getTTLDefault());
       if self.clock_div > 0
-        %% FIXME hard code
-        self.cmd = [self.cmd, ...
-                    sprintf('t=200,CLOCK_OUT(%d)\n', self.clock_div)];
-        t = 200e-6;
+        t = t + self.CLOCK_DELAY;
+        self.appendCmdFmt('CLOCK_OUT(%d)', t, self.clock_div);
       end
       start_t = t;
 
@@ -94,12 +99,10 @@ classdef fpgaBackend < pulseBackend
       end
 
       if self.clock_div > 0
-        %% FIXME hard code
-        t = t + 1e-6;
-        self.cmd = [self.cmd, sprintf('t=%.2f,CLOCK_OUT(100)\n', t * 1e6)];
-        %% FIXME hard code
-        t = t + 100e-6;
-        self.cmd = [self.cmd, sprintf('t=%.2f,CLOCK_OUT(off)\n', t * 1e6)];
+        t = t + self.MIN_DELAY;
+        self.appendCmdFmt('CLOCK_OUT(100)', t);
+        t = t + self.FIN_CLOCK_DELAY;
+        self.appendCmdFmt('CLOCK_OUT(off)', t);
       end
     end
 
@@ -113,10 +116,15 @@ classdef fpgaBackend < pulseBackend
   end
 
   methods(Access=private)
-      function val = getTTLDefault(self)
+    function val = getTTLDefault(self)
       %% FIXME
       val = 0;
       return;
+    end
+
+    function appendCmdFmt(self, fmt, t, varargin)
+      self.cmd = [self.cmd, sprintf(['t=%.2f,', fmt, '\n'], ...
+                                    t * 1e6, varargin{:})];
     end
   end
 end
