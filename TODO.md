@@ -1,6 +1,5 @@
 ## Pulse Function
 1. piecewise linear
-2. jump (might better be an object)
 
 ## Framework
 1. main sequence
@@ -10,7 +9,7 @@
 
 2. config
 
-3. device/channel id translator/loader
+3. device/channel id translator/loader, alias handling
 
 4. default/initial value
 
