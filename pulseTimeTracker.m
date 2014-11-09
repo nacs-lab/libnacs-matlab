@@ -60,6 +60,10 @@ classdef pulseTimeTracker < handle
       t = self.curTime;
     end
 
+    function v = getValue(self, cid)
+      v = self.curValues(cid);
+    end
+
     function vs = getValues(self)
       vs = containers.Map();
       for key in self.curValues.keys()
