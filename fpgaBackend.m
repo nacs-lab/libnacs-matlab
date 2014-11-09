@@ -85,7 +85,7 @@ classdef fpgaBackend < pulseBackend
       ntime = size(crit_ts, 1);
       t = self.START_DELAY;
       self.cmd = '';
-      self.appendCmdFmt('TTL(all)=%x', t, self.getTTLDefault());
+      self.appendCmdFmt('TTL(all)=%x', t, self.getTTLDefault(seq));
       if self.clock_div > 0
         t = t + self.CLOCK_DELAY;
         self.appendCmdFmt('CLOCK_OUT(%d)', t, self.clock_div);
@@ -116,10 +116,21 @@ classdef fpgaBackend < pulseBackend
   end
 
   methods(Access=private)
-    function val = getTTLDefault(self)
-      %% FIXME
+    function val = singleTTLDefault(self, seq, chn)
+      val = uint64(0);
+      try
+        if seq.getDefaults(sprintf('FPGA1/TTL%d', chn))
+          val = uint64(1);
+        end
+      catch
+      end
+    end
+
+    function val = getTTLDefault(self, seq)
       val = 0;
-      return;
+      for i = 0:31
+        val = val | bitshift(self.singleTTLDefault(seq, i), i);
+      end
     end
 
     function appendCmdFmt(self, fmt, t, varargin)
