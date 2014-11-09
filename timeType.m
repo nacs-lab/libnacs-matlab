@@ -13,8 +13,8 @@
 
 classdef timeType < int32
   enumeration
-    End(0)
-    Dirty(1)
-    Start(2)
+    End(0);
+    Dirty(1);
+    Start(2);
   end
 end
