@@ -85,12 +85,13 @@ classdef fpgaBackend < pulseBackend
       ntime = size(crit_ts, 1);
       t = self.START_DELAY;
       self.cmd = '';
-      self.appendCmdFmt('TTL(all)=%x', t, self.getTTLDefault(seq));
+      self.appendCmd('TTL(all)=%x', t, self.getTTLDefault(seq));
       if self.clock_div > 0
         t = t + self.CLOCK_DELAY;
-        self.appendCmdFmt('CLOCK_OUT(%d)', t, self.clock_div);
+        self.appendCmd('CLOCK_OUT(%d)', t, self.clock_div);
       end
       start_t = t;
+      tracker = pulseTimeTracker(seq, cids);
 
       %% WIP
       i = 0;
@@ -100,9 +101,9 @@ classdef fpgaBackend < pulseBackend
 
       if self.clock_div > 0
         t = t + self.MIN_DELAY;
-        self.appendCmdFmt('CLOCK_OUT(100)', t);
+        self.appendCmd('CLOCK_OUT(100)', t);
         t = t + self.FIN_CLOCK_DELAY;
-        self.appendCmdFmt('CLOCK_OUT(off)', t);
+        self.appendCmd('CLOCK_OUT(off)', t);
       end
     end
 
@@ -133,7 +134,7 @@ classdef fpgaBackend < pulseBackend
       end
     end
 
-    function appendCmdFmt(self, fmt, t, varargin)
+    function appendCmd(self, fmt, t, varargin)
       self.cmd = [self.cmd, sprintf(['t=%.2f,', fmt, '\n'], ...
                                     t * 1e6, varargin{:})];
     end
