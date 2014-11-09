@@ -122,6 +122,7 @@ classdef timeSeq < handle
                            toffset, step_len, cid, pulse_obj.getID()}];
             end
           else
+            %% Maybe treating a zero length pulse as hasDirtyTime?
             tstart = pulse{1} + toffset;
             tlen = pulse{2};
             res = [res; {tstart, timeType.Start, pulse_obj, ...
@@ -133,6 +134,29 @@ classdef timeSeq < handle
       end
       if ~isempty(res)
         res = sortrows(res, [1, 2, 7]);
+      end
+    end
+
+    function vals = getValues(self, dt, varargin)
+      total_t = self.length();
+      nstep = floor(total_t / dt) + 1;
+      nchn = nargin - 2;
+
+      vals = zeros(nchn, nstep);
+      for i = 1:nchn
+        chn = varargin{i};
+        if ischar(chn)
+          scale = 1;
+        else
+          scale = chn{2};
+          chn = chn{1};
+        end
+        tracker = pulseTimeTracker(self, chn);
+
+        for j = 1:nstep
+          [t, evt] = tracker.nextEvent(dt, true);
+          vals(i, j) = tracker.getValue(chn);
+        end
       end
     end
   end
