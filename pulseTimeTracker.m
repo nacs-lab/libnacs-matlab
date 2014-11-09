@@ -68,6 +68,14 @@ classdef pulseTimeTracker < handle
       end
     end
 
+    function res = getStartValues(self)
+      vs = containers.Map();
+      for key in self.startValues.keys()
+        key = key{:};
+        vs(key) = self.startValues(key);
+      end
+    end
+
     function [t, evt] = nextEvent(self, dt, strict)
       if nargin < 3
         strict = false;
@@ -82,7 +90,7 @@ classdef pulseTimeTracker < handle
       end
     end
 
-    function res = curPulses(self)
+    function res = getCurPulses(self)
       res = containers.Map();
       for key in self.curPulses.keys()
         key = key{:};
