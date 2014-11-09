@@ -24,17 +24,17 @@ classdef timeSeq < handle
   end
 
   methods
-    function self = timeSeq(parent, toffset, len)
+    function self = timeSeq(parent_or_name, toffset, len)
       if nargin < 1
         self.logger = nacsLogger('seq');
       elseif nargin < 2
-        error('Creating sub time sequence without a time offset');
+        self.logger = nacsLogger(parent_or_name);
       else
-        self.parent = parent;
+        self.parent = parent_or_name;
         self.tOffset = toffset;
 
-        self.logger = parent.logger;
-        parent.addSubSeq(self, toffset);
+        self.logger = parent_or_name.logger;
+        parent_or_name.addSubSeq(self, toffset);
         if nargin >= 3
           self.len = len;
         end

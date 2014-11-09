@@ -105,6 +105,10 @@ classdef fpgaBackend < pulseBackend
         t = t + self.FIN_CLOCK_DELAY;
         self.appendCmd('CLOCK_OUT(off)', t);
       end
+
+      seq.log('#### Start Generated Sequence File ####');
+      seq.log(self.cmd);
+      seq.log('#### End Sequence File ####');
     end
 
     function res = getCmd(self)
