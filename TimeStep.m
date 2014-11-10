@@ -11,13 +11,13 @@
 %% You should have received a copy of the GNU Lesser General Public
 %% License along with this library.
 
-classdef timeStep < TimeSeq
+classdef TimeStep < TimeSeq
   properties(Hidden, Access=private)
     pulses;
   end
 
   methods
-    function self = timeStep(varargin)
+    function self = TimeStep(varargin)
       self = self@TimeSeq(varargin{:});
       self.pulses = containers.Map();
       if self.len <= 0

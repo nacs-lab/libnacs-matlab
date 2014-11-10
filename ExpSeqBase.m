@@ -26,7 +26,7 @@ classdef ExpSeqBase < TimeSeq
 
     function step = addStep(self, first_arg, varargin)
       %% addStep(len[, offset=0])
-      %%     Add a #timeStep with len and offset from the last step
+      %%     Add a #TimeStep with len and offset from the last step
       %% addStep([offset=0, ]class_or_func, *extra_args)
       %%     Construct a step or sub sequence with @class_or_func(*extra_args)
 
@@ -66,7 +66,7 @@ classdef ExpSeqBase < TimeSeq
   methods(Access=private)
     function step = addTimeStep(self, len, offset)
       self.curTime = self.curTime + offset;
-      step = timeStep(self, self.curTime, len);
+      step = TimeStep(self, self.curTime, len);
       self.curTime = self.curTime + len;
     end
     function step = addCustomStep(self, offset, cls, varargin)
