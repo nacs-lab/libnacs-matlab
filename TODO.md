@@ -18,7 +18,7 @@
 5. run sequence, priority
 
 ## Backend
-1. niDACBackend
+1. NiDACBackend
 
     1. Generate data
     2. Connect clock
