@@ -20,9 +20,17 @@ classdef(Abstract) pulseBackend < handle
   end
 
   methods
+    function val = getPriority(self)
+      %% There's probably a better way to let the backend specify the necessary
+      %% dependencies for running each functions. A simple priority is good
+      %% enough for now.
+      val = 0;
+    end
+
     function prepare(self, seq, cids)
       %% Prepare channels, connect clock etc.
     end
+
     function wait(self, rep)
       %% Wait for the sequence to finish.
     end
