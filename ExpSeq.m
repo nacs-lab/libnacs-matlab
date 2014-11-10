@@ -12,7 +12,8 @@
 %% License along with this library.
 
 classdef ExpSeq < ExpSeqBase
-  properties
+  properties(Access=private)
+    drivers;
   end
 
   methods
@@ -23,6 +24,7 @@ classdef ExpSeq < ExpSeqBase
         error('Sequence name must be a string.');
       end
       self = self@ExpSeqBase(name);
+      self.drivers = containers.Map();
     end
   end
 end
