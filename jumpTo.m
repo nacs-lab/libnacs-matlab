@@ -11,7 +11,7 @@
 %% You should have received a copy of the GNU Lesser General Public
 %% License along with this library.
 
-classdef jumpTo < pulseBase
+classdef jumpTo < PulseBase
   properties(Access=private)
     val;
     time;
@@ -19,7 +19,7 @@ classdef jumpTo < pulseBase
 
   methods
     function self = jumpTo(v, t)
-      self = self@pulseBase();
+      self = self@PulseBase();
       if nargin <= 1
         t = 0;
       elseif t < 0;

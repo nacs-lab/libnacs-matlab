@@ -36,7 +36,7 @@ classdef timeStep < timeSeq
           error('Pulse cannot be a non-scalar value.');
         end
         pulse = jumpTo(pulse, 0);
-      elseif ~isa(pulse, 'pulseBase')
+      elseif ~isa(pulse, 'PulseBase')
         %% Treat as function
         pulse = FuncPulse(pulse);
       end

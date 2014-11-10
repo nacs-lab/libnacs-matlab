@@ -11,7 +11,7 @@
 %% You should have received a copy of the GNU Lesser General Public
 %% License along with this library.
 
-classdef(Abstract) pulseBase < handle
+classdef(Abstract) PulseBase < handle
   properties(Access=private)
     id;
   end
@@ -21,7 +21,7 @@ classdef(Abstract) pulseBase < handle
   end
 
   methods
-    function self = pulseBase()
+    function self = PulseBase()
       %% Cannot be multithread-safe. FIXME
       %% (when porting to a real programming language)
       global nacsPulseBaseID;
