@@ -83,7 +83,7 @@ classdef FPGABackend < PulseBackend
         for i = size(new_pulses, 1)
           pulse = new_pulses(i, :);
           cid = pulse{6};
-          if pulse{2} == timeType.Dirty
+          if pulse{2} == TimeType.Dirty
             %% TODO? merge TTL update, use more precise values
             %% TODO? update finished pulse
             self.appendPulse(cid, tracker.getValue(cid));

@@ -11,7 +11,7 @@
 %% You should have received a copy of the GNU Lesser General Public
 %% License along with this library.
 
-classdef timeType < int32
+classdef TimeType < int32
   enumeration
     End(0);
     Dirty(1);

@@ -141,17 +141,17 @@ classdef PulseTimeTracker < handle
         cid = pulse{5};
 
         switch pulse{2}
-          case timeType.Dirty
+          case TimeType.Dirty
             if self.curPulses.isKey(cid)
               error("Overlaping pulses.");
             end
             self.curPulses(cid) = pulse;
             self.curValues(cid) = self.calcVal(pulse, 0);
             evt = [evt; pulse];
-          case timeType.Start
+          case TimeType.Start
             if self.curPulses.isKey(cid)
               prev_pulse = self.curPulses(cid);
-              if prev_pulse{2} ~= timeType.Dirty
+              if prev_pulse{2} ~= TimeType.Dirty
                 error("Overlaping pulses.");
               end
               self.updateStart(cid);
@@ -160,7 +160,7 @@ classdef PulseTimeTracker < handle
             self.curPulses(cid) = pulse;
             self.curValues(cid) = self.calcVal(pulse, 0);
             evt = [evt; pulse];
-          case timeType.End
+          case TimeType.End
             error("Pulse ends too early.");
           otherwise
             error("Invalid time type.");
@@ -175,7 +175,7 @@ classdef PulseTimeTracker < handle
       for key in self.curPulses.keys()
         key = key{:};
         pulse = self.curPulses(key);
-        if pulse{2} == timeType.Dirty
+        if pulse{2} == TimeType.Dirty
           self.updateStart(key);
         end
       end
@@ -208,13 +208,13 @@ classdef PulseTimeTracker < handle
         cid = pulse{5};
 
         switch pulse{2}
-          case timeType.Dirty
+          case TimeType.Dirty
             if self.curPulses.isKey(cid)
               orig_pulse = self.curPulses(cid);
               %% multiple Dirty pulse in one time slice can happen
               %% when the user specifies a strict dt that is longer
               %% than the time between pulses.
-              if orig_pulse{2} ~= timeType.Dirty
+              if orig_pulse{2} ~= TimeType.Dirty
                 error("Overlaping pulses.");
               end
               self.updateStart(cid);
@@ -223,10 +223,10 @@ classdef PulseTimeTracker < handle
             self.curPulses(cid) = pulse;
             self.curValues(cid) = self.calcVal(pulse, pulse{1});
             evt = [evt; pulse];
-          case timeType.Start
+          case TimeType.Start
             if self.curPulses.isKey(cid)
               prev_pulse = self.curPulses(cid);
-              if prev_pulse{2} ~= timeType.Dirty
+              if prev_pulse{2} ~= TimeType.Dirty
                 error("Overlaping pulses.");
               end
               self.updateStart(cid);
@@ -236,12 +236,12 @@ classdef PulseTimeTracker < handle
             new_time = min(pulse{1} + pulse{2}, t);
             self.curValues(cid) = self.calcVal(pulse, new_time);
             evt = [evt; pulse];
-          case timeType.End
+          case TimeType.End
             if ~self.curPulses.isKey(cid)
               error("No pulse to finish.");
             end
             prev_pulse = self.curPulses(cid);
-            if prev_pulse{2} ~= timeType.Start
+            if prev_pulse{2} ~= TimeType.Start
               error("Wrong pulse type to finish.");
             elseif prev_pulse{7} ~= pulse{7}
               error("Wrong pulse to finish.");
