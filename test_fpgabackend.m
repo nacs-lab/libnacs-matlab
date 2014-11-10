@@ -12,7 +12,7 @@
 %% License along with this library.
 
 function test_fpgabackend()
-  backend = fpgaBackend();
+  backend = FPGABackend();
   backend.initDev('FPGA1');
   backend.initChannel('FPGA1', 'TTL1');
   backend.initChannel('FPGA1', 'TTL2');

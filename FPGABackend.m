@@ -11,7 +11,7 @@
 %% You should have received a copy of the GNU Lesser General Public
 %% License along with this library.
 
-classdef fpgaBackend < pulseBackend
+classdef FPGABackend < pulseBackend
   properties(Hidden, Access=private)
     url = '';
     clock_div = 0;
@@ -36,7 +36,7 @@ classdef fpgaBackend < pulseBackend
   end
 
   methods
-    function self = fpgaBackend(varargin)
+    function self = FPGABackend(varargin)
       self = self@pulseBackend(varargin{:});
       self.config = loadConfig();
       self.url = self.config.fpgaUrls('FPGA1');
