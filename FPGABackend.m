@@ -73,7 +73,7 @@ classdef FPGABackend < PulseBackend
 
       while true
         min_delay = self.MIN_DELAY + t - (tracker.getTime() + start_t);
-        [new_t, new_pulses] = tracker.nextEvent(min_delay, trackMode.NoEarlier);
+        [new_t, new_pulses] = tracker.nextEvent(min_delay, TrackMode.NoEarlier);
         if new_t < 0
           break;
         end

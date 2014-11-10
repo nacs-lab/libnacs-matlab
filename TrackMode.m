@@ -11,7 +11,7 @@
 %% You should have received a copy of the GNU Lesser General Public
 %% License along with this library.
 
-classdef trackMode < int32
+classdef TrackMode < int32
   enumeration
     Strict(0);
     NoLater(1);

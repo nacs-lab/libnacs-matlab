@@ -82,7 +82,7 @@ classdef PulseTimeTracker < handle
 
     function [t, evt] = nextEvent(self, dt, mode)
       if nargin < 3
-        mode = trackMode.NoLater;
+        mode = TrackMode.NoLater;
       end
       if nargin < 2
         dt = 0;
@@ -194,9 +194,9 @@ classdef PulseTimeTracker < handle
       next_pulse = self.pulses(self.curPulseIdx + 1, :);
       if dt <= 0
         t = next_pulse{1};
-      elseif mode == trackMode.NoLater
+      elseif mode == TrackMode.NoLater
         t = min(self.curTime + dt, next_pulse{1});
-      elseif mode == trackMode.NoEarlier && self.curPulses.Count == 0
+      elseif mode == TrackMode.NoEarlier && self.curPulses.Count == 0
         t = max(self.curTime + dt, next_pulse{1});
       else
         t = self.curTime + dt;
