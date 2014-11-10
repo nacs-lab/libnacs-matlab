@@ -115,7 +115,7 @@ classdef pulseTimeTracker < handle
     end
 
     function updateStart(self, cid)
-      self.curPulses.delete(cid);
+      self.curPulses.remove(cid);
       self.startValues(cid) = self.curValues(cid);
     end
 
@@ -196,7 +196,7 @@ classdef pulseTimeTracker < handle
         t = next_pulse{1};
       elseif mode == trackMode.NoLater
         t = min(self.curTime + dt, next_pulse{1});
-      elseif mode == trackMode.NoEarlier
+      elseif mode == trackMode.NoEarlier && self.curPulses.Count == 0
         t = max(self.curTime + dt, next_pulse{1});
       else
         t = self.curTime + dt;
