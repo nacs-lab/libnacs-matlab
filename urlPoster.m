@@ -158,7 +158,7 @@ classdef urlPoster < handle
       data_stm.close();
     end
 
-    function [output, status] = reply(self)
+    function output = reply(self)
       %% Read the data from the connection.
       import com.mathworks.mlwidgets.io.InterruptibleStreamCopier;
       try
@@ -175,7 +175,6 @@ classdef urlPoster < handle
         error(['Error downloading URL. Your network connection may be ', ...
                'down or your proxy settings improperly configured.']);
       end
-      status = 1;
     end
   end
 end

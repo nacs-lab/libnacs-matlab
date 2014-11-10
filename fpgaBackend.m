@@ -17,6 +17,7 @@ classdef fpgaBackend < pulseBackend
     clock_div = 0;
     cmd = '';
     config;
+    poster = [];
   end
 
   properties(Constant, Hidden, Access=private)
@@ -25,6 +26,13 @@ classdef fpgaBackend < pulseBackend
     MIN_DELAY = 1e-6;
     START_DELAY = 0.5e-6;
     FIN_CLOCK_DELAY = 100e-6;
+
+    TTL_CHN = 1;
+    DDS_CHN = 2;
+
+    SET_FREQ = 1;
+    SET_AMP = 2;
+    SET_PHASE = 3;
   end
 
   methods
@@ -42,35 +50,7 @@ classdef fpgaBackend < pulseBackend
 
     function initChannel(self, did, cid)
       self.initDev(did);
-      cpath = strsplit(cid, '/');
-      if strncmpi(cpath(1), 'TTL', 3)
-        if size(cpath, 2) ~= 1
-          error('Invalid TTL channel id "%s".', cid);
-        end
-        matches = regexpi(cpath, '^ttl([1-9]\d*)$', 'tokens');
-        if isempty(matches)
-          error('No TTL channel number');
-        end
-        chn = str2double(matches{1}{1});
-        if ~isfinite(chn) || chn < 0 || chn > 24 || (mod(chn, 4) == 0)
-          error('Unconnected TTL channel %d.', chn);
-        end
-      elseif strncmpi(cpath(1), 'DDS', 3)
-        if size(cpath, 2) ~= 2
-          error('Invalid DDS channel id "%s".', cid);
-        end
-        matches = regexpi(cpath, '^dds([1-9]\d*)$', 'tokens');
-        if isempty(matches)
-          error('No DDS channel number');
-        end
-        chn = str2double(matches{1}{1});
-        if ~isfinite(chn) || chn < 0 || chn > 22
-          error('DDS channel number %d out of range.', chn);
-        end
-        if ~(strcmpi(cpath(2), 'freq') || strcmpi(cpath(2), 'amp'))
-          error('Invalid DDS parameter name "%s".', cpath(2));
-        end
-      end
+      self.parseCId(cid);
     end
 
     function enableClockOut(self, div)
@@ -79,8 +59,6 @@ classdef fpgaBackend < pulseBackend
     end
 
     function generate(self, seq, cids)
-      %% TODO
-      %% use clock_div
       t = self.INIT_DELAY;
       self.cmd = '';
       self.appendCmd('TTL(all)=%x', t, self.getTTLDefault(seq));
@@ -91,13 +69,38 @@ classdef fpgaBackend < pulseBackend
       start_t = t + self.START_DELAY;
       tracker = pulseTimeTracker(seq, cids);
 
-      %% WIP
       while true
-        [new_t, evt] = tracker.nextEvent(self.MIN_DELAY, trackMode.NoEarlier);
+        min_delay = self.MIN_DELAY + t - (tracker.getTime() + start_t);
+        [new_t, new_pulses] = tracker.nextEvent(min_delay, trackMode.NoEarlier);
         if new_t < 0
           break;
         end
-        new_t = new_t + start_t;
+        t = new_t + start_t;
+
+        updated_chn = containers.Map();
+        for i = size(new_pulses, 1)
+          pulse = new_pulses(i, :);
+          cid = pulse{6};
+          if pulse{2} == timeType.Dirty
+            %% TODO? merge TTL update, use more precise values
+            %% TODO? update finished pulse
+            self.appendPulse(cid, tracker.getValue(cid));
+            t = t + self.MIN_DELAY;
+            updated_chn(cid) = 1;
+          end
+        end
+
+        %% Update channels that are currently active.
+        cur_pulses = tracker.getCurPulses();
+        for key = cur_pulses.keys()
+          key = key{:};
+          if updated_chn.isKey(key)
+            continue
+          end
+          pulse = cur_pulses(key);
+          self.appendPulse(key, tracker.getValue(key));
+          t = t + self.MIN_DELAY;
+        end
       end
 
       if self.clock_div > 0
@@ -117,11 +120,60 @@ classdef fpgaBackend < pulseBackend
     end
 
     function run(self, rep)
-      %% TODO
+      self.poster = urlPoster(self.url);
+      self.poster.post({'command', 'runseq', ...
+                        'debugPulses', 'off',
+                        'reps', '1',
+                        'seqtext', self.cmd});
+    end
+
+    function wait(self, rep)
+      output = self.poster.reply();
+      disp(output);
     end
   end
 
   methods(Access=private)
+    function [chn_type, chn_num, chn_param] = parseCId(self, cid)
+      cpath = strsplit(cid, '/');
+      if strncmpi(cpath(1), 'TTL', 3)
+        chn_type = TTL_CHN;
+        chn_param = 0;
+        if size(cpath, 2) ~= 1
+          error('Invalid TTL channel id "%s".', cid);
+        end
+        matches = regexpi(cpath, '^ttl([1-9]\d*)$', 'tokens');
+        if isempty(matches)
+          error('No TTL channel number');
+        end
+        chn_num = str2double(matches{1}{1});
+        if ~isfinite(chn_num) || chn_num < 0 || chn_num > 24 || ...
+           mod(chn_num, 4) == 0
+          error('Unconnected TTL channel %d.', chn_num);
+        end
+      elseif strncmpi(cpath(1), 'DDS', 3)
+        chn_type = DDS_CHN;
+        if size(cpath, 2) ~= 2
+          error('Invalid DDS channel id "%s".', cid);
+        end
+        matches = regexpi(cpath, '^dds([1-9]\d*)$', 'tokens');
+        if isempty(matches)
+          error('No DDS channel number');
+        end
+        chn_num = str2double(matches{1}{1});
+        if ~isfinite(chn_num) || chn_num < 0 || chn_num > 22
+          error('DDS channel number %d out of range.', chn_num);
+        end
+        if strcmpi(cpath(2), 'freq')
+          chn_param = SET_FREQ;
+        elseif strcmpi(cpath(2), 'amp')
+          chn_param = SET_AMP;
+        else
+          error('Invalid DDS parameter name "%s".', cpath(2));
+        end
+      end
+    end
+
     function val = singleTTLDefault(self, seq, chn)
       val = uint64(0);
       try
@@ -142,6 +194,33 @@ classdef fpgaBackend < pulseBackend
     function appendCmd(self, fmt, t, varargin)
       self.cmd = [self.cmd, sprintf(['t=%.2f,', fmt, '\n'], ...
                                     t * 1e6, varargin{:})];
+    end
+
+    function appendPulse(self, cid, val)
+      if ~strncmpi('FPGA1/', cid, 5)
+        error('Unknown channel ID "%s"', cid);
+      end
+      cid = cid(6:end);
+      [chn_type, chn_num, chn_param] = parseCId(self, cid);
+      if chn_type == TTL_CHN
+        if val
+          val = 1
+        else
+          val = 0
+        end
+        self.appendCmd('TTL(%d) = %d', chn_num, val);
+      elseif chn_type == DDS_CHN
+        if chn_param == SET_FREQ
+          cmd = 'freq';
+        elseif chn_param == SET_AMP
+          cmd = 'amp';
+        else
+          error('Unknown DDS parameter.');
+        end
+        self.appendCmd('%s(%d) = %f', cmd, chn_num, val);
+      else
+        error('Unknown channel type.');
+      end
     end
   end
 end
