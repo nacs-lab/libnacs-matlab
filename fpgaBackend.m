@@ -54,7 +54,9 @@ classdef fpgaBackend < pulseBackend
     end
 
     function enableClockOut(self, div)
-      %% TODO, add check
+      if div < 0 or div > 254
+        error('Clock divider out of range.');
+      end
       self.clock_div = div;
     end
 
