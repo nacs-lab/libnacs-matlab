@@ -20,9 +20,10 @@ classdef fpgaBackend < pulseBackend
   end
 
   properties(Constant, Hidden, Access=private)
-    START_DELAY = 100e-6;
+    INIT_DELAY = 100e-6;
     CLOCK_DELAY = 100e-6;
     MIN_DELAY = 1e-6;
+    START_DELAY = 0.5e-6;
     FIN_CLOCK_DELAY = 100e-6;
   end
 
@@ -80,23 +81,23 @@ classdef fpgaBackend < pulseBackend
     function generate(self, seq, cids)
       %% TODO
       %% use clock_div
-      crit_ts = seq.getPulseTimes(cids);
-
-      ntime = size(crit_ts, 1);
-      t = self.START_DELAY;
+      t = self.INIT_DELAY;
       self.cmd = '';
       self.appendCmd('TTL(all)=%x', t, self.getTTLDefault(seq));
       if self.clock_div > 0
         t = t + self.CLOCK_DELAY;
         self.appendCmd('CLOCK_OUT(%d)', t, self.clock_div);
       end
-      start_t = t;
+      start_t = t + self.START_DELAY;
       tracker = pulseTimeTracker(seq, cids);
 
       %% WIP
-      i = 0;
-      while i < ntime
-        i = i + 1;
+      while true
+        [new_t, evt] = tracker.nextEvent(self.MIN_DELAY);
+        if new_t < 0
+          break;
+        end
+        new_t = new_t + start_t;
       end
 
       if self.clock_div > 0
