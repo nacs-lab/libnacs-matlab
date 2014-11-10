@@ -38,7 +38,7 @@ classdef timeStep < timeSeq
         pulse = jumpTo(pulse, 0);
       elseif ~isa(pulse, 'pulseBase')
         %% Treat as function
-        pulse = funcPulse(pulse);
+        pulse = FuncPulse(pulse);
       end
       if self.pulses.isKey(cid)
         pulse_list = self.pulses(cid);

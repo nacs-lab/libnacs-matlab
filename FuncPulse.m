@@ -11,13 +11,13 @@
 %% You should have received a copy of the GNU Lesser General Public
 %% License along with this library.
 
-classdef funcPulse < pulseBase
+classdef FuncPulse < pulseBase
   properties(Access=private)
     func;
   end
 
   methods
-    function self = funcPulse(func)
+    function self = FuncPulse(func)
       self = self@pulseBase();
       self.func = func;
     end
