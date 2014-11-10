@@ -54,7 +54,7 @@ classdef FPGABackend < PulseBackend
     end
 
     function enableClockOut(self, div)
-      if div < 0 or div > 254
+      if div < 0 || div > 254
         error('Clock divider out of range.');
       end
       self.clock_div = div;
@@ -99,7 +99,6 @@ classdef FPGABackend < PulseBackend
           if updated_chn.isKey(key)
             continue
           end
-          pulse = cur_pulses(key);
           self.appendPulse(key, tracker.getValue(key));
           t = t + self.MIN_DELAY;
         end
@@ -139,7 +138,7 @@ classdef FPGABackend < PulseBackend
     function [chn_type, chn_num, chn_param] = parseCId(self, cid)
       cpath = strsplit(cid, '/');
       if strncmp(cpath(1), 'TTL', 3)
-        chn_type = TTL_CHN;
+        chn_type = self.TTL_CHN;
         chn_param = 0;
         if size(cpath, 2) ~= 1
           error('Invalid TTL channel id "%s".', cid);
@@ -154,7 +153,7 @@ classdef FPGABackend < PulseBackend
           error('Unconnected TTL channel %d.', chn_num);
         end
       elseif strncmp(cpath(1), 'DDS', 3)
-        chn_type = DDS_CHN;
+        chn_type = self.DDS_CHN;
         if size(cpath, 2) ~= 2
           error('Invalid DDS channel id "%s".', cid);
         end
@@ -167,9 +166,9 @@ classdef FPGABackend < PulseBackend
           error('DDS channel number %d out of range.', chn_num);
         end
         if strcmp(cpath(2), 'FREQ')
-          chn_param = SET_FREQ;
+          chn_param = self.SET_FREQ;
         elseif strcmp(cpath(2), 'AMP')
-          chn_param = SET_AMP;
+          chn_param = self.SET_AMP;
         else
           error('Invalid DDS parameter name "%s".', cpath(2));
         end
@@ -204,22 +203,22 @@ classdef FPGABackend < PulseBackend
       end
       cid = cid(6:end);
       [chn_type, chn_num, chn_param] = parseCId(self, cid);
-      if chn_type == TTL_CHN
+      if chn_type == self.TTL_CHN
         if val
-          val = 1
+          val = 1;
         else
-          val = 0
+          val = 0;
         end
         self.appendCmd('TTL(%d) = %d', chn_num, val);
-      elseif chn_type == DDS_CHN
-        if chn_param == SET_FREQ
-          cmd = 'freq';
-        elseif chn_param == SET_AMP
-          cmd = 'amp';
+      elseif chn_type == self.DDS_CHN
+        if chn_param == self.SET_FREQ
+          cmd_name = 'freq';
+        elseif chn_param == self.SET_AMP
+          cmd_name = 'amp';
         else
           error('Unknown DDS parameter.');
         end
-        self.appendCmd('%s(%d) = %f', cmd, chn_num, val);
+        self.appendCmd('%s(%d) = %f', cmd_name, chn_num, val);
       else
         error('Unknown channel type.');
       end
