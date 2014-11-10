@@ -80,9 +80,9 @@ classdef pulseTimeTracker < handle
       end
     end
 
-    function [t, evt] = nextEvent(self, dt, strict)
+    function [t, evt] = nextEvent(self, dt, mode)
       if nargin < 3
-        strict = false;
+        mode = trackMode.NoLater;
       end
       if nargin < 2
         dt = 0;
@@ -90,7 +90,7 @@ classdef pulseTimeTracker < handle
       if self.curTime < 0
         [t, evt] = self.initEvent();
       else
-        [t, evt] = self.nextEventReal(dt, strict);
+        [t, evt] = self.nextEventReal(dt, mode);
       end
     end
 
@@ -168,8 +168,8 @@ classdef pulseTimeTracker < handle
       end
     end
 
-    function [t, evt] = nextEventReal(self, dt, strict)
-      evt = {}
+    function [t, evt] = nextEventReal(self, dt, mode)
+      evt = {};
 
       %% Remove dirty pulses from self.curPulses and update startValues
       for key in self.curPulses.keys()
@@ -194,8 +194,10 @@ classdef pulseTimeTracker < handle
       next_pulse = self.pulses(self.curPulseIdx + 1, :);
       if dt <= 0
         t = next_pulse{1};
-      elseif ~strict
+      elseif mode == trackMode.NoLater
         t = min(self.curTime + dt, next_pulse{1});
+      elseif mode == trackMode.NoEarlier
+        t = max(self.curTime + dt, next_pulse{1});
       else
         t = self.curTime + dt;
       end

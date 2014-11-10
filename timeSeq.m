@@ -154,7 +154,7 @@ classdef timeSeq < handle
         tracker = pulseTimeTracker(self, chn);
 
         for j = 1:nstep
-          [t, evt] = tracker.nextEvent(dt, true);
+          [t, evt] = tracker.nextEvent(dt, trackMode.Strict);
           vals(i, j) = tracker.getValue(chn);
         end
       end

@@ -15,6 +15,6 @@ classdef trackMode < int32
   enumeration
     Strict(0);
     NoLater(1);
-    NextChange(2);
+    NoEarlier(2);
   end
 end

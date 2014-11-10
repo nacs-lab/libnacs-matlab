@@ -93,7 +93,7 @@ classdef fpgaBackend < pulseBackend
 
       %% WIP
       while true
-        [new_t, evt] = tracker.nextEvent(self.MIN_DELAY);
+        [new_t, evt] = tracker.nextEvent(self.MIN_DELAY, trackMode.NoEarlier);
         if new_t < 0
           break;
         end

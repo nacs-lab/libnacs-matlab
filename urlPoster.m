@@ -35,8 +35,8 @@
 %%         distribution
 %%       * Neither the name of the Columbia University nor the names
 %%         of its contributors may be used to endorse or promote products
-%            derived from this software without specific prior written
-%            permission.
+%%         derived from this software without specific prior written
+%%         permission.
 
 %%   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 %%   "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
