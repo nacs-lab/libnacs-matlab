@@ -43,7 +43,7 @@ classdef FPGABackend < PulseBackend
     end
 
     function initDev(self, did)
-      if ~strcmpi('FPGA1', did)
+      if ~strcmp('FPGA1', did)
         error('Unknown FPGA device "%s".', did);
       end
     end
@@ -138,13 +138,13 @@ classdef FPGABackend < PulseBackend
   methods(Access=private)
     function [chn_type, chn_num, chn_param] = parseCId(self, cid)
       cpath = strsplit(cid, '/');
-      if strncmpi(cpath(1), 'TTL', 3)
+      if strncmp(cpath(1), 'TTL', 3)
         chn_type = TTL_CHN;
         chn_param = 0;
         if size(cpath, 2) ~= 1
           error('Invalid TTL channel id "%s".', cid);
         end
-        matches = regexpi(cpath, '^ttl([1-9]\d*)$', 'tokens');
+        matches = regexp(cpath, '^TTL([1-9]\d*)$', 'tokens');
         if isempty(matches)
           error('No TTL channel number');
         end
@@ -153,12 +153,12 @@ classdef FPGABackend < PulseBackend
            mod(chn_num, 4) == 0
           error('Unconnected TTL channel %d.', chn_num);
         end
-      elseif strncmpi(cpath(1), 'DDS', 3)
+      elseif strncmp(cpath(1), 'DDS', 3)
         chn_type = DDS_CHN;
         if size(cpath, 2) ~= 2
           error('Invalid DDS channel id "%s".', cid);
         end
-        matches = regexpi(cpath, '^dds([1-9]\d*)$', 'tokens');
+        matches = regexp(cpath, '^DDS([1-9]\d*)$', 'tokens');
         if isempty(matches)
           error('No DDS channel number');
         end
@@ -166,9 +166,9 @@ classdef FPGABackend < PulseBackend
         if ~isfinite(chn_num) || chn_num < 0 || chn_num > 22
           error('DDS channel number %d out of range.', chn_num);
         end
-        if strcmpi(cpath(2), 'freq')
+        if strcmp(cpath(2), 'FREQ')
           chn_param = SET_FREQ;
-        elseif strcmpi(cpath(2), 'amp')
+        elseif strcmp(cpath(2), 'AMP')
           chn_param = SET_AMP;
         else
           error('Invalid DDS parameter name "%s".', cpath(2));
@@ -199,7 +199,7 @@ classdef FPGABackend < PulseBackend
     end
 
     function appendPulse(self, cid, val)
-      if ~strncmpi('FPGA1/', cid, 5)
+      if ~strncmp('FPGA1/', cid, 5)
         error('Unknown channel ID "%s"', cid);
       end
       cid = cid(6:end);
