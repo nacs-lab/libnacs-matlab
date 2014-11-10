@@ -29,4 +29,4 @@
     3. Start run
 
 ## Misc
-1. Error code?
+1. Port to a real programming language.
