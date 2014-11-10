@@ -16,13 +16,7 @@
 5. run sequence, priority.
 
 ## Backend
-1. fpgaBackend
-
-    1. enableClockOut(rate)
-    2. Generate sequence file
-    3. Upload sequence file
-
-2. niDACBackend
+1. niDACBackend
 
     1. Generate data
     2. Connect clock
