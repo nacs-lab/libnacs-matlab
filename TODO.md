@@ -9,11 +9,9 @@
     1. name
     2. findDriver
 
-2. device/channel driver loader
+2. default/initial value
 
-3. default/initial value
-
-4. run sequence, priority
+3. run sequence, priority
 
 ## Backend
 1. NiDACBackend
@@ -28,23 +26,21 @@
 
 # Timeline
 
-1. device/channel driver loader
+1. default/initial value
 
-2. default/initial value
+2. run sequence, priority
 
-3. run sequence, priority
-
-4. main sequence
+3. main sequence
 
     1. name
     2. findDriver
 
-5. NiDACBackend
+4. NiDACBackend
 
     1. Generate data
     2. Connect clock
     3. Start run
 
-6. piecewise linear
+5. piecewise linear
 
-7. Absolute time object
+6. Absolute time object
