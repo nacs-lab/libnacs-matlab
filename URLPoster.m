@@ -50,7 +50,7 @@
 %%   NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 %%   SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-classdef urlPoster < handle
+classdef URLPoster < handle
   properties(Access=private)
     conn = [];
     url_str;
@@ -59,7 +59,7 @@ classdef urlPoster < handle
   methods(Static, Access=private)
     function setup()
       if ~usejava('jvm')
-        error('urlPoster requires Java.');
+        error('URLPoster requires Java.');
       end
 
       %% Be sure the proxy settings are set.
@@ -68,8 +68,8 @@ classdef urlPoster < handle
   end
 
   methods
-    function self = urlPoster(url_str)
-      urlPoster.setup();
+    function self = URLPoster(url_str)
+      URLPoster.setup();
 
       self.url_str = url_str;
 

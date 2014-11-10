@@ -122,7 +122,7 @@ classdef FPGABackend < PulseBackend
     end
 
     function run(self, rep)
-      self.poster = urlPoster(self.url);
+      self.poster = URLPoster(self.url);
       self.poster.post({'command', 'runseq', ...
                         'debugPulses', 'off',
                         'reps', '1',
