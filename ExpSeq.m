@@ -12,6 +12,9 @@
 %% License along with this library.
 
 classdef ExpSeq < ExpSeqBase
+  properties
+  end
+
   methods
     function self = ExpSeq(name)
       if nargin < 1

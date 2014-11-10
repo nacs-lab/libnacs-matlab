@@ -26,16 +26,18 @@ classdef TimeSeq < handle
 
   methods
     function self = TimeSeq(parent_or_name, toffset, len)
-      self.config = loadConfig();
       if nargin < 1
         self.logger = NaCsLogger('seq');
+        self.config = loadConfig();
       elseif nargin < 2
         self.logger = NaCsLogger(parent_or_name);
+        self.config = loadConfig();
       else
         self.parent = parent_or_name;
         self.tOffset = toffset;
 
         self.logger = parent_or_name.logger;
+        self.config = parent_or_name.config;
         parent_or_name.addSubSeq(self, toffset);
         if nargin >= 3
           self.len = len;
