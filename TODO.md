@@ -9,7 +9,7 @@
     1. name
     2. findDriver
 
-2. device/channel id translator/loader, alias handling
+2. device/channel driver loader
 
 3. default/initial value
 
@@ -28,7 +28,7 @@
 
 # Timeline
 
-1. device/channel id translator/loader, alias handling
+1. device/channel driver loader
 
 2. default/initial value
 
