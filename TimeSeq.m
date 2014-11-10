@@ -13,6 +13,7 @@
 
 classdef TimeSeq < handle
   properties(Hidden, Access=protected)
+    config;
     logger;
   end
 
@@ -25,6 +26,7 @@ classdef TimeSeq < handle
 
   methods
     function self = TimeSeq(parent_or_name, toffset, len)
+      self.config = loadConfig();
       if nargin < 1
         self.logger = NaCsLogger('seq');
       elseif nargin < 2
