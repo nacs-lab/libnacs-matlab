@@ -12,9 +12,9 @@
 %% License along with this library.
 
 function test_timeseq()
-  tseq = timeSeq();
-  subseq1 = timeSeq(tseq, 0);
-  subseq2 = timeSeq(tseq, 2);
+  tseq = TimeSeq();
+  subseq1 = TimeSeq(tseq, 0);
+  subseq2 = TimeSeq(tseq, 2);
 
   assert(tseq.globChannelAvailable('', 2) == 1);
   assert(tseq.globChannelAvailable('', 1) == 1);

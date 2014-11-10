@@ -17,7 +17,7 @@
 %% step3:   [1, 3]   [6, 8] cid2
 
 function test_timestep()
-  tseq = timeSeq();
+  tseq = TimeSeq();
   timeStep(tseq, 2, 3) ...
           .addPulse('1', rampTo(10));
 

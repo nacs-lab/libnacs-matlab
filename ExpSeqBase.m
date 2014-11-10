@@ -11,7 +11,7 @@
 %% You should have received a copy of the GNU Lesser General Public
 %% License along with this library.
 
-classdef ExpSeqBase < timeSeq
+classdef ExpSeqBase < TimeSeq
   properties(Hidden, Access=private)
     curTime = 0;
   end
@@ -21,7 +21,7 @@ classdef ExpSeqBase < timeSeq
       if nargin >= 3
         error('Too many arguments for ExpSeqBase.');
       end
-      self = self@timeSeq(varargin{:});
+      self = self@TimeSeq(varargin{:});
     end
 
     function step = addStep(self, first_arg, varargin)

@@ -11,7 +11,7 @@
 %% You should have received a copy of the GNU Lesser General Public
 %% License along with this library.
 
-classdef timeSeq < handle
+classdef TimeSeq < handle
   properties(Hidden, Access=protected)
     logger;
   end
@@ -24,7 +24,7 @@ classdef timeSeq < handle
   end
 
   methods
-    function self = timeSeq(parent_or_name, toffset, len)
+    function self = TimeSeq(parent_or_name, toffset, len)
       if nargin < 1
         self.logger = NaCsLogger('seq');
       elseif nargin < 2

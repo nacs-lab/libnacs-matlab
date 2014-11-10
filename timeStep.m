@@ -11,14 +11,14 @@
 %% You should have received a copy of the GNU Lesser General Public
 %% License along with this library.
 
-classdef timeStep < timeSeq
+classdef timeStep < TimeSeq
   properties(Hidden, Access=private)
     pulses;
   end
 
   methods
     function self = timeStep(varargin)
-      self = self@timeSeq(varargin{:});
+      self = self@TimeSeq(varargin{:});
       self.pulses = containers.Map();
       if self.len <= 0
         error('Time steps should have a fixed and positive length');
@@ -67,11 +67,11 @@ classdef timeStep < timeSeq
           end
         end
       end
-      avail = channelAvailable@timeSeq(self, cid, t, dt);
+      avail = channelAvailable@TimeSeq(self, cid, t, dt);
     end
 
     function res = getPulsesRaw(self, cid)
-      res = getPulsesRaw@timeSeq(self, cid);
+      res = getPulsesRaw@TimeSeq(self, cid);
       if self.pulses.isKey(cid)
         step_len = self.len;
         for pulse = self.pulses(cid)
