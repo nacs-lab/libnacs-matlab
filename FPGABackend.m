@@ -69,7 +69,7 @@ classdef FPGABackend < PulseBackend
         self.appendCmd('CLOCK_OUT(%d)', t, self.clock_div);
       end
       start_t = t + self.START_DELAY;
-      tracker = pulseTimeTracker(seq, cids);
+      tracker = PulseTimeTracker(seq, cids);
 
       while true
         min_delay = self.MIN_DELAY + t - (tracker.getTime() + start_t);

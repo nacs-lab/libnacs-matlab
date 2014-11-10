@@ -151,7 +151,7 @@ classdef timeSeq < handle
           scale = chn{2};
           chn = chn{1};
         end
-        tracker = pulseTimeTracker(self, chn);
+        tracker = PulseTimeTracker(self, chn);
 
         for j = 1:nstep
           [t, evt] = tracker.nextEvent(dt, trackMode.Strict);

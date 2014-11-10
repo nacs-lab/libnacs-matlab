@@ -11,7 +11,7 @@
 %% You should have received a copy of the GNU Lesser General Public
 %% License along with this library.
 
-classdef pulseTimeTracker < handle
+classdef PulseTimeTracker < handle
   %% This class has no expection guarantee.
   properties
     cids; % channel ids
@@ -35,7 +35,7 @@ classdef pulseTimeTracker < handle
   end
 
   methods
-    function self = pulseTimeTracker(seq, cids)
+    function self = PulseTimeTracker(seq, cids)
       if ischar(cids)
         cids = {cids};
       end
