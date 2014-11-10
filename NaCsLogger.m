@@ -11,13 +11,13 @@
 %% You should have received a copy of the GNU Lesser General Public
 %% License along with this library.
 
-classdef nacsLogger < handle
+classdef NaCsLogger < handle
   properties(Hidden, Access=protected)
     fd = -1;
   end
 
   methods
-    function self = nacsLogger(name)
+    function self = NaCsLogger(name)
       config = loadConfig();
       log_dir = fullfile(config.logDir, datestr(now, 'yyyy-mm-dd'));
       if ~isdir(log_dir)

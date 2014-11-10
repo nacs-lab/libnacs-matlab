@@ -26,9 +26,9 @@ classdef timeSeq < handle
   methods
     function self = timeSeq(parent_or_name, toffset, len)
       if nargin < 1
-        self.logger = nacsLogger('seq');
+        self.logger = NaCsLogger('seq');
       elseif nargin < 2
-        self.logger = nacsLogger(parent_or_name);
+        self.logger = NaCsLogger(parent_or_name);
       else
         self.parent = parent_or_name;
         self.tOffset = toffset;
