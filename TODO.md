@@ -1,6 +1,8 @@
 ## Pulse Function
 1. piecewise linear
 
+2. Absolute time object
+
 ## Framework
 1. main sequence
 
@@ -13,7 +15,7 @@
 
 4. default/initial value
 
-5. run sequence, priority.
+5. run sequence, priority
 
 ## Backend
 1. niDACBackend
