@@ -11,7 +11,7 @@
 %% You should have received a copy of the GNU Lesser General Public
 %% License along with this library.
 
-classdef(Abstract) pulseBackend < handle
+classdef(Abstract) PulseBackend < handle
   methods(Abstract=true)
     initDev(self, did); % Check and add device
     initChannel(self, did, cid); % Check and add channel
