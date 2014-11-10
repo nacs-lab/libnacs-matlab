@@ -23,7 +23,7 @@
 %%           step2:                                             [18, 20] cid1
 
 function test_expseqbase()
-  seq = expSeqBase();
+  seq = ExpSeqBase();
   seq.addStep(1) ...
      .addPulse('1', linearRamp(10, 1)) ...
      .addPulse('3', linearRamp(20, 2));

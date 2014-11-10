@@ -11,15 +11,15 @@
 %% You should have received a copy of the GNU Lesser General Public
 %% License along with this library.
 
-classdef expSeqBase < timeSeq
+classdef ExpSeqBase < timeSeq
   properties(Hidden, Access=private)
     curTime = 0;
   end
 
   methods
-    function self = expSeqBase(varargin)
+    function self = ExpSeqBase(varargin)
       if nargin >= 3
-        error('Too many arguments for expSeqBase.');
+        error('Too many arguments for ExpSeqBase.');
       end
       self = self@timeSeq(varargin{:});
     end
@@ -74,7 +74,7 @@ classdef expSeqBase < timeSeq
         cls = str2func(cls);
       end
       self.curTime = self.curTime + offset;
-      step = expSeqBase(self, self.curTime);
+      step = ExpSeqBase(self, self.curTime);
       %% return proxy since I'm not sure there's a good way to forward
       %% return values in matlab, especially since the return value can
       %% depend on the number of return values.

@@ -22,7 +22,7 @@ function test_fpgabackend()
   backend.initChannel('FPGA1', 'DDS5/freq');
   backend.initChannel('FPGA1', 'dds5/AMP');
 
-  seq = expSeqBase();
+  seq = ExpSeqBase();
   seq.addStep(1) ...
      .addPulse('FPGA1/dds1/freq', linearRamp(10, 1)) ...
      .addPulse('FPGA1/dds3/freq', linearRamp(20, 2));
