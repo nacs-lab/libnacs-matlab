@@ -15,13 +15,13 @@ classdef TimeSeq < handle
   properties(Hidden, Access=protected)
     config;
     logger;
+    len = 0;
   end
 
   properties(Hidden, Access=private)
     subSeqs = [];
     tOffset;
     parent = 0;
-    len = 0;
   end
 
   methods
