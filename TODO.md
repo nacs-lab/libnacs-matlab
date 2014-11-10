@@ -24,21 +24,19 @@
 
 
 # Timeline
-
-1. run sequence, priority
-
-2. main sequence
+1. main sequence
 
     1. name
     2. findDriver
     3. default/initial value
+    4. run sequence, priority
 
-3. NiDACBackend
+2. NiDACBackend
 
     1. Generate data
     2. Connect clock
     3. Start run
 
-4. piecewise linear
+3. piecewise linear
 
-5. Absolute time object
+4. Absolute time object
