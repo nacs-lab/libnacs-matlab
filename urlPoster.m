@@ -81,13 +81,13 @@ classdef urlPoster < handle
         case 'http'
           try
             handler = sun.net.www.protocol.http.Handler;
-          catch exception
+          catch
             handler = [];
           end
         case 'https'
           try
             handler = sun.net.www.protocol.https.Handler;
-          catch exception
+          catch
             handler = [];
           end
         otherwise
@@ -101,7 +101,7 @@ classdef urlPoster < handle
         else
           url = java.net.URL([], url_str, handler);
         end
-      catch exception
+      catch
         error(['Either this URL could not be parsed or ', ...
                'the protocol is not supported.']);
       end
