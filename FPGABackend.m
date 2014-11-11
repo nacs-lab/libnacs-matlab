@@ -86,7 +86,7 @@ classdef FPGABackend < PulseBackend
           if pulse{2} == TimeType.Dirty
             %% TODO? merge TTL update, use more precise values
             %% TODO? update finished pulse
-            self.appendPulse(cid, tracker.getValue(cid));
+            self.appendPulse(cid, t, tracker.getValue(cid));
             t = t + self.MIN_DELAY;
             updated_chn(cid) = 1;
           end
@@ -99,7 +99,7 @@ classdef FPGABackend < PulseBackend
           if updated_chn.isKey(key)
             continue
           end
-          self.appendPulse(key, tracker.getValue(key));
+          self.appendPulse(key, t, tracker.getValue(key));
           t = t + self.MIN_DELAY;
         end
       end
@@ -199,7 +199,7 @@ classdef FPGABackend < PulseBackend
                                     t * 1e6, varargin{:})];
     end
 
-    function appendPulse(self, cid, val)
+    function appendPulse(self, cid, t, val)
       if ~strncmp('FPGA1/', cid, 5)
         error('Unknown channel ID "%s"', cid);
       end
@@ -211,7 +211,7 @@ classdef FPGABackend < PulseBackend
         else
           val = 0;
         end
-        self.appendCmd('TTL(%d) = %d', chn_num, val);
+        self.appendCmd('TTL(%d) = %d', t, chn_num, val);
       elseif chn_type == self.DDS_CHN
         if chn_param == self.SET_FREQ
           cmd_name = 'freq';
@@ -220,7 +220,7 @@ classdef FPGABackend < PulseBackend
         else
           error('Unknown DDS parameter.');
         end
-        self.appendCmd('%s(%d) = %f', cmd_name, chn_num, val);
+        self.appendCmd('%s(%d) = %f', t, cmd_name, chn_num, val);
       else
         error('Unknown channel type.');
       end
