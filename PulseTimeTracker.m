@@ -51,6 +51,7 @@ classdef PulseTimeTracker < handle
       self.curPulses = containers.Map();
 
       for cid = self.cids
+        cid = cid{:};
         self.curValues(cid) = seq.getDefaults(cid);
         self.startValues(cid) = seq.getDefaults(cid);
       end
@@ -182,7 +183,9 @@ classdef PulseTimeTracker < handle
 
       if self.curPulseIdx >= size(self.pulses, 1)
         %% No more pulses, hold value till end
-        self.curPulses = containers.Map();
+        if self.curPulses.Count > 0
+          self.curPulses = containers.Map();
+        end
         t = self.curTime + dt;
         if dt <= 0 || t > self.seqLen
           %% End-of-sequence

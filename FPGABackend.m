@@ -80,7 +80,7 @@ classdef FPGABackend < PulseBackend
         t = new_t + start_t;
 
         updated_chn = containers.Map();
-        for i = size(new_pulses, 1)
+        for i = 1:size(new_pulses, 1)
           pulse = new_pulses(i, :);
           cid = pulse{6};
           if pulse{2} == TimeType.Dirty

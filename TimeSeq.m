@@ -113,6 +113,7 @@ classdef TimeSeq < handle
       end
       res = {};
       for cid = cids
+        cid = cid{:};
         pulses = self.getPulses(cid);
         for i = 1:size(pulses, 1)
           pulse = pulses(i, :);
