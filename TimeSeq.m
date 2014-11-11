@@ -120,7 +120,7 @@ classdef TimeSeq < handle
           pulse_obj = pulse{3};
           toffset = pulse{4};
           step_len = pulse{5};
-          dirty_times = pulse_obj.dirtyTimes(step_len);
+          dirty_times = pulse_obj.dirtyTime(step_len);
           if ~isempty(dirty_times)
             for t = dirty_times
               res = [res; {t + toffset, TimeType.Dirty, pulse_obj, ...
