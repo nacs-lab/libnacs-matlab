@@ -137,13 +137,13 @@ classdef FPGABackend < PulseBackend
   methods(Access=private)
     function [chn_type, chn_num, chn_param] = parseCId(self, cid)
       cpath = strsplit(cid, '/');
-      if strncmp(cpath(1), 'TTL', 3)
+      if strncmp(cpath{1}, 'TTL', 3)
         chn_type = self.TTL_CHN;
         chn_param = 0;
         if size(cpath, 2) ~= 1
           error('Invalid TTL channel id "%s".', cid);
         end
-        matches = regexp(cpath, '^TTL([1-9]\d*)$', 'tokens');
+        matches = regexp(cpath{1}, '^TTL([1-9]\d*)$', 'tokens');
         if isempty(matches)
           error('No TTL channel number');
         end
@@ -152,12 +152,12 @@ classdef FPGABackend < PulseBackend
            mod(chn_num, 4) == 0
           error('Unconnected TTL channel %d.', chn_num);
         end
-      elseif strncmp(cpath(1), 'DDS', 3)
+      elseif strncmp(cpath{1}, 'DDS', 3)
         chn_type = self.DDS_CHN;
         if size(cpath, 2) ~= 2
           error('Invalid DDS channel id "%s".', cid);
         end
-        matches = regexp(cpath, '^DDS([1-9]\d*)$', 'tokens');
+        matches = regexp(cpath{1}, '^DDS([1-9]\d*)$', 'tokens');
         if isempty(matches)
           error('No DDS channel number');
         end
@@ -165,13 +165,15 @@ classdef FPGABackend < PulseBackend
         if ~isfinite(chn_num) || chn_num < 0 || chn_num > 22
           error('DDS channel number %d out of range.', chn_num);
         end
-        if strcmp(cpath(2), 'FREQ')
+        if strcmp(cpath{2}, 'FREQ')
           chn_param = self.SET_FREQ;
-        elseif strcmp(cpath(2), 'AMP')
+        elseif strcmp(cpath{2}, 'AMP')
           chn_param = self.SET_AMP;
         else
-          error('Invalid DDS parameter name "%s".', cpath(2));
+          error('Invalid DDS parameter name "%s".', cpath{2});
         end
+      else
+          error('Unknown channel type "%s"', cpath{1});
       end
     end
 

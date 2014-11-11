@@ -16,8 +16,8 @@ function test_fpgabackend()
   backend.initDev('FPGA1');
   backend.initChannel('FPGA1', 'TTL1');
   backend.initChannel('FPGA1', 'TTL2');
-  backend.initChannel('FPGA1', 'ttl3');
-  backend.initChannel('FPGA1', 'ttl5');
+  backend.initChannel('FPGA1', 'TTL3');
+  backend.initChannel('FPGA1', 'TTL5');
 
   backend.initChannel('FPGA1', 'DDS5/FREQ');
   backend.initChannel('FPGA1', 'DDS5/AMP');

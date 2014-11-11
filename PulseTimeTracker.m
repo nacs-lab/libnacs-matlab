@@ -139,7 +139,7 @@ classdef PulseTimeTracker < handle
       while self.nextTimeWithIn(0)
         self.curPulseIdx = self.curPulseIdx + 1;
         pulse = self.pulses(self.curPulseIdx, :);
-        cid = pulse{5};
+        cid = pulse{6};
 
         switch pulse{2}
           case TimeType.Dirty
@@ -208,7 +208,7 @@ classdef PulseTimeTracker < handle
       while self.nextTimeWithIn(t)
         self.curPulseIdx = self.curPulseIdx + 1;
         pulse = self.pulses(self.curPulseIdx, :);
-        cid = pulse{5};
+        cid = pulse{6};
 
         switch pulse{2}
           case TimeType.Dirty
