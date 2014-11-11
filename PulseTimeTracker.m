@@ -250,7 +250,7 @@ classdef PulseTimeTracker < handle
               error('Wrong pulse to finish.');
             end
             %% Finish up pulse
-            self.curValues(cid) = self.calcVal(old_pulse, pulse{1});
+            self.curValues(cid) = self.calcVal(prev_pulse, pulse{1});
             self.updateStart(cid);
             evt = self.clearEvent(evt, cid);
           otherwise

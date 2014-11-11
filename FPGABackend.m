@@ -203,7 +203,7 @@ classdef FPGABackend < PulseBackend
       if ~strncmp('FPGA1/', cid, 5)
         error('Unknown channel ID "%s"', cid);
       end
-      cid = cid(6:end);
+      cid = cid(7:end);
       [chn_type, chn_num, chn_param] = parseCId(self, cid);
       if chn_type == self.TTL_CHN
         if val
