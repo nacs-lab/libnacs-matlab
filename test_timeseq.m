@@ -11,24 +11,28 @@
 %% You should have received a copy of the GNU Lesser General Public
 %% License along with this library.
 
-function test_timeseq()
-  tseq = TimeSeq();
-  subseq1 = TimeSeq(tseq, 0);
-  subseq2 = TimeSeq(tseq, 2);
+classdef test_timeseq < TimeSeq
+  methods
+    function self = test_timeseq()
+      self = self@TimeSeq();
+      subseq1 = TimeSeq(self, 0);
+      subseq2 = TimeSeq(self, 2);
 
-  assert(tseq.globChannelAvailable('', 2) == 1);
-  assert(tseq.globChannelAvailable('', 1) == 1);
-  assert(tseq.globChannelAvailable('', 0) == 1);
+      assert(self.globChannelAvailable('', 2) == 1);
+      assert(self.globChannelAvailable('', 1) == 1);
+      assert(self.globChannelAvailable('', 0) == 1);
 
-  assert(subseq1.globChannelAvailable('', 2) == 1);
-  assert(subseq1.globChannelAvailable('', 1) == 1);
-  assert(subseq1.globChannelAvailable('', 0) == 1);
+      assert(subseq1.globChannelAvailable('', 2) == 1);
+      assert(subseq1.globChannelAvailable('', 1) == 1);
+      assert(subseq1.globChannelAvailable('', 0) == 1);
 
-  assert(subseq2.globChannelAvailable('', 2) == 1);
-  assert(subseq2.globChannelAvailable('', 1) == 1);
-  assert(subseq2.globChannelAvailable('', 0) == 1);
+      assert(subseq2.globChannelAvailable('', 2) == 1);
+      assert(subseq2.globChannelAvailable('', 1) == 1);
+      assert(subseq2.globChannelAvailable('', 0) == 1);
 
-  assert(isempty(tseq.getPulses('')));
-  assert(isempty(subseq1.getPulses('')));
-  assert(isempty(subseq2.getPulses('')));
+      assert(isempty(self.getPulses('')));
+      assert(isempty(subseq1.getPulses('')));
+      assert(isempty(subseq2.getPulses('')));
+    end
+  end
 end

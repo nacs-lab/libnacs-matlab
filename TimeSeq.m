@@ -52,17 +52,6 @@ classdef TimeSeq < handle
       end
     end
 
-    function avail = globChannelAvailable(self, cid, t, dt)
-      if nargin < 4 || dt < 0
-        dt = 0;
-      end
-      if self.hasParent()
-        avail = self.parent.globChannelAvailable(cid, t + self.tOffset, dt);
-      else
-        avail = self.channelAvailable(cid, t, dt);
-      end
-    end
-
     function log(self, s)
       self.logger.log(s);
     end
@@ -174,6 +163,17 @@ classdef TimeSeq < handle
   end
 
   methods(Access=protected)
+    function avail = globChannelAvailable(self, cid, t, dt)
+      if nargin < 4 || dt < 0
+        dt = 0;
+      end
+      if self.hasParent()
+        avail = self.parent.globChannelAvailable(cid, t + self.tOffset, dt);
+      else
+        avail = self.channelAvailable(cid, t, dt);
+      end
+    end
+
     function val = getDefault(self, cid)
       val = 0;
       return;
