@@ -16,53 +16,57 @@
 %% step2:     [2, 5] cid1
 %% step3:   [1, 3]   [6, 8] cid2
 
-function test_timestep()
-  tseq = TimeSeq();
-  TimeStep(tseq, 2, 3) ...
-          .addPulse('1', rampTo(10));
+classdef test_timestep < TimeSeq
+  methods
+    function self = test_timestep()
+      self = self@TimeSeq();
+      TimeStep(self, 2, 3) ...
+              .addPulse('1', rampTo(10));
 
-  TimeStep(tseq, 0, 2) ...
-          .addPulse('1', linearRamp(1, 2)) ...
-          .addPulse('3', linearRamp(0, 1));
+      TimeStep(self, 0, 2) ...
+              .addPulse('1', linearRamp(1, 2)) ...
+              .addPulse('3', linearRamp(0, 1));
 
-  TimeStep(tseq, 1, 2) ...
-          .addPulse('2', linearRamp(2, 3));
+      TimeStep(self, 1, 2) ...
+              .addPulse('2', linearRamp(2, 3));
 
-  TimeStep(tseq, 6, 2) ...
-          .addPulse('2', 4);
+      TimeStep(self, 6, 2) ...
+              .addPulse('2', 4);
 
-  pulses1 = tseq.getPulses('1');
-  pulses2 = tseq.getPulses('2');
-  pulses3 = tseq.getPulses('3');
+      pulses1 = self.getPulses('1');
+      pulses2 = self.getPulses('2');
+      pulses3 = self.getPulses('3');
 
-  assert(size(pulses1, 1) == 2);
-  assert(size(pulses2, 1) == 2);
-  assert(size(pulses3, 1) == 1);
+      assert(size(pulses1, 1) == 2);
+      assert(size(pulses2, 1) == 2);
+      assert(size(pulses3, 1) == 1);
 
-  assert(pulses1{1, 1} == 0);
-  assert(pulses1{1, 2} == 2);
-  assert(pulses1{1, 4} == 0);
-  assert(pulses1{1, 5} == 2);
+      assert(pulses1{1, 1} == 0);
+      assert(pulses1{1, 2} == 2);
+      assert(pulses1{1, 4} == 0);
+      assert(pulses1{1, 5} == 2);
 
-  assert(pulses1{2, 1} == 2);
-  assert(pulses1{2, 2} == 3);
-  assert(pulses1{2, 4} == 2);
-  assert(pulses1{2, 5} == 3);
-
-
-  assert(pulses2{1, 1} == 1);
-  assert(pulses2{1, 2} == 2);
-  assert(pulses2{1, 4} == 1);
-  assert(pulses2{1, 5} == 2);
-
-  assert(pulses2{2, 1} == 6);
-  assert(pulses2{2, 2} == 0);
-  assert(pulses2{2, 4} == 6);
-  assert(pulses2{2, 5} == 2);
+      assert(pulses1{2, 1} == 2);
+      assert(pulses1{2, 2} == 3);
+      assert(pulses1{2, 4} == 2);
+      assert(pulses1{2, 5} == 3);
 
 
-  assert(pulses3{1, 1} == 0);
-  assert(pulses3{1, 2} == 2);
-  assert(pulses3{1, 4} == 0);
-  assert(pulses3{1, 5} == 2);
+      assert(pulses2{1, 1} == 1);
+      assert(pulses2{1, 2} == 2);
+      assert(pulses2{1, 4} == 1);
+      assert(pulses2{1, 5} == 2);
+
+      assert(pulses2{2, 1} == 6);
+      assert(pulses2{2, 2} == 0);
+      assert(pulses2{2, 4} == 6);
+      assert(pulses2{2, 5} == 2);
+
+
+      assert(pulses3{1, 1} == 0);
+      assert(pulses3{1, 2} == 2);
+      assert(pulses3{1, 4} == 0);
+      assert(pulses3{1, 5} == 2);
+    end
+  end
 end

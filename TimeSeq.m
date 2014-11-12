@@ -60,19 +60,6 @@ classdef TimeSeq < handle
       self.logger.logf(varargin{:});
     end
 
-    function res = getPulses(self, cid)
-      %% Return a array of tuples (toffset, length, pulse_obj,
-      %%                           step_start, step_len, cid)
-      %% the pulse_obj should have a method calcValue that take 3 parameters:
-      %%     time_in_pulse, length, old_val_before_pulse
-      %% and should return the new value @time_in_pulse after the step_start.
-      %% The returned value should be sorted with toffset.
-      res = self.getPulsesRaw(cid);
-      if ~isempty(res)
-        res = sortrows(res, 1);
-      end
-    end
-
     function res = length(self)
       if self.len > 0
         res = self.len;
@@ -163,6 +150,19 @@ classdef TimeSeq < handle
   end
 
   methods(Access=protected)
+    function res = getPulses(self, cid)
+      %% Return a array of tuples (toffset, length, pulse_obj,
+      %%                           step_start, step_len, cid)
+      %% the pulse_obj should have a method calcValue that take 3 parameters:
+      %%     time_in_pulse, length, old_val_before_pulse
+      %% and should return the new value @time_in_pulse after the step_start.
+      %% The returned value should be sorted with toffset.
+      res = self.getPulsesRaw(cid);
+      if ~isempty(res)
+        res = sortrows(res, 1);
+      end
+    end
+
     function avail = globChannelAvailable(self, cid, t, dt)
       if nargin < 4 || dt < 0
         dt = 0;
