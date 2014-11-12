@@ -12,9 +12,13 @@
 %% License along with this library.
 
 classdef TimeSeq < handle
-  properties(Hidden, Access=protected)
+  properties
     config;
     logger;
+    chn_manager;
+  end
+
+  properties(Hidden, Access=protected)
     len = 0;
   end
 
@@ -29,15 +33,18 @@ classdef TimeSeq < handle
       if nargin < 1
         self.logger = NaCsLogger('seq');
         self.config = loadConfig();
+        self.chn_manager = ChannelManager();
       elseif nargin < 2
         self.logger = NaCsLogger(parent_or_name);
         self.config = loadConfig();
+        self.chn_manager = ChannelManager();
       else
         self.parent = parent_or_name;
         self.tOffset = toffset;
 
         self.logger = parent_or_name.logger;
         self.config = parent_or_name.config;
+        self.chn_manager = parent_or_name.chn_manager;
         parent_or_name.addSubSeq(self, toffset);
         if nargin >= 3
           self.len = len;
