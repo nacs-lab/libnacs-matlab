@@ -74,7 +74,7 @@ classdef FPGABackend < PulseBackend
       tracker = PulseTimeTracker(seq, cids);
 
       while true
-        min_delay = self.MIN_DELAY + t - (tracker.getTime() + start_t);
+        min_delay = self.MIN_DELAY + t - (tracker.curTime + start_t);
         [new_t, new_pulses] = tracker.nextEvent(min_delay, TrackMode.NoEarlier);
         if new_t < 0
           break;
@@ -88,20 +88,20 @@ classdef FPGABackend < PulseBackend
           if pulse{2} == TimeType.Dirty
             %% TODO? merge TTL update, use more precise values
             %% TODO? update finished pulse
-            self.appendPulse(cid, t, tracker.getValue(cid));
+            self.appendPulse(cid, t, tracker.curValues(cid));
             t = t + self.MIN_DELAY;
             updated_chn(cid) = 1;
           end
         end
 
         %% Update channels that are currently active.
-        cur_pulses = tracker.getCurPulses();
+        cur_pulses = tracker.curPulses;
         for key = cur_pulses.keys()
           key = key{:};
           if updated_chn.isKey(key)
             continue
           end
-          self.appendPulse(key, t, tracker.getValue(key));
+          self.appendPulse(key, t, tracker.curValues(key));
           t = t + self.MIN_DELAY;
         end
       end

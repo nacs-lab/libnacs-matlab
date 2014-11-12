@@ -160,7 +160,7 @@ classdef TimeSeq < handle
 
         for j = 1:nstep
           [t, evt] = tracker.nextEvent(dt, TrackMode.Strict);
-          vals(i, j) = tracker.getValue(chn);
+          vals(i, j) = tracker.curValues(chn);
         end
       end
     end

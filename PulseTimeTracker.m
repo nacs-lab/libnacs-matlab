@@ -57,30 +57,6 @@ classdef PulseTimeTracker < handle
       end
     end
 
-    function t = getTime(self)
-      t = self.curTime;
-    end
-
-    function v = getValue(self, cid)
-      v = self.curValues(cid);
-    end
-
-    function vs = getValues(self)
-      vs = containers.Map();
-      for key = self.curValues.keys()
-        key = key{:};
-        vs(key) = self.curValues(key);
-      end
-    end
-
-    function vs = getStartValues(self)
-      vs = containers.Map();
-      for key = self.startValues.keys()
-        key = key{:};
-        vs(key) = self.startValues(key);
-      end
-    end
-
     function [t, evt] = nextEvent(self, dt, mode)
       if nargin < 3
         mode = TrackMode.NoLater;
@@ -92,14 +68,6 @@ classdef PulseTimeTracker < handle
         [t, evt] = self.initEvent();
       else
         [t, evt] = self.nextEventReal(dt, mode);
-      end
-    end
-
-    function res = getCurPulses(self)
-      res = containers.Map();
-      for key = self.curPulses.keys()
-        key = key{:};
-        res(key) = self.curPulses(key);
       end
     end
   end
