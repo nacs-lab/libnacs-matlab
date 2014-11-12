@@ -18,6 +18,7 @@ classdef FPGABackend < PulseBackend
     cmd = '';
     config;
     poster = [];
+    cidCache;
   end
 
   properties(Constant, Hidden, Access=private)
@@ -40,6 +41,7 @@ classdef FPGABackend < PulseBackend
       self = self@PulseBackend(varargin{:});
       self.config = loadConfig();
       self.url = self.config.fpgaUrls('FPGA1');
+      self.cidCache = containers.Map();
     end
 
     function initDev(self, did)
@@ -136,6 +138,16 @@ classdef FPGABackend < PulseBackend
 
   methods(Access=private)
     function [chn_type, chn_num, chn_param] = parseCId(self, cid)
+      try
+        res = self.cidCache(cid);
+        [chn_type, chn_num, chn_param] = res{:};
+      catch
+        [chn_type, chn_num, chn_param] = self.parseCIdReal(cid);
+        self.cidCache(cid) = {chn_type, chn_num, chn_param};
+      end
+    end
+
+    function [chn_type, chn_num, chn_param] = parseCIdReal(self, cid)
       cpath = strsplit(cid, '/');
       if strncmp(cpath{1}, 'TTL', 3)
         chn_type = self.TTL_CHN;
