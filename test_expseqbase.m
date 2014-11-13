@@ -42,9 +42,9 @@ classdef test_expseqbase < ExpSeqBase
       self.addStep(1, @addstep_tester);
       self.addStep(1, 'addstep_tester', 2);
 
-      pulses1 = self.getPulses('1');
-      pulses2 = self.getPulses('2');
-      pulses3 = self.getPulses('3');
+      pulses1 = self.getPulses(self.translateChannel('1'));
+      pulses2 = self.getPulses(self.translateChannel('2'));
+      pulses3 = self.getPulses(self.translateChannel('3'));
 
       assert(size(pulses1, 1) == 12);
       assert(size(pulses2, 1) == 1);
@@ -68,7 +68,7 @@ classdef test_expseqbase < ExpSeqBase
         assert(pulses1{i, 2} == pulses1_expected{i}{2});
         assert(pulses1{i, 4} == pulses1_expected{i}{3});
         assert(pulses1{i, 5} == pulses1_expected{i}{4});
-        assert(pulses1{i, 6} == '1');
+        assert(pulses1{i, 6} == self.translateChannel('1'));
       end
 
       pulses2_expected = {{1, 4, 1, 4}};
@@ -78,7 +78,7 @@ classdef test_expseqbase < ExpSeqBase
         assert(pulses2{i, 2} == pulses2_expected{i}{2});
         assert(pulses2{i, 4} == pulses2_expected{i}{3});
         assert(pulses2{i, 5} == pulses2_expected{i}{4});
-        assert(pulses2{i, 6} == '2');
+        assert(pulses2{i, 6} == self.translateChannel('2'));
       end
 
       pulses3_expected = {{0, 1, 0, 1}, ...
@@ -89,7 +89,7 @@ classdef test_expseqbase < ExpSeqBase
         assert(pulses3{i, 2} == pulses3_expected{i}{2});
         assert(pulses3{i, 4} == pulses3_expected{i}{3});
         assert(pulses3{i, 5} == pulses3_expected{i}{4});
-        assert(pulses3{i, 6} == '3');
+        assert(pulses3{i, 6} == self.translateChannel('3'));
       end
     end
   end
