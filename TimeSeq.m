@@ -79,24 +79,24 @@ classdef TimeSeq < handle
     end
 
     function vals = getDefaults(self, cids)
-      if ischar(cids)
+      %% @cid: a column array of channel id numbers
+      if isnumeric(cids)
         vals = self.getDefault(cids);
       else
         nchn = size(cids, 1);
-        vals = zeros(1, nchn);
+        vals = zeros(nchn, 1);
         for i = 1:nchn
-          vals(i) = self.getDefault(cids{i});
+          vals(i) = self.getDefault(cids(i));
         end
       end
     end
 
     function res = getPulseTimes(self, cids)
-      if ischar(cids)
-        cids = {cids};
-      end
+      %% TODOPULSE use struct
+      nchn = size(cids, 1);
       res = {};
-      for cid = cids
-        cid = cid{:};
+      for j = 1:nchn
+        cid = cids(j);
         pulses = self.getPulses(cid);
         for i = 1:size(pulses, 1)
           pulse = pulses(i, :);
@@ -126,6 +126,7 @@ classdef TimeSeq < handle
     end
 
     function vals = getValues(self, dt, varargin)
+      %% TODOPULSE refactor
       total_t = self.length();
       nstep = floor(total_t / dt) + 1;
       nchn = nargin - 2;
@@ -174,7 +175,7 @@ classdef TimeSeq < handle
       end
     end
 
-    function val = getDefault(self, cid)
+    function val = getDefault(self, ~)
       val = 0;
       return;
     end
@@ -227,6 +228,7 @@ classdef TimeSeq < handle
     end
 
     function res = getPulsesRaw(self, cid)
+      %% TODOPULSE use struct
       res = {};
       for seq_t = self.subSeqs
         seq_toffset = seq_t{1};
@@ -247,13 +249,13 @@ classdef TimeSeq < handle
       end
     end
 
-    function res = checkChannel(self, cid)
+    function res = translateChannel(self, cid)
       if self.hasParent()
-        res = self.parent.checkChannel(cid);
+        res = self.parent.translateChannel(cid);
       else
         %% Mainly for testing.
         %% The top level time sequence should implement proper check.
-        res = true;
+        res = self.chn_manager.getId(cid);
       end
     end
   end

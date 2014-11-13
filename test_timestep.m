@@ -33,9 +33,9 @@ classdef test_timestep < TimeSeq
       TimeStep(self, 6, 2) ...
               .addPulse('2', 4);
 
-      pulses1 = self.getPulses('1');
-      pulses2 = self.getPulses('2');
-      pulses3 = self.getPulses('3');
+      pulses1 = self.getPulses(self.translateChannel('1'));
+      pulses2 = self.getPulses(self.translateChannel('2'));
+      pulses3 = self.getPulses(self.translateChannel('3'));
 
       assert(size(pulses1, 1) == 2);
       assert(size(pulses2, 1) == 2);

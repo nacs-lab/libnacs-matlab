@@ -12,7 +12,7 @@
 %% License along with this library.
 
 classdef ExpSeqBase < TimeSeq
-  properties(Hidden, Access=private)
+  properties(Hidden, Access=protected)
     curTime = 0;
   end
 
@@ -82,10 +82,4 @@ classdef ExpSeqBase < TimeSeq
       self.curTime = self.curTime + step.curTime;
     end
   end
-
-  %% methods(Access=protected)
-  %%   function time = getCurTime(self)
-  %%     time = self.curTime;
-  %%   end
-  %% end
 end

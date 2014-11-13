@@ -13,7 +13,7 @@
 
 classdef ChannelManager < handle
   properties
-    channels = [];
+    channels = {};
   end
   properties(Access=private)
     cid_map;
@@ -21,15 +21,15 @@ classdef ChannelManager < handle
 
   methods
     function self = ChannelManager()
-      cid_map = containers.Map();
+      self.cid_map = containers.Map();
     end
 
     function id = getId(self, name)
       try
         id = self.cid_map(name);
       catch
-        id = size(self.channels, 1) + 1;
-        self.channels(id) = name;
+        id = size(self.channels, 2) + 1;
+        self.channels{id} = name;
         self.cid_map(name) = id;
       end
     end

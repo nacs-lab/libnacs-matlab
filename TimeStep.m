@@ -19,17 +19,16 @@ classdef TimeStep < TimeSeq
   methods
     function self = TimeStep(varargin)
       self = self@TimeSeq(varargin{:});
-      self.pulses = containers.Map();
+      self.pulses = {};
       if self.len <= 0
         error('Time steps should have a fixed and positive length');
       end
     end
 
-    function ret = addPulse(self, cid, pulse)
+    function ret = addPulse(self, name, pulse)
       ret = self;
-      if ~self.checkChannel(cid)
-        error('Invalid Channel ID.');
-      elseif ~self.globChannelAvailable(cid, 0, self.len)
+      cid = self.translateChannel(name);
+      if ~self.globChannelAvailable(cid, 0, self.len)
         error('Overlaping pulses.');
       elseif isnumeric(pulse)
         if ~isscalar(pulse)
@@ -40,13 +39,13 @@ classdef TimeStep < TimeSeq
         %% Treat as function
         pulse = FuncPulse(pulse);
       end
-      if self.pulses.isKey(cid)
-        pulse_list = self.pulses(cid);
+      if size(self.pulses, 2) < cid
+        pulse_list = {};
       else
-        pulse_list = [];
+        pulse_list = self.pulses{cid};
       end
-      pulse_list = [pulse_list, pulse];
-      self.pulses(cid) = pulse_list;
+      pulse_list{end + 1} = pulse;
+      self.pulses{cid} = pulse_list;
     end
   end
 
@@ -59,8 +58,10 @@ classdef TimeStep < TimeSeq
       if t >= len || t + dt <= 0
         avail = true;
         return;
-      elseif self.pulses.isKey(cid)
-        for pulse = self.pulses(cid)
+      elseif size(self.pulses, 2) >= cid
+        pulses = self.pulses{cid};
+        for i = 1:size(pulses, 2)
+          pulse = pulses{i};
           if ~pulse.available(t, dt, len)
             avail = false;
             return;
@@ -72,9 +73,11 @@ classdef TimeStep < TimeSeq
 
     function res = getPulsesRaw(self, cid)
       res = getPulsesRaw@TimeSeq(self, cid);
-      if self.pulses.isKey(cid)
+      if size(self.pulses, 2) >= cid
         step_len = self.len;
-        for pulse = self.pulses(cid)
+        pulses = self.pulses{cid};
+        for i = 1:size(pulses, 2)
+          pulse = pulses{i};
           [tstart, tlen] = pulse.timeSpan(step_len);
           res = [res; {tstart, tlen, pulse, 0, step_len, cid}];
         end
