@@ -23,13 +23,14 @@ classdef TimeSeq < handle
   end
 
   properties(Hidden, Access=private)
-    subSeqs = [];
+    subSeqs;
     tOffset;
     parent = 0;
   end
 
   methods
     function self = TimeSeq(parent_or_name, toffset, len)
+      self.subSeqs = {};
       if nargin < 1
         self.logger = NaCsLogger('seq');
         self.config = loadConfig();
@@ -66,11 +67,10 @@ classdef TimeSeq < handle
         return;
       else
         res = 0;
-        for seq_t = self.subSeqs
-          toffset = seq_t{1};
-          sub_seq = seq_t{2};
-
-          sub_end = sub_seq.length() + toffset;
+        nsub = size(self.subSeqs, 2);
+        for i = 1:nsub
+          seq_t = self.subSeqs{i};
+          sub_end = seq_t.seq.length() + seq_t.offset;
           if sub_end > res
             res = sub_end;
           end
@@ -204,7 +204,7 @@ classdef TimeSeq < handle
       if sub_seq.hasParent() && sub_seq.getParent() ~= self
         error('Reparenting time sequence is not allowed.');
       end
-      self.subSeqs = [self.subSeqs, {toffset; sub_seq}];
+      self.subSeqs{end + 1} = struct('offset', toffset, 'seq', sub_seq);
     end
 
     function avail = channelAvailable(self, cid, t, dt)
@@ -216,11 +216,11 @@ classdef TimeSeq < handle
       if len > 0 && t >= len
         return;
       end
-      for seq_t = self.subSeqs
-        toffset = seq_t{1};
-        sub_seq = seq_t{2};
-        sub_t = t - toffset;
-        if sub_t + dt > 0 && ~sub_seq.channelAvailable(cid, sub_t, dt)
+      nsub = size(self.subSeqs, 2);
+      for i = 1:nsub
+        seq_t = self.subSeqs{i};
+        sub_t = t - seq_t.offset;
+        if sub_t + dt > 0 && ~seq_t.seq.channelAvailable(cid, sub_t, dt)
           avail = false;
           return;
         end
@@ -230,10 +230,10 @@ classdef TimeSeq < handle
     function res = getPulsesRaw(self, cid)
       %% TODOPULSE use struct
       res = {};
-      for seq_t = self.subSeqs
-        seq_toffset = seq_t{1};
-        sub_seq = seq_t{2};
-        sub_pulses = sub_seq.getPulsesRaw(cid);
+      nsub = size(self.subSeqs, 2);
+      for i = 1:nsub
+        seq_t = self.subSeqs{i};
+        sub_pulses = seq_t.seq.getPulsesRaw(cid);
 
         for i = 1:size(sub_pulses, 1)
           sub_tuple = sub_pulses(i, :);
@@ -243,8 +243,8 @@ classdef TimeSeq < handle
           step_toffset = sub_tuple{4};
           step_len = sub_tuple{5};
 
-          res = [res; {pulse_toffset + seq_toffset, pulse_len, pulse_func, ...
-                       step_toffset + seq_toffset, step_len, cid}];
+          res = [res; {pulse_toffset + seq_t.offset, pulse_len, pulse_func, ...
+                       step_toffset + seq_t.offset, step_len, cid}];
         end
       end
     end
