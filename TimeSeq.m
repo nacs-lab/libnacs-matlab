@@ -148,6 +148,16 @@ classdef TimeSeq < handle
         end
       end
     end
+
+    function res = translateChannel(self, cid)
+      if self.hasParent()
+        res = self.parent.translateChannel(cid);
+      else
+        %% Mainly for testing.
+        %% The top level time sequence should implement proper check.
+        res = self.chn_manager.getId(cid);
+      end
+    end
   end
 
   methods(Access=protected)
@@ -246,16 +256,6 @@ classdef TimeSeq < handle
           res = [res; {pulse_toffset + seq_t.offset, pulse_len, pulse_func, ...
                        step_toffset + seq_t.offset, step_len, cid}];
         end
-      end
-    end
-
-    function res = translateChannel(self, cid)
-      if self.hasParent()
-        res = self.parent.translateChannel(cid);
-      else
-        %% Mainly for testing.
-        %% The top level time sequence should implement proper check.
-        res = self.chn_manager.getId(cid);
       end
     end
   end

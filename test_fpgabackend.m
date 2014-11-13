@@ -36,7 +36,8 @@ function test_fpgabackend()
      .addPulse('FPGA1/DDS3/FREQ', rampTo(10));
 
   backend.enableClockOut(100);
-  backend.generate(seq, {'FPGA1/DDS1/FREQ', 'FPGA1/DDS2/FREQ', ...
-                         'FPGA1/DDS3/FREQ'});
+  backend.generate(seq, [seq.translateChannel('FPGA1/DDS1/FREQ'), ...
+                         seq.translateChannel('FPGA1/DDS2/FREQ'), ...
+                         seq.translateChannel('FPGA1/DDS3/FREQ')]);
   backend.getCmd()
 end
