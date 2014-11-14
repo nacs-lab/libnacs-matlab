@@ -54,7 +54,18 @@ classdef FPGABackend < PulseBackend
     end
 
     function initChannel(self, cid)
-      self.parseCId(cid);
+      if size(self.type_cache, 2) >= cid && self.type_cache(cid) > 0
+        return;
+      end
+      name = self.seq.channelName(cid);
+      if ~strncmp('FPGA1/', name, 5)
+        error('Unknown channel name "%s"', name);
+      end
+      name = name(7:end);
+      [chn_type, chn_num, chn_param] = self.parseCIdReal(name);
+      self.type_cache(cid) = chn_type;
+      self.num_cache(cid) = chn_num;
+      self.param_cache(cid) = chn_param;
     end
 
     function enableClockOut(self, div)
@@ -144,21 +155,6 @@ classdef FPGABackend < PulseBackend
 
   methods(Access=private)
     function [chn_type, chn_num, chn_param] = parseCId(self, cid)
-      if size(self.type_cache, 2) >= cid && self.type_cache(cid) > 0
-        chn_type = self.type_cache(cid);
-        chn_num = self.num_cache(cid);
-        chn_param = self.param_cache(cid);
-        return;
-      end
-      name = self.seq.channelName(cid);
-      if ~strncmp('FPGA1/', name, 5)
-        error('Unknown channel name "%s"', name);
-      end
-      name = name(7:end);
-      [chn_type, chn_num, chn_param] = self.parseCIdReal(name);
-      self.type_cache(cid) = chn_type;
-      self.num_cache(cid) = chn_num;
-      self.param_cache(cid) = chn_param;
     end
 
     function [chn_type, chn_num, chn_param] = parseCIdReal(self, cid)
@@ -221,7 +217,9 @@ classdef FPGABackend < PulseBackend
     end
 
     function appendPulse(self, cid, t, val)
-      [chn_type, chn_num, chn_param] = self.parseCId(cid);
+      chn_type = self.type_cache(cid);
+      chn_num = self.num_cache(cid);
+      chn_param = self.param_cache(cid);
       if chn_type == self.TTL_CHN
         if val
           val = 1;
