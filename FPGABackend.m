@@ -15,10 +15,11 @@ classdef FPGABackend < PulseBackend
   properties(Hidden, Access=private)
     url = '';
     clock_div = 0;
-    cmd = '';
     config;
     poster = [];
-    cidCache;
+    cid_cache;
+    commands;
+    cmd_str;
   end
 
   properties(Constant, Hidden, Access=private)
@@ -41,7 +42,8 @@ classdef FPGABackend < PulseBackend
       self = self@PulseBackend(varargin{:});
       self.config = loadConfig();
       self.url = self.config.fpgaUrls('FPGA1');
-      self.cidCache = containers.Map();
+      self.cid_cache = containers.Map();
+      self.commands = {};
     end
 
     function initDev(self, did)
@@ -64,7 +66,8 @@ classdef FPGABackend < PulseBackend
 
     function generate(self, seq, cids)
       t = self.INIT_DELAY;
-      self.cmd = '';
+      self.cmd_str = '';
+      self.commands = {};
       self.appendCmd('TTL(all)=%x', t, self.getTTLDefault(seq));
       if self.clock_div > 0
         t = t + self.CLOCK_DELAY;
@@ -113,13 +116,15 @@ classdef FPGABackend < PulseBackend
         self.appendCmd('CLOCK_OUT(off)', t);
       end
 
+      self.cmd_str = [self.commands{:}];
+
       seq.log('#### Start Generated Sequence File ####');
-      seq.log(self.cmd);
+      seq.log(self.cmd_str);
       seq.log('#### End Sequence File ####');
     end
 
     function res = getCmd(self)
-      res = self.cmd;
+      res = self.cmd_str;
     end
 
     function run(self, rep)
@@ -127,7 +132,7 @@ classdef FPGABackend < PulseBackend
       self.poster.post({'command', 'runseq', ...
                         'debugPulses', 'off',
                         'reps', '1',
-                        'seqtext', self.cmd});
+                        'seqtext', self.cmd_str});
     end
 
     function wait(self, rep)
@@ -139,11 +144,11 @@ classdef FPGABackend < PulseBackend
   methods(Access=private)
     function [chn_type, chn_num, chn_param] = parseCId(self, cid)
       try
-        res = self.cidCache(cid);
+        res = self.cid_cache(cid);
         [chn_type, chn_num, chn_param] = res{:};
       catch
         [chn_type, chn_num, chn_param] = self.parseCIdReal(cid);
-        self.cidCache(cid) = {chn_type, chn_num, chn_param};
+        self.cid_cache(cid) = {chn_type, chn_num, chn_param};
       end
     end
 
@@ -207,8 +212,8 @@ classdef FPGABackend < PulseBackend
     end
 
     function appendCmd(self, fmt, t, varargin)
-      self.cmd = [self.cmd, sprintf(['t=%.2f,', fmt, '\n'], ...
-                                    t * 1e6, varargin{:})];
+      self.commands(end) = sprintf(['t=%.2f,', fmt, '\n'], ...
+                                   t * 1e6, varargin{:});
     end
 
     function appendPulse(self, cid, t, val)
@@ -232,7 +237,7 @@ classdef FPGABackend < PulseBackend
         else
           error('Unknown DDS parameter.');
         end
-        self.appendCmd('%s(%d) = %f', t, cmd_name, chn_num, val);
+        self.appendCmd([cmd_name, '(%d) = %f'], t, chn_num, val);
       else
         error('Unknown channel type.');
       end
