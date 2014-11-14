@@ -12,16 +12,6 @@
 %% License along with this library.
 
 function test_fpgabackend()
-  backend = FPGABackend();
-  backend.initDev('FPGA1');
-  backend.initChannel('FPGA1', 'TTL1');
-  backend.initChannel('FPGA1', 'TTL2');
-  backend.initChannel('FPGA1', 'TTL3');
-  backend.initChannel('FPGA1', 'TTL5');
-
-  backend.initChannel('FPGA1', 'DDS5/FREQ');
-  backend.initChannel('FPGA1', 'DDS5/AMP');
-
   seq = ExpSeqBase();
   seq.addStep(1e-3) ...
      .addPulse('FPGA1/DDS1/FREQ', linearRamp(10, 1)) ...
@@ -35,9 +25,19 @@ function test_fpgabackend()
      .addPulse('FPGA1/DDS1/FREQ', rampTo(0)) ...
      .addPulse('FPGA1/DDS3/FREQ', rampTo(10));
 
+  backend = FPGABackend(seq);
+  backend.initDev('FPGA1');
+  backend.initChannel(seq.translateChannel('FPGA1/DDS1/FREQ'));
+  backend.initChannel(seq.translateChannel('FPGA1/DDS2/FREQ'));
+  backend.initChannel(seq.translateChannel('FPGA1/DDS3/FREQ'));
+
+  backend.initChannel(seq.translateChannel('FPGA1/TTL2'));
+  backend.initChannel(seq.translateChannel('FPGA1/TTL3'));
+  backend.initChannel(seq.translateChannel('FPGA1/TTL5'));
+
   backend.enableClockOut(100);
-  backend.generate(seq, [seq.translateChannel('FPGA1/DDS1/FREQ'), ...
-                         seq.translateChannel('FPGA1/DDS2/FREQ'), ...
-                         seq.translateChannel('FPGA1/DDS3/FREQ')]);
+  backend.generate([seq.translateChannel('FPGA1/DDS1/FREQ'), ...
+                    seq.translateChannel('FPGA1/DDS2/FREQ'), ...
+                    seq.translateChannel('FPGA1/DDS3/FREQ')]);
   backend.getCmd()
 end

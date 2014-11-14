@@ -242,12 +242,20 @@ classdef TimeSeq < handle
       end
     end
 
-    function res = translateChannel(self, cid)
+    function name = channelName(self, cid)
       if self.hasParent()
-        res = self.parent.translateChannel(cid);
+        name = self.parent.channelName(cid);
+      else
+        name = self.chn_manager.channels{cid};
+      end
+    end
+
+    function cid = translateChannel(self, name)
+      if self.hasParent()
+        cid = self.parent.translateChannel(name);
       else
         %% The top level time sequence should also implement proper check.
-        res = self.chn_manager.getId(cid);
+        cid = self.chn_manager.getId(name);
       end
     end
   end

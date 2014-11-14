@@ -143,13 +143,17 @@ classdef FPGABackend < PulseBackend
 
   methods(Access=private)
     function [chn_type, chn_num, chn_param] = parseCId(self, cid)
-      if size(type_cache, 2) < cid || type_cache(cid) > 0
+      if size(self.type_cache, 2) >= cid && self.type_cache(cid) > 0
         chn_type = self.type_cache(cid);
         chn_num = self.num_cache(cid);
         chn_param = self.param_cache(cid);
         return;
       end
-      name = self.seq.translateChannel(cid);
+      name = self.seq.channelName(cid);
+      if ~strncmp('FPGA1/', name, 5)
+        error('Unknown channel name "%s"', name);
+      end
+      name = name(7:end);
       [chn_type, chn_num, chn_param] = self.parseCIdReal(name);
       self.type_cache(cid) = chn_type;
       self.num_cache(cid) = chn_num;
@@ -216,16 +220,12 @@ classdef FPGABackend < PulseBackend
     end
 
     function appendCmd(self, fmt, t, varargin)
-      self.commands(end) = sprintf(['t=%.2f,', fmt, '\n'], ...
-                                   t * 1e6, varargin{:});
+      self.commands{end + 1} = sprintf(['t=%.2f,', fmt, '\n'], ...
+                                       t * 1e6, varargin{:});
     end
 
     function appendPulse(self, cid, t, val)
-      if ~strncmp('FPGA1/', cid, 5)
-        error('Unknown channel ID "%s"', cid);
-      end
-      cid = cid(7:end);
-      [chn_type, chn_num, chn_param] = parseCId(self, cid);
+      [chn_type, chn_num, chn_param] = self.parseCId(cid);
       if chn_type == self.TTL_CHN
         if val
           val = 1;
