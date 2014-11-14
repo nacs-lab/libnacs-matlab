@@ -99,8 +99,7 @@ classdef FPGABackend < PulseBackend
 
         %% Update channels that are currently active.
         cur_pulses = tracker.curPulses;
-        for key = cur_pulses.keys()
-          key = key{:};
+        for key = 1:tracker.nchn
           if updated_chn.isKey(key)
             continue
           end
