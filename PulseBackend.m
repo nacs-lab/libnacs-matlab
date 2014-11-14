@@ -12,14 +12,22 @@
 %% License along with this library.
 
 classdef(Abstract) PulseBackend < handle
+  properties(Access=protected)
+    seq;
+  end
+
   methods(Abstract=true)
     initDev(self, did); % Check and add device
     initChannel(self, did, cid); % Check and add channel
-    generate(self, seq, cids); % Generate sequence.
+    generate(self, cids); % Generate sequence.
     run(self, rep); % Start sequence.
   end
 
   methods
+    function self = PulseBackend(seq)
+      self.seq = seq;
+    end
+
     function val = getPriority(self)
       %% There's probably a better way to let the backend specify the necessary
       %% dependencies for running each functions. A simple priority is good
@@ -27,7 +35,7 @@ classdef(Abstract) PulseBackend < handle
       val = 0;
     end
 
-    function prepare(self, seq, cids)
+    function prepare(self, cids)
       %% Prepare channels, connect clock etc.
     end
 
