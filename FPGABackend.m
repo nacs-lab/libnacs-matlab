@@ -222,12 +222,12 @@ classdef FPGABackend < PulseBackend
       chn_param = self.param_cache(cid);
       if chn_type == self.TTL_CHN
         if val
-          val = 1;
+          self.commands{end + 1} = sprintf('t=%.2f,TTL(%d) = 1\n', ...
+                                           t * 1e6, chn_num);
         else
-          val = 0;
+          self.commands{end + 1} = sprintf('t=%.2f,TTL(%d) = 0\n', ...
+                                           t * 1e6, chn_num);
         end
-        self.commands{end + 1} = sprintf('t=%.2f,TTL(%d) = %d\n', ...
-                                         t * 1e6, chn_num, val);
       elseif chn_type == self.DDS_CHN
         if chn_param == self.SET_FREQ
           self.commands{end + 1} = sprintf('t=%.2f,freq(%d) = %f\n', ...
