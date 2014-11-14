@@ -24,6 +24,14 @@ classdef ChannelManager < handle
       self.cid_map = containers.Map();
     end
 
+    function id = findId(self, name)
+      try
+        id = self.cid_map(name);
+      catch
+        id = 0;
+      end
+    end
+
     function id = getId(self, name)
       try
         id = self.cid_map(name);

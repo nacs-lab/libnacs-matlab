@@ -250,6 +250,14 @@ classdef TimeSeq < handle
       end
     end
 
+    function cid = findChannelId(self, name)
+      if self.hasParent()
+        cid = self.parent.findChannelId(name);
+      else
+        cid = self.chn_manager.findId(name);
+      end
+    end
+
     function cid = translateChannel(self, name)
       if self.hasParent()
         cid = self.parent.translateChannel(name);
