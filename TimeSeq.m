@@ -157,7 +157,7 @@ classdef TimeSeq < handle
           %% Index before next time
           next_vidx = ceil(pulse{1} / dt);
           if next_vidx >= vidx
-            vals(i, vidx:next_vidx) = cur_value;
+            vals(i, vidx:next_vidx) = cur_value * scale;
           end
           next_time = next_vidx * dt;
           vidx = next_vidx + 1;
@@ -232,13 +232,13 @@ classdef TimeSeq < handle
           idxs = vidx:last_vidx;
           pulse_obj = pulse{3};
           vals(i, idxs) = pulse_obj.calcValue((idxs - 1) * dt - pulse{4}, ...
-                                              pulse{5}, cur_value);
+                                              pulse{5}, cur_value) * scale;
           cur_value = pulse_obj.calcValue(pulse_end{1} - pulse{4}, ...
                                           pulse{5}, cur_value);
           pidx = pidx + 1;
           vidx = last_vidx + 1;
         end
-        vals(i, vidx:end) = cur_value;
+        vals(i, vidx:end) = cur_value * scale;
       end
     end
 
