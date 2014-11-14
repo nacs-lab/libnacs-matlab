@@ -246,8 +246,7 @@ classdef TimeSeq < handle
       if self.hasParent()
         res = self.parent.translateChannel(cid);
       else
-        %% Mainly for testing.
-        %% The top level time sequence should implement proper check.
+        %% The top level time sequence should also implement proper check.
         res = self.chn_manager.getId(cid);
       end
     end

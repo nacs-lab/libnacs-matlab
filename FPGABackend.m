@@ -17,9 +17,11 @@ classdef FPGABackend < PulseBackend
     clock_div = 0;
     config;
     poster = [];
-    cid_cache;
+    type_cache = [];
+    num_cache = [];
+    param_cache = [];
     commands;
-    cmd_str;
+    cmd_str = '';
   end
 
   properties(Constant, Hidden, Access=private)
@@ -42,7 +44,6 @@ classdef FPGABackend < PulseBackend
       self = self@PulseBackend(varargin{:});
       self.config = loadConfig();
       self.url = self.config.fpgaUrls('FPGA1');
-      self.cid_cache = containers.Map();
       self.commands = {};
     end
 
@@ -52,8 +53,7 @@ classdef FPGABackend < PulseBackend
       end
     end
 
-    function initChannel(self, did, cid)
-      self.initDev(did);
+    function initChannel(self, cid)
       self.parseCId(cid);
     end
 
@@ -64,17 +64,17 @@ classdef FPGABackend < PulseBackend
       self.clock_div = div;
     end
 
-    function generate(self, seq, cids)
+    function generate(self, cids)
       t = self.INIT_DELAY;
       self.cmd_str = '';
       self.commands = {};
-      self.appendCmd('TTL(all)=%x', t, self.getTTLDefault(seq));
+      self.appendCmd('TTL(all)=%x', t, self.getTTLDefault());
       if self.clock_div > 0
         t = t + self.CLOCK_DELAY;
         self.appendCmd('CLOCK_OUT(%d)', t, self.clock_div);
       end
       start_t = t + self.START_DELAY;
-      tracker = PulseTimeTracker(seq, cids);
+      tracker = PulseTimeTracker(self.seq, cids);
 
       while true
         min_delay = self.MIN_DELAY + t - (tracker.curTime + start_t);
@@ -118,9 +118,9 @@ classdef FPGABackend < PulseBackend
 
       self.cmd_str = [self.commands{:}];
 
-      seq.log('#### Start Generated Sequence File ####');
-      seq.log(self.cmd_str);
-      seq.log('#### End Sequence File ####');
+      self.seq.log('#### Start Generated Sequence File ####');
+      self.seq.log(self.cmd_str);
+      self.seq.log('#### End Sequence File ####');
     end
 
     function res = getCmd(self)
@@ -143,13 +143,17 @@ classdef FPGABackend < PulseBackend
 
   methods(Access=private)
     function [chn_type, chn_num, chn_param] = parseCId(self, cid)
-      try
-        res = self.cid_cache(cid);
-        [chn_type, chn_num, chn_param] = res{:};
-      catch
-        [chn_type, chn_num, chn_param] = self.parseCIdReal(cid);
-        self.cid_cache(cid) = {chn_type, chn_num, chn_param};
+      if size(type_cache, 2) < cid || type_cache(cid) > 0
+        chn_type = self.type_cache(cid);
+        chn_num = self.num_cache(cid);
+        chn_param = self.param_cache(cid);
+        return;
       end
+      name = self.seq.translateChannel(cid);
+      [chn_type, chn_num, chn_param] = self.parseCIdReal(name);
+      self.type_cache(cid) = chn_type;
+      self.num_cache(cid) = chn_num;
+      self.param_cache(cid) = chn_param;
     end
 
     function [chn_type, chn_num, chn_param] = parseCIdReal(self, cid)
@@ -190,24 +194,24 @@ classdef FPGABackend < PulseBackend
           error('Invalid DDS parameter name "%s".', cpath{2});
         end
       else
-          error('Unknown channel type "%s"', cpath{1});
+        error('Unknown channel type "%s"', cpath{1});
       end
     end
 
-    function val = singleTTLDefault(self, seq, chn)
+    function val = singleTTLDefault(self, chn)
       val = uint64(0);
       try
-        if seq.getDefaults(sprintf('FPGA1/TTL%d', chn))
+        if self.seq.getDefaults(sprintf('FPGA1/TTL%d', chn))
           val = uint64(1);
         end
       catch
       end
     end
 
-    function val = getTTLDefault(self, seq)
+    function val = getTTLDefault(self)
       val = 0;
       for i = 0:31
-        val = val | bitshift(self.singleTTLDefault(seq, i), i);
+        val = val | bitshift(self.singleTTLDefault(i), i);
       end
     end
 
