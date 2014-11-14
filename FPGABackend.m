@@ -79,11 +79,11 @@ classdef FPGABackend < PulseBackend
       t = self.INIT_DELAY;
       self.cmd_str = '';
       self.commands = {};
-      self.commands{end + 1} = sprintf(['t=%.2f,TTL(all)=%x\n'], ...
+      self.commands{end + 1} = sprintf('t=%.2f,TTL(all)=%x\n', ...
                                        t * 1e6, self.getTTLDefault());
       if self.clock_div > 0
         t = t + self.CLOCK_DELAY;
-        self.commands{end + 1} = sprintf(['t=%.2f,CLOCK_OUT(%d)\n'], ...
+        self.commands{end + 1} = sprintf('t=%.2f,CLOCK_OUT(%d)\n', ...
                                          t * 1e6, self.clock_div);
       end
       start_t = t + self.START_DELAY;
@@ -123,9 +123,9 @@ classdef FPGABackend < PulseBackend
 
       if self.clock_div > 0
         t = t + self.MIN_DELAY;
-        self.commands{end + 1} = sprintf(['t=%.2f,CLOCK_OUT(100)\n'], t * 1e6);
+        self.commands{end + 1} = sprintf('t=%.2f,CLOCK_OUT(100)\n', t * 1e6);
         t = t + self.FIN_CLOCK_DELAY;
-        self.commands{end + 1} = sprintf(['t=%.2f,CLOCK_OUT(off)\n'], t * 1e6);
+        self.commands{end + 1} = sprintf('t=%.2f,CLOCK_OUT(off)\n', t * 1e6);
       end
 
       self.cmd_str = [self.commands{:}];
@@ -226,19 +226,18 @@ classdef FPGABackend < PulseBackend
         else
           val = 0;
         end
-        self.commands{end + 1} = sprintf(['t=%.2f,TTL(%d) = %d\n'], ...
+        self.commands{end + 1} = sprintf('t=%.2f,TTL(%d) = %d\n', ...
                                          t * 1e6, chn_num, val);
       elseif chn_type == self.DDS_CHN
         if chn_param == self.SET_FREQ
-          cmd_name = 'freq';
+          self.commands{end + 1} = sprintf('t=%.2f,freq(%d) = %f\n', ...
+                                           t * 1e6, chn_num, val);
         elseif chn_param == self.SET_AMP
-          cmd_name = 'amp';
+          self.commands{end + 1} = sprintf('t=%.2f,amp(%d) = %f\n', ...
+                                           t * 1e6, chn_num, val);
         else
           error('Unknown DDS parameter.');
         end
-        self.commands{end + 1} = sprintf(['t=%.2f,', cmd_name, ...
-                                          '(%d) = %f\n'], ...
-                                         t * 1e6, chn_num, val);
       else
         error('Unknown channel type.');
       end
