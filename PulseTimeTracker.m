@@ -14,6 +14,7 @@
 classdef PulseTimeTracker < handle
   %% This class has no expection guarantee.
   properties
+    nchn;
     cids; % channel ids
     pulses; % pulses time sorted in start time
     seqLen; % total length of the sequence
@@ -23,35 +24,31 @@ classdef PulseTimeTracker < handle
     curPulseIdx;
 
     curTime;
-    curValues; % current values of all channels
+    curValues = []; % current values of all channels
     %% Old values of all channels at the beginning of the current pulse
     %% This should be used to calculate values of the pulses in self.curPulses
     %% and the next pulse for the channel if there isn't a pulse for the
     %% corresponding channel in self.curPulses.
     %% The value should be updated whenever a pulse is removed from
     %% self.curPulses
-    startValues;
+    startValues = [];
     curPulses; % pulses that are being processed in the current time slice
   end
 
   methods
     function self = PulseTimeTracker(seq, cids)
-      if ischar(cids)
-        cids = {cids};
-      end
       self.cids = cids;
+      self.nchn = size(self.cids, 2);
       self.pulses = seq.getPulseTimes(cids);
       self.seqLen = seq.length();
 
       self.curPulseIdx = 0;
 
       self.curTime = -1;
-      self.curValues = containers.Map();
-      self.startValues = containers.Map();
-      self.curPulses = containers.Map();
+      self.curPulses = cell(1, max(cids));
 
-      for cid = self.cids
-        cid = cid{:};
+      for i = 1:self.nchn
+        cid = self.cids(i);
         self.curValues(cid) = seq.getDefaults(cid);
         self.startValues(cid) = seq.getDefaults(cid);
       end
@@ -84,7 +81,7 @@ classdef PulseTimeTracker < handle
     end
 
     function updateStart(self, cid)
-      self.curPulses.remove(cid);
+      self.curPulses{cid} = [];
       self.startValues(cid) = self.curValues(cid);
     end
 
@@ -111,22 +108,22 @@ classdef PulseTimeTracker < handle
 
         switch pulse{2}
           case TimeType.Dirty
-            if self.curPulses.isKey(cid)
+            if ~isempty(self.curPulses{cid})
               error('Overlaping pulses.');
             end
-            self.curPulses(cid) = pulse;
+            self.curPulses{cid} = pulse;
             self.curValues(cid) = self.calcVal(pulse, 0);
             evt = [evt; pulse];
           case TimeType.Start
-            if self.curPulses.isKey(cid)
-              prev_pulse = self.curPulses(cid);
+            if ~isempty(self.curPulses{cid})
+              prev_pulse = self.curPulses{cid};
               if prev_pulse{2} ~= TimeType.Dirty
                 error('Overlaping pulses.');
               end
               self.updateStart(cid);
               evt = self.clearEvent(evt, cid);
             end
-            self.curPulses(cid) = pulse;
+            self.curPulses{cid} = pulse;
             self.curValues(cid) = self.calcVal(pulse, 0);
             evt = [evt; pulse];
           case TimeType.End
@@ -141,19 +138,19 @@ classdef PulseTimeTracker < handle
       evt = {};
 
       %% Remove dirty pulses from self.curPulses and update startValues
-      for key = self.curPulses.keys()
-        key = key{:};
-        pulse = self.curPulses(key);
-        if pulse{2} == TimeType.Dirty
-          self.updateStart(key);
+      for key = 1:self.nchn
+        if ~isempty(self.curPulses{key})
+          pulse = self.curPulses{key};
+          if pulse{2} == TimeType.Dirty
+            self.updateStart(key);
+          end
         end
       end
 
       if self.curPulseIdx >= size(self.pulses, 1)
         %% No more pulses, hold value till end
-        if self.curPulses.Count > 0
-          self.curPulses = containers.Map();
-        end
+        %% TODO optimize?
+        self.curPulses = cell(1, self.nchn);
         t = self.curTime + dt;
         if dt <= 0 || t > self.seqLen
           %% End-of-sequence
@@ -167,7 +164,8 @@ classdef PulseTimeTracker < handle
         t = next_pulse{1};
       elseif mode == TrackMode.NoLater
         t = min(self.curTime + dt, next_pulse{1});
-      elseif mode == TrackMode.NoEarlier && self.curPulses.Count == 0
+      elseif mode == TrackMode.NoEarlier && ...
+             all(cellfun(@isempty, self.curPulses))
         t = max(self.curTime + dt, next_pulse{1});
       else
         t = self.curTime + dt;
@@ -180,8 +178,8 @@ classdef PulseTimeTracker < handle
 
         switch pulse{2}
           case TimeType.Dirty
-            if self.curPulses.isKey(cid)
-              orig_pulse = self.curPulses(cid);
+            if ~isempty(self.curPulses{cid})
+              orig_pulse = self.curPulses{cid};
               %% multiple Dirty pulse in one time slice can happen
               %% when the user specifies a strict dt that is longer
               %% than the time between pulses.
@@ -191,27 +189,27 @@ classdef PulseTimeTracker < handle
               self.updateStart(cid);
               evt = self.clearEvent(evt, cid);
             end
-            self.curPulses(cid) = pulse;
+            self.curPulses{cid} = pulse;
             self.curValues(cid) = self.calcVal(pulse, pulse{1});
             evt = [evt; pulse];
           case TimeType.Start
-            if self.curPulses.isKey(cid)
-              prev_pulse = self.curPulses(cid);
+            if ~isempty(self.curPulses{cid})
+              prev_pulse = self.curPulses{cid};
               if prev_pulse{2} ~= TimeType.Dirty
                 error('Overlaping pulses.');
               end
               self.updateStart(cid);
               evt = self.clearEvent(evt, cid);
             end
-            self.curPulses(cid) = pulse;
+            self.curPulses{cid} = pulse;
             new_time = min(pulse{1} + pulse{2}, t);
             self.curValues(cid) = self.calcVal(pulse, new_time);
             evt = [evt; pulse];
           case TimeType.End
-            if ~self.curPulses.isKey(cid)
+            if isempty(self.curPulses{cid})
               error('No pulse to finish.');
             end
-            prev_pulse = self.curPulses(cid);
+            prev_pulse = self.curPulses{cid};
             if prev_pulse{2} ~= TimeType.Start
               error('Wrong pulse type to finish.');
             elseif prev_pulse{7} ~= pulse{7}
