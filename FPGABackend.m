@@ -19,7 +19,6 @@ classdef FPGABackend < PulseBackend
     poster = [];
     type_cache = [];
     num_cache = [];
-    param_cache = [];
     commands;
     cmd_str = '';
   end
@@ -32,11 +31,9 @@ classdef FPGABackend < PulseBackend
     FIN_CLOCK_DELAY = 100e-6;
 
     TTL_CHN = 1;
-    DDS_CHN = 2;
-
-    SET_FREQ = 1;
-    SET_AMP = 2;
-    SET_PHASE = 3;
+    DDS_FREQ = 2;
+    DDS_AMP = 3;
+    DDS_PHASE = 4;
   end
 
   methods
@@ -62,10 +59,9 @@ classdef FPGABackend < PulseBackend
         error('Unknown channel name "%s"', name);
       end
       name = name(7:end);
-      [chn_type, chn_num, chn_param] = self.parseCIdReal(name);
+      [chn_type, chn_num] = self.parseCIdReal(name);
       self.type_cache(cid) = chn_type;
       self.num_cache(cid) = chn_num;
-      self.param_cache(cid) = chn_param;
     end
 
     function enableClockOut(self, div)
@@ -154,14 +150,10 @@ classdef FPGABackend < PulseBackend
   end
 
   methods(Access=private)
-    function [chn_type, chn_num, chn_param] = parseCId(self, cid)
-    end
-
-    function [chn_type, chn_num, chn_param] = parseCIdReal(self, cid)
+    function [chn_type, chn_num] = parseCIdReal(self, cid)
       cpath = strsplit(cid, '/');
       if strncmp(cpath{1}, 'TTL', 3)
         chn_type = self.TTL_CHN;
-        chn_param = 0;
         if size(cpath, 2) ~= 1
           error('Invalid TTL channel id "%s".', cid);
         end
@@ -175,7 +167,6 @@ classdef FPGABackend < PulseBackend
           error('Unconnected TTL channel %d.', chn_num);
         end
       elseif strncmp(cpath{1}, 'DDS', 3)
-        chn_type = self.DDS_CHN;
         if size(cpath, 2) ~= 2
           error('Invalid DDS channel id "%s".', cid);
         end
@@ -188,9 +179,9 @@ classdef FPGABackend < PulseBackend
           error('DDS channel number %d out of range.', chn_num);
         end
         if strcmp(cpath{2}, 'FREQ')
-          chn_param = self.SET_FREQ;
+          chn_type = self.DDS_FREQ;
         elseif strcmp(cpath{2}, 'AMP')
-          chn_param = self.SET_AMP;
+          chn_type = self.DDS_AMP;
         else
           error('Invalid DDS parameter name "%s".', cpath{2});
         end
@@ -220,7 +211,6 @@ classdef FPGABackend < PulseBackend
     function appendPulse(self, cid, t, val)
       chn_type = self.type_cache(cid);
       chn_num = self.num_cache(cid);
-      chn_param = self.param_cache(cid);
       if chn_type == self.TTL_CHN
         if val
           self.commands{end + 1} = sprintf('t=%.2f,TTL(%d) = 1\n', ...
@@ -229,16 +219,12 @@ classdef FPGABackend < PulseBackend
           self.commands{end + 1} = sprintf('t=%.2f,TTL(%d) = 0\n', ...
                                            t * 1e6, chn_num);
         end
-      elseif chn_type == self.DDS_CHN
-        if chn_param == self.SET_FREQ
-          self.commands{end + 1} = sprintf('t=%.2f,freq(%d) = %f\n', ...
-                                           t * 1e6, chn_num, val);
-        elseif chn_param == self.SET_AMP
-          self.commands{end + 1} = sprintf('t=%.2f,amp(%d) = %f\n', ...
-                                           t * 1e6, chn_num, val);
-        else
-          error('Unknown DDS parameter.');
-        end
+      elseif chn_type == self.DDS_FREQ
+        self.commands{end + 1} = sprintf('t=%.2f,freq(%d) = %f\n', ...
+                                         t * 1e6, chn_num, val);
+      elseif chn_type == self.DDS_AMP
+        self.commands{end + 1} = sprintf('t=%.2f,amp(%d) = %f\n', ...
+                                         t * 1e6, chn_num, val);
       else
         error('Unknown channel type.');
       end
