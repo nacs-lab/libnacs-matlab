@@ -68,10 +68,12 @@ classdef FPGABackend < PulseBackend
       t = self.INIT_DELAY;
       self.cmd_str = '';
       self.commands = {};
-      self.appendCmd('TTL(all)=%x', t, self.getTTLDefault());
+      self.commands{end + 1} = sprintf(['t=%.2f,TTL(all)=%x\n'], ...
+                                       t * 1e6, self.getTTLDefault());
       if self.clock_div > 0
         t = t + self.CLOCK_DELAY;
-        self.appendCmd('CLOCK_OUT(%d)', t, self.clock_div);
+        self.commands{end + 1} = sprintf(['t=%.2f,CLOCK_OUT(%d)\n'], ...
+                                         t * 1e6, self.clock_div);
       end
       start_t = t + self.START_DELAY;
       tracker = PulseTimeTracker(self.seq, cids);
@@ -110,9 +112,9 @@ classdef FPGABackend < PulseBackend
 
       if self.clock_div > 0
         t = t + self.MIN_DELAY;
-        self.appendCmd('CLOCK_OUT(100)', t);
+        self.commands{end + 1} = sprintf(['t=%.2f,CLOCK_OUT(100)\n'], t * 1e6);
         t = t + self.FIN_CLOCK_DELAY;
-        self.appendCmd('CLOCK_OUT(off)', t);
+        self.commands{end + 1} = sprintf(['t=%.2f,CLOCK_OUT(off)\n'], t * 1e6);
       end
 
       self.cmd_str = [self.commands{:}];
@@ -218,11 +220,6 @@ classdef FPGABackend < PulseBackend
       end
     end
 
-    function appendCmd(self, fmt, t, varargin)
-      self.commands{end + 1} = sprintf(['t=%.2f,', fmt, '\n'], ...
-                                       t * 1e6, varargin{:});
-    end
-
     function appendPulse(self, cid, t, val)
       [chn_type, chn_num, chn_param] = self.parseCId(cid);
       if chn_type == self.TTL_CHN
@@ -231,7 +228,8 @@ classdef FPGABackend < PulseBackend
         else
           val = 0;
         end
-        self.appendCmd('TTL(%d) = %d', t, chn_num, val);
+        self.commands{end + 1} = sprintf(['t=%.2f,TTL(%d) = %d\n'], ...
+                                         t * 1e6, chn_num, val);
       elseif chn_type == self.DDS_CHN
         if chn_param == self.SET_FREQ
           cmd_name = 'freq';
@@ -240,7 +238,9 @@ classdef FPGABackend < PulseBackend
         else
           error('Unknown DDS parameter.');
         end
-        self.appendCmd([cmd_name, '(%d) = %f'], t, chn_num, val);
+        self.commands{end + 1} = sprintf(['t=%.2f,', cmd_name, ...
+                                          '(%d) = %f\n'], ...
+                                         t * 1e6, chn_num, val);
       else
         error('Unknown channel type.');
       end
