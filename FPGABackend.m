@@ -279,8 +279,8 @@ classdef FPGABackend < PulseBackend
                 error('Invalid pulse type.');
             end
           end
-          %% There are three possibilities when we exit the loop
-          %% 1. Next pulse too late
+          %% There are two possibilities when we exit the loop
+          %% 1. Next pulse too late or not exist
           %%     No pulse is currently running, but we do need to check
           %%     if we need to update the device using orig_values(i)
           if ~pulse_mask(i)
@@ -310,14 +310,10 @@ classdef FPGABackend < PulseBackend
                 cur_values(i) = val;
               end
             end
-            %% 2. End of pulse sequence
-            %%     Just proceed to the next channel.
-            if ~pidxs(i)
-              continue;
-            end
+            continue;
           end
 
-          %% 3. Found a pulse that persists
+          %% 2. Found a pulse that persists
           %%     Calculate values for this pulse and run the next loop.
           t_seq = glob_tidx * self.MIN_DELAY;
           pulse = pulse_end;
