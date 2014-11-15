@@ -12,8 +12,8 @@
 %% License along with this library.
 
 classdef(Abstract) PulseBase < handle
-  properties(Access=private)
-    id;
+  properties
+    id = 0;
   end
   methods(Abstract=true)
     %% Old value is the value of the channel at tstart returned by timeSpan.
@@ -22,19 +22,6 @@ classdef(Abstract) PulseBase < handle
 
   methods
     function self = PulseBase()
-      %% Cannot be multithread-safe. FIXME
-      %% (when porting to a real programming language)
-      global nacsPulseBaseID;
-      if isempty(nacsPulseBaseID)
-        nacsPulseBaseID = uint64(1);
-      else
-        nacsPulseBaseID = nacsPulseBaseID + 1;
-      end
-      self.id = nacsPulseBaseID;
-    end
-
-    function id = getID(self)
-      id = self.id;
     end
 
     function res = hasDirtyTime(self, len)

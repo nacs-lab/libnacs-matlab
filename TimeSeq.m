@@ -26,6 +26,7 @@ classdef TimeSeq < handle
     subSeqs;
     tOffset;
     parent = 0;
+    pulse_id_counter = 0;
   end
 
   methods
@@ -107,16 +108,16 @@ classdef TimeSeq < handle
           if ~isempty(dirty_times)
             for t = dirty_times
               res = [res; {t + toffset, int32(TimeType.Dirty), pulse_obj, ...
-                           toffset, step_len, cid, pulse_obj.getID()}];
+                           toffset, step_len, cid, pulse_obj.id}];
             end
           else
             %% Maybe treating a zero length pulse as hasDirtyTime?
             tstart = pulse{1};
             tlen = pulse{2};
             res = [res; {tstart, int32(TimeType.Start), pulse_obj, ...
-                         toffset, step_len, cid, pulse_obj.getID()}];
+                         toffset, step_len, cid, pulse_obj.id}];
             res = [res; {tstart + tlen, int32(TimeType.End), pulse_obj, ...
-                         toffset, step_len, cid, pulse_obj.getID()}];
+                         toffset, step_len, cid, pulse_obj.id}];
           end
         end
       end
@@ -269,6 +270,15 @@ classdef TimeSeq < handle
   end
 
   methods(Access=protected)
+    function id = nextPulseId(self)
+      if self.hasParent()
+        id = self.parent.nextPulseId();
+      else
+        self.pulse_id_counter = self.pulse_id_counter + 1;
+        id = self.pulse_id_counter;
+      end
+    end
+
     function res = getPulses(self, cid)
       %% Return a array of tuples (toffset, length, pulse_obj,
       %%                           step_start, step_len, cid)
