@@ -267,61 +267,8 @@ classdef FPGABackend < PulseBackend
       t = glob_tidx * self.MIN_DELAY + start_t;
       glob_tidx = glob_tidx + 1;
       self.commands{end + 1} = sprintf('t=%.2f,CLOCK_OUT(off)\n', t * 1e6);
-    end
 
-    function generate_old(self, cids)
-      %% t = self.INIT_DELAY;
-      %% self.cmd_str = '';
-      %% self.commands = {};
-      %% self.commands{end + 1} = sprintf('t=%.2f,TTL(all)=%x\n', ...
-      %%                                  t * 1e6, self.getTTLDefault());
-      %% if self.clock_div > 0
-      %%   t = t + self.CLOCK_DELAY;
-      %%   self.commands{end + 1} = sprintf('t=%.2f,CLOCK_OUT(%d)\n', ...
-      %%                                    t * 1e6, self.clock_div);
-      %% end
-      %% start_t = t + self.START_DELAY;
-      tracker = PulseTimeTracker(self.seq, cids);
-
-      while true
-        min_delay = self.MIN_DELAY + t - (tracker.curTime + start_t);
-        [new_t, new_pulses] = tracker.nextEvent(min_delay, TrackMode.NoEarlier);
-        if new_t < 0
-          break;
-        end
-        t = new_t + start_t;
-
-        updated_chn = containers.Map();
-        for i = 1:size(new_pulses, 1)
-          pulse = new_pulses(i, :);
-          cid = pulse{6};
-          if pulse{2} == TimeType.Dirty
-            %% TODO? merge TTL update, use more precise values
-            %% TODO? update finished pulse
-            self.appendPulse(cid, t, tracker.curValues(cid));
-            t = t + self.MIN_DELAY;
-            updated_chn(cid) = 1;
-          end
-        end
-
-        %% Update channels that are currently active.
-        cur_pulses = tracker.curPulses;
-        for key = 1:tracker.nchn
-          if updated_chn.isKey(key)
-            continue
-          end
-          self.appendPulse(key, t, tracker.curValues(key));
-          t = t + self.MIN_DELAY;
-        end
-      end
-
-      if self.clock_div > 0
-        t = t + self.MIN_DELAY;
-        self.commands{end + 1} = sprintf('t=%.2f,CLOCK_OUT(100)\n', t * 1e6);
-        t = t + self.FIN_CLOCK_DELAY;
-        self.commands{end + 1} = sprintf('t=%.2f,CLOCK_OUT(off)\n', t * 1e6);
-      end
-
+      %% Finally we construct and log the sequence.
       self.cmd_str = [self.commands{:}];
 
       self.seq.log('#### Start Generated Sequence File ####');
