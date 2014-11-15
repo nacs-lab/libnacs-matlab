@@ -428,13 +428,13 @@ classdef FPGABackend < PulseBackend
       res = self.cmd_str;
     end
 
-    function run(self, rep)
+    function run(self)
       self.poster = URLPoster(self.url);
       self.poster.post({'command', 'runseq', 'debugPulses', 'off', ...
                         'reps', '1'}, {'seqtext', self.cmd_str});
     end
 
-    function wait(self, rep)
+    function wait(self)
       output = self.poster.reply();
       disp(output);
     end

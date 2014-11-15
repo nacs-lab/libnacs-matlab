@@ -91,13 +91,13 @@ classdef NiDACBackend < PulseBackend
       end
     end
 
-    function run(self, rep)
+    function run(self)
       if ~self.dry_run
         self.session.startBackground();
       end
     end
 
-    function wait(self, rep)
+    function wait(self)
       if ~self.dry_run
         self.session.wait();
       end

@@ -14,6 +14,7 @@
 classdef ExpSeq < ExpSeqBase
   properties(Access=private)
     drivers;
+    driver_cids;
     generated = false;
   end
 
@@ -26,6 +27,7 @@ classdef ExpSeq < ExpSeqBase
       end
       self = self@ExpSeqBase(name);
       self.drivers = containers.Map();
+      self.driver_cids = containers.Map();
       self.name_map = containers.Map();
     end
 
@@ -33,10 +35,11 @@ classdef ExpSeq < ExpSeqBase
       name = self.config.translateChannel(name);
       cpath = strsplit(name, '/');
       did = cpath{1};
-      driver = self.initDeviceDriver(did);
+      [driver, driver_name] = self.initDeviceDriver(did);
       cid = translateChannel@ExpSeqBase(self, name);
       driver.initChannel(cid);
-      %% TODO add cid to driver
+      cur_cids = self.driver_cids(driver_name);
+      self.driver_cids(driver_name) = [cur_cids, cid];
     end
 
     function cid = findChannelId(self, name)
@@ -51,12 +54,24 @@ classdef ExpSeq < ExpSeqBase
         driver_func = str2func(driver_name);
         driver = driver_func(self);
         self.drivers(driver_name) = driver;
+        self.driver_cids(driver_name) = [];
       end
     end
 
     function generate(self)
       if ~self.generated
-        %% TODO
+        for key = self.drivers.keys()
+          driver_name = key{:};
+          driver = self.drivers(driver_name);
+          cids = self.driver_cids(driver_name);
+          driver.prepare(cids);
+        end
+        for key = self.drivers.keys()
+          driver_name = key{:};
+          driver = self.drivers(driver_name);
+          cids = self.driver_cids(driver_name);
+          driver.generate(cids);
+        end
         self.generated = true;
       end
     end
@@ -79,7 +94,7 @@ classdef ExpSeq < ExpSeqBase
   end
 
   methods(Access=private)
-    function driver = initDeviceDriver(self, did)
+    function [driver, driver_name] = initDeviceDriver(self, did)
       driver_name = self.config.pulseDrivers(did);
       driver = self.findDriver(driver_name);
       driver.initDev(did);
