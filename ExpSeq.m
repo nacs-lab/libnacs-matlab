@@ -13,10 +13,8 @@
 
 classdef ExpSeq < ExpSeqBase
   properties(Access=private)
-    driver_names;
     drivers;
-
-    name_map;
+    generated = false;
   end
 
   methods
@@ -32,47 +30,59 @@ classdef ExpSeq < ExpSeqBase
     end
 
     function cid = translateChannel(self, name)
-      name = self.transChnName(name);
+      name = self.config.translateChannel(name);
       cpath = strsplit(name, '/');
       did = cpath{1};
-      driver = self.loadDriver(did);
+      driver = self.initDeviceDriver(did);
       cid = translateChannel@ExpSeqBase(self, name);
       driver.initChannel(cid);
+      %% TODO add cid to driver
     end
 
     function cid = findChannelId(self, name)
-      name = self.transChnName(name);
+      name = self.config.translateChannel(name);
       cid = findChannelId@ExpSeqBase(self, name);
+    end
+
+    function driver = findDriver(self, driver_name)
+      try
+        driver = self.drivers(driver_name);
+      catch
+        driver_func = str2func(driver_name);
+        driver = driver_func(self);
+        self.drivers(driver_name) = driver;
+      end
+    end
+
+    function generate(self)
+      if ~self.generated
+        %% TODO
+        self.generated = true;
+      end
+    end
+
+    function run(self)
+      self.generate();
+      %% TODO
+    end
+  end
+
+  methods(Acess=protected)
+    function val = getDefault(self, cid)
+      name = self.channelName(cid);
+      try
+        val = self.config.defaultVals(name);
+      catch
+        val = 0;
+      end
     end
   end
 
   methods(Access=private)
-    function driver = loadDriver(self, did)
-      %% TODO
-    end
-
-    function res = transChnName(self, name)
-      try
-        res = self.name_map(name);
-      catch
-        cpath = strsplit(name, '/');
-        self.name_map(name) = [];
-        if self.channelAlias.isKey(cpath{1})
-          cpath{1} = self.channelAlias(cpath{1});
-          res = self.transChnName(strjoin(cpath, '/'));
-        else
-          res = name;
-        end
-        self.name_map(name) = res;
-        return;
-      end
-      if isempty(res)
-        error('Alias loop detected: %s.', name);
-      end
+    function driver = initDeviceDriver(self, did)
+      driver_name = self.config.pulseDrivers(did);
+      driver = self.findDriver(driver_name);
+      driver.initDev(did);
     end
   end
-
-  %% TODO translateChannel
-  %% getDefault
-  %% findDriver
 end

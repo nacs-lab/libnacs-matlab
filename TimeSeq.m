@@ -312,7 +312,6 @@ classdef TimeSeq < handle
 
     function val = getDefault(self, ~)
       val = 0;
-      return;
     end
 
     function res = hasParent(self)

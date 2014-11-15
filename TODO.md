@@ -24,9 +24,7 @@
 # Timeline
 1. main sequence
 
-    1. findDriver
-    2. default/initial value
-    3. run sequence, priority
+    1. run sequence, priority
 
 2. NiDACBackend
 
