@@ -82,7 +82,7 @@ classdef FPGABackend < PulseBackend
 
       nchn = size(cids, 2);
       total_t = self.seq.length();
-      nstep = floor(total_t / dt) + 1;
+      nstep = floor(total_t / dt);
 
       pulse_mask = false(1, nchn);
       cur_pulses = cell(1, nchn);
@@ -172,8 +172,13 @@ classdef FPGABackend < PulseBackend
         %% For each TTL channels, we update the TTL values and add a command
         %% at the end of the loop to update all TTL values.
         new_ttl = ttl_values;
+        next_tidx = nstep;
 
         for i = 1:nchn
+          if pidxs(i) == 0
+            %% pulse index is only 0 when all the pulses are done.
+            continue;
+          end
           cid = cids(i);
           if pulse_mask(i)
             pulse = cur_pulses{i};
@@ -185,12 +190,13 @@ classdef FPGABackend < PulseBackend
               val = pulse{3}.calcValue(t_seq - pulse{4}, pulse{5}, ...
                                        orig_values(i));
               tidxs(i) = glob_tidx;
+              next_tidx = glob_tidx + 1;
               chn_type = self.type_cache(i);
               chn_num = self.num_cache(i);
               if chn_type == self.TTL_CHN
                 val = logical(val);
                 cur_values(i) = val;
-                ttl_values = bitset(ttl_values, chn_num, val);
+                new_ttl = bitset(new_ttl, chn_num, val);
               elseif chn_type == self.DDS_FREQ
                 if abs(cur_values(i) - val) >= 0.4
                   t = glob_tidx * self.MIN_DELAY + start_t;
@@ -216,13 +222,16 @@ classdef FPGABackend < PulseBackend
             end
             %% Otherwise, finish up the pulse and proceed to check for
             %% new pulses.
-            %% TODO update pulse_mask, (cur_pulses can be leave unchanged)
-            %% orig_values, cur_values, ttl_values
+            pulse_mask(i) = false;
+            %% pulse{1} is the end of the pulse.
+            orig_values(i) = pulse{3}.calcValue(pulse{1} - pulse{4}, ...
+                                                pulse{5}, orig_values(i));
           end
           %% Find and process pulses that starts no later than the next time
           %% point. If no new pulses are found we still need to check if a new
           %% value is necessary since we might need to finish up a previous
           %% pulse.
+          %% Also needs to update next_tidx according to the next time pulse.
           %% TODO
         end
 
@@ -234,6 +243,9 @@ classdef FPGABackend < PulseBackend
           self.commands{end + 1} = sprintf('t=%.2f,TTL(all)=%x\n', ...
                                            t * 1e6, ttl_values);
         end
+
+        %% And check if we can skip some time points.
+        glob_tidx = max(glob_tidx, next_tidx);
 
         %% At the end of the loop, we check if all channels have processed
         %% all the pulses, if so, we should break the loop and finish up.
