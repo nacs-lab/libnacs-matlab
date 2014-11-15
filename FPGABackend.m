@@ -59,7 +59,7 @@ classdef FPGABackend < PulseBackend
         error('Unknown channel name "%s"', name);
       end
       name = name(7:end);
-      [chn_type, chn_num] = self.parseCIdReal(name);
+      [chn_type, chn_num] = self.parseCId(name);
       self.type_cache(cid) = chn_type;
       self.num_cache(cid) = chn_num;
     end
@@ -174,7 +174,6 @@ classdef FPGABackend < PulseBackend
             %% pulse index is only 0 when all the pulses are done.
             continue;
           end
-          cid = cids(i);
           if pulse_mask(i)
             pulse = cur_pulses{i};
             t_seq = glob_tidx * self.MIN_DELAY;
@@ -187,11 +186,7 @@ classdef FPGABackend < PulseBackend
               next_tidx = glob_tidx + 1;
               chn_type = self.type_cache(i);
               chn_num = self.num_cache(i);
-              if chn_type == self.TTL_CHN
-                val = logical(val);
-                cur_values(i) = val;
-                new_ttl = bitset(new_ttl, chn_num + 1, val);
-              elseif chn_type == self.DDS_FREQ
+              if chn_type == self.DDS_FREQ
                 if abs(cur_values(i) - val) >= 0.4
                   t = glob_tidx * self.MIN_DELAY + start_t;
                   glob_tidx = glob_tidx + 1;
@@ -209,6 +204,10 @@ classdef FPGABackend < PulseBackend
                                                    t * 1e6, chn_num, val);
                   cur_values(i) = val;
                 end
+              elseif chn_type == self.TTL_CHN
+                val = logical(val);
+                cur_values(i) = val;
+                new_ttl = bitset(new_ttl, chn_num + 1, val);
               else
                 error('Invalid channel type.');
               end
@@ -401,7 +400,7 @@ classdef FPGABackend < PulseBackend
   end
 
   methods(Access=private)
-    function [chn_type, chn_num] = parseCIdReal(self, cid)
+    function [chn_type, chn_num] = parseCId(self, cid)
       cpath = strsplit(cid, '/');
       if strncmp(cpath{1}, 'TTL', 3)
         chn_type = self.TTL_CHN;
@@ -456,28 +455,6 @@ classdef FPGABackend < PulseBackend
       val = uint64(0);
       for i = 0:31
         val = bitset(val, i + 1, self.singleTTLDefault(i));
-      end
-    end
-
-    function appendPulse(self, cid, t, val)
-      chn_type = self.type_cache(cid);
-      chn_num = self.num_cache(cid);
-      if chn_type == self.TTL_CHN
-        if val
-          self.commands{end + 1} = sprintf('t=%.2f,TTL(%d) = 1\n', ...
-                                           t * 1e6, chn_num);
-        else
-          self.commands{end + 1} = sprintf('t=%.2f,TTL(%d) = 0\n', ...
-                                           t * 1e6, chn_num);
-        end
-      elseif chn_type == self.DDS_FREQ
-        self.commands{end + 1} = sprintf('t=%.2f,freq(%d) = %f\n', ...
-                                         t * 1e6, chn_num, val);
-      elseif chn_type == self.DDS_AMP
-        self.commands{end + 1} = sprintf('t=%.2f,amp(%d) = %f\n', ...
-                                         t * 1e6, chn_num, val);
-      else
-        error('Unknown channel type.');
       end
     end
   end

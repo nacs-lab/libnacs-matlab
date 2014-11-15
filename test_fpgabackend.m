@@ -39,5 +39,5 @@ function test_fpgabackend()
   backend.generate([seq.translateChannel('FPGA1/DDS1/FREQ'), ...
                     seq.translateChannel('FPGA1/DDS2/FREQ'), ...
                     seq.translateChannel('FPGA1/DDS3/FREQ')]);
-  backend.getCmd()
+  backend.getCmd();
 end
