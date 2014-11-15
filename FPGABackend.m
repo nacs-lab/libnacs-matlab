@@ -128,7 +128,8 @@ classdef FPGABackend < PulseBackend
       end
       start_t = t + self.START_DELAY; % global time offset
 
-      while true
+      %% We run the loop as long as there's any pulses left.
+      while any(pidxs ~= 0)
         %% At the beginning of each loop:
         %% @glob_tidx the time index to be filled. The corresponding sequence
         %% time is glob_tidx * self.MIN_DELAY and the corresponding FPGA
@@ -246,12 +247,6 @@ classdef FPGABackend < PulseBackend
 
         %% And check if we can skip some time points.
         glob_tidx = max(glob_tidx, next_tidx);
-
-        %% At the end of the loop, we check if all channels have processed
-        %% all the pulses, if so, we should break the loop and finish up.
-        if all(pidxs == 0)
-          break;
-        end
       end
 
       %% Now we wait till the end of the sequence.
