@@ -78,6 +78,8 @@ classdef FPGABackend < PulseBackend
       DDS_PHASE = self.DDS_PHASE;
       MIN_DELAY = self.MIN_DELAY;
 
+      MIN_DELAY_US = MIN_DELAY * 1e6;
+
       type_cache = self.type_cache;
       num_cache = self.num_cache;
 
@@ -85,13 +87,13 @@ classdef FPGABackend < PulseBackend
       pulse_cache_range = zeros(max_pulse_id, 2);
       pulse_cache = cell(1, max_pulse_id);
 
-      t = self.INIT_DELAY;
+      start_us = self.INIT_DELAY * 1e6;
       self.cmd_str = '';
       commands = {};
 
       ttl_values = self.getTTLDefault();
       commands{end + 1} = sprintf('t=%.2f,TTL(all)=%x\n', ...
-                                  t * 1e6, ttl_values);
+                                  start_us, ttl_values);
 
       nchn = size(cids, 2);
       total_t = self.seq.length();
@@ -117,15 +119,15 @@ classdef FPGABackend < PulseBackend
 
         %% TTL defaults are already set.
         if type_cache(cid) ~= TTL_CHN
-          t = t + MIN_DELAY * 10;
+          start_us = start_us + MIN_DELAY_US * 10;
           chn_num = num_cache(cid);
           chn_type = type_cache(cid);
           if chn_type == DDS_FREQ
             commands{end + 1} = sprintf('t=%.2f,freq(%d) = %f\n', ...
-                                        t * 1e6, chn_num, cur_values(i));
+                                        start_us, chn_num, cur_values(i));
           elseif chn_type == DDS_AMP
             commands{end + 1} = sprintf('t=%.2f,amp(%d) = %f\n', ...
-                                        t * 1e6, chn_num, cur_values(i));
+                                        start_us, chn_num, cur_values(i));
           end
         end
 
@@ -135,18 +137,18 @@ classdef FPGABackend < PulseBackend
       end
 
       if self.clock_div > 0
-        t = t + self.CLOCK_DELAY;
+        start_us = start_us + self.CLOCK_DELAY * 1e6;
         commands{end + 1} = sprintf('t=%.2f,CLOCK_OUT(%d)\n', ...
-                                    t * 1e6, self.clock_div);
+                                    start_us, self.clock_div);
       end
-      start_t = t + self.START_DELAY; % global time offset
+      start_us = start_us + self.START_DELAY * 1e6; % global time offset
 
       %% We run the loop as long as there's any pulses left.
       while any(pidxs ~= 0)
         %% At the beginning of each loop:
         %% @glob_tidx the time index to be filled. The corresponding sequence
         %% time is glob_tidx * MIN_DELAY and the corresponding FPGA
-        %% time is glob_tidx * MIN_DELAY + start_t
+        %% time in us is glob_tidx * MIN_DELAY_US + start_us
         %%
         %% @pidxs points to the pulse for each channel to be processed
         %% in @all_pulses (0 if there's not more pulses for the channel).
@@ -197,20 +199,20 @@ classdef FPGABackend < PulseBackend
               chn_num = num_cache(i);
               if chn_type == DDS_FREQ
                 if abs(cur_values(i) - val) >= 0.4
-                  t = glob_tidx * MIN_DELAY + start_t;
+                  tus = glob_tidx * MIN_DELAY_US + start_us;
                   glob_tidx = glob_tidx + 1;
                   commands{end + 1} = sprintf('t=%.2f,freq(%d)=%.1f\n', ...
-                                              t * 1e6, chn_num, val);
+                                              tus, chn_num, val);
                   cur_values(i) = val;
                 end
               elseif chn_type == DDS_AMP
                 %% Maximum amplitude is 1.
                 val = min(1, val);
                 if abs(cur_values(i) - val) >= 0.0002
-                  t = glob_tidx * MIN_DELAY + start_t;
+                  tus = glob_tidx * MIN_DELAY_US + start_us;
                   glob_tidx = glob_tidx + 1;
                   commands{end + 1} = sprintf('t=%.2f,amp(%d)=%.4f\n', ...
-                                              t * 1e6, chn_num, val);
+                                              tus, chn_num, val);
                   cur_values(i) = val;
                 end
               elseif chn_type == TTL_CHN
@@ -314,20 +316,20 @@ classdef FPGABackend < PulseBackend
               cur_values(i) = val;
             elseif chn_type == DDS_FREQ
               if abs(cur_values(i) - val) >= 0.4
-                t = glob_tidx * MIN_DELAY + start_t;
+                tus = glob_tidx * MIN_DELAY_US + start_us;
                 glob_tidx = glob_tidx + 1;
                 commands{end + 1} = sprintf('t=%.2f,freq(%d)=%.1f\n', ...
-                                            t * 1e6, chn_num, val);
+                                            tus, chn_num, val);
                 cur_values(i) = val;
               end
             elseif chn_type == DDS_AMP
               %% Maximum amplitude is 1.
               val = min(1, val);
               if abs(cur_values(i) - val) >= 0.0002
-                t = glob_tidx * MIN_DELAY + start_t;
+                tus = glob_tidx * MIN_DELAY_US + start_us;
                 glob_tidx = glob_tidx + 1;
                 commands{end + 1} = sprintf('t=%.2f,amp(%d)=%.4f\n', ...
-                                            t * 1e6, chn_num, val);
+                                            tus, chn_num, val);
                 cur_values(i) = val;
               end
             end
@@ -348,20 +350,20 @@ classdef FPGABackend < PulseBackend
             new_ttl = bitset(new_ttl, chn_num + 1, val);
           elseif chn_type == DDS_FREQ
             if abs(cur_values(i) - val) >= 0.4
-              t = glob_tidx * MIN_DELAY + start_t;
+              tus = glob_tidx * MIN_DELAY_US + start_us;
               glob_tidx = glob_tidx + 1;
               commands{end + 1} = sprintf('t=%.2f,freq(%d)=%.1f\n', ...
-                                          t * 1e6, chn_num, val);
+                                          tus, chn_num, val);
               cur_values(i) = val;
             end
           elseif chn_type == DDS_AMP
             %% Maximum amplitude is 1.
             val = min(1, val);
             if abs(cur_values(i) - val) >= 0.0002
-              t = glob_tidx * MIN_DELAY + start_t;
+              tus = glob_tidx * MIN_DELAY_US + start_us;
               glob_tidx = glob_tidx + 1;
               commands{end + 1} = sprintf('t=%.2f,amp(%d)=%.4f\n', ...
-                                          t * 1e6, chn_num, val);
+                                          tus, chn_num, val);
               cur_values(i) = val;
             end
           end
@@ -370,10 +372,10 @@ classdef FPGABackend < PulseBackend
         %% Now we need to update ttl values
         if new_ttl ~= ttl_values
           ttl_values = new_ttl;
-          t = glob_tidx * MIN_DELAY + start_t;
+          tus = glob_tidx * MIN_DELAY_US + start_us;
           glob_tidx = glob_tidx + 1;
           commands{end + 1} = sprintf('t=%.2f,TTL(all)=%x\n', ...
-                                      t * 1e6, ttl_values);
+                                      tus, ttl_values);
         end
 
         %% And check if we can skip some time points.
@@ -384,15 +386,15 @@ classdef FPGABackend < PulseBackend
       glob_tidx = max(nstep, glob_tidx + 1);
       if self.clock_div > 0
         %% This is a hack that is believed to make the NI card happy.
-        t = glob_tidx * MIN_DELAY + start_t;
+        tus = glob_tidx * MIN_DELAY_US + start_us;
         glob_tidx = glob_tidx + floor(self.FIN_CLOCK_DELAY / MIN_DELAY);
-        commands{end + 1} = sprintf('t=%.2f,CLOCK_OUT(100)\n', t * 1e6);
+        commands{end + 1} = sprintf('t=%.2f,CLOCK_OUT(100)\n', tus);
       end
       %% We turn off the clock even when it is not used just as a place holder.
       %% for the end of the sequence.
-      t = glob_tidx * MIN_DELAY + start_t;
+      tus = glob_tidx * MIN_DELAY_US + start_us;
       glob_tidx = glob_tidx + 1;
-      commands{end + 1} = sprintf('t=%.2f,CLOCK_OUT(off)\n', t * 1e6);
+      commands{end + 1} = sprintf('t=%.2f,CLOCK_OUT(off)\n', tus);
 
       %% Finally we construct and log the sequence.
       self.cmd_str = [commands{:}];
