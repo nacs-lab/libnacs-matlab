@@ -13,12 +13,27 @@
 
 classdef NiDACBackend < PulseBackend
   properties(Hidden, Access=private)
+    dry_run = false;
+    session;
+    nicid_count = 1;
+    cid_map;
+    clock_connected;
+    cids;
   end
 
   methods
-    function self = NiDACBackend(varargin)
-      self = self@PulseBackend(varargin{:});
-      %% TODO
+    function self = NiDACBackend(seq, dry_run)
+      self = self@PulseBackend(seq);
+      if nargin > 1
+        self.dry_run = dry_run;
+      else
+        self.dry_run = false;
+      end
+      if ~self.dry_run
+        self.session = daq.createSession('ni');
+        self.session.Rate = 5e5;
+      end
+      self.clock_connected = containers.Map();
     end
 
     function val = getPriority(self)
@@ -26,20 +41,63 @@ classdef NiDACBackend < PulseBackend
     end
 
     function initDev(self, did)
-      %% TODO
+      if ~self.clock_connected.isKey(did)
+        self.clock_connected(did) = true;
+        %% TODO enable clockout
+        self.session.addClockConnect('external', ...
+                                     [did, '/', ...
+                                      self.seq.config.niClocks(did)], ...
+                                     'ScalClock');
+      end
     end
 
-    function initChannel(self, did, cid)
-      %% TODO
+    function initChannel(self, cid)
+      if size(self.cid_map, 2) >= cid && self.cid_map(cid) > 0
+        return;
+      end
+      name = self.seq.channelName(cid);
+      cpath = strsplit(name, '/');
+      if size(cpath, 2) ~= 2
+        error('Invalid NI channel "%s".', name);
+      end
+      dev_name = cpath{1};
+      matches = regexp(cpath{2}, '^([1-9]\d*)$', 'tokens');
+      if isempty(matches)
+        error('No NI channel number');
+      end
+      output_id = str2double(matches{1}{1});
+
+      if self.dry_run
+        nicid = self.nicid_count;
+        self.nicid_count = self.nicid_count + 1;
+      else
+        [~, nicid] = self.session.addAnalogOutputChannel(dev_name, ...
+                                                         output_id, 'Voltage');
+      end
+      self.cid_map(cid) = nicid;
+      self.cids(nicid) = cid;
     end
 
-    function generate(self, seq, cids)
-      %% TODO
-      %% use clock_div
+    function generate(self, cids)
+      if ~all(sort(cids), sort(self.cids))
+        error('Channel mismatch.');
+      end
+      data = self.seq.getValues(2e-6, self.cids);
+      if ~self.dry_run
+        self.session.queueOutputData(data);
+      end
     end
 
     function run(self, rep)
-      %% TODO
+      if ~self.dry_run
+        self.session.startBackground();
+      end
+    end
+
+    function wait(self, rep)
+      if ~self.dry_run
+        self.session.wait();
+      end
     end
   end
 end

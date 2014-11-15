@@ -36,8 +36,8 @@ classdef FPGABackend < PulseBackend
   end
 
   methods
-    function self = FPGABackend(varargin)
-      self = self@PulseBackend(varargin{:});
+    function self = FPGABackend(seq)
+      self = self@PulseBackend(seq);
       self.config = loadConfig();
       self.url = self.config.fpgaUrls('FPGA1');
     end

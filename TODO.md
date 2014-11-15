@@ -15,9 +15,7 @@
 ## Backend
 1. NiDACBackend
 
-    1. Generate data
-    2. Connect clock
-    3. Start run
+    1. Connect clock
 
 ## Misc
 1. Port to a real programming language.
@@ -32,9 +30,7 @@
 
 2. NiDACBackend
 
-    1. Generate data
-    2. Connect clock
-    3. Start run
+    1. Connect clock
 
 3. piecewise linear
 
