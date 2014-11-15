@@ -90,14 +90,17 @@ classdef FPGABackend < PulseBackend
       start_us = self.INIT_DELAY * 1e6;
       self.cmd_str = '';
       commands = {};
-
-      ttl_values = self.getTTLDefault();
-      commands{end + 1} = sprintf('t=%.2f,TTL(all)=%x\n', ...
-                                  start_us, ttl_values);
+      cmd_len = 0;
 
       nchn = size(cids, 2);
       total_t = self.seq.length();
       nstep = floor(total_t / MIN_DELAY);
+
+      ttl_values = self.getTTLDefault();
+      commands{cmd_len + min(nstep, 100000)} = [];
+      cmd_len = cmd_len + 1;
+      commands{cmd_len} = sprintf('t=%.2f,TTL(all)=%x\n', ...
+                                  start_us, ttl_values);
 
       pulse_mask = false(1, nchn);
       cur_pulses = cell(1, nchn);
@@ -123,10 +126,12 @@ classdef FPGABackend < PulseBackend
           chn_num = num_cache(cid);
           chn_type = type_cache(cid);
           if chn_type == DDS_FREQ
-            commands{end + 1} = sprintf('t=%.2f,freq(%d) = %f\n', ...
+            cmd_len = cmd_len + 1;
+            commands{cmd_len} = sprintf('t=%.2f,freq(%d) = %f\n', ...
                                         start_us, chn_num, cur_values(i));
           elseif chn_type == DDS_AMP
-            commands{end + 1} = sprintf('t=%.2f,amp(%d) = %f\n', ...
+            cmd_len = cmd_len + 1;
+            commands{cmd_len} = sprintf('t=%.2f,amp(%d) = %f\n', ...
                                         start_us, chn_num, cur_values(i));
           end
         end
@@ -138,7 +143,8 @@ classdef FPGABackend < PulseBackend
 
       if self.clock_div > 0
         start_us = start_us + self.CLOCK_DELAY * 1e6;
-        commands{end + 1} = sprintf('t=%.2f,CLOCK_OUT(%d)\n', ...
+        cmd_len = cmd_len + 1;
+        commands{cmd_len} = sprintf('t=%.2f,CLOCK_OUT(%d)\n', ...
                                     start_us, self.clock_div);
       end
       start_us = start_us + self.START_DELAY * 1e6; % global time offset
@@ -201,7 +207,8 @@ classdef FPGABackend < PulseBackend
                 if abs(cur_values(i) - val) >= 0.4
                   tus = glob_tidx * MIN_DELAY_US + start_us;
                   glob_tidx = glob_tidx + 1;
-                  commands{end + 1} = sprintf('t=%.2f,freq(%d)=%.1f\n', ...
+                  cmd_len = cmd_len + 1;
+                  commands{cmd_len} = sprintf('t=%.2f,freq(%d)=%.1f\n', ...
                                               tus, chn_num, val);
                   cur_values(i) = val;
                 end
@@ -211,7 +218,8 @@ classdef FPGABackend < PulseBackend
                 if abs(cur_values(i) - val) >= 0.0002
                   tus = glob_tidx * MIN_DELAY_US + start_us;
                   glob_tidx = glob_tidx + 1;
-                  commands{end + 1} = sprintf('t=%.2f,amp(%d)=%.4f\n', ...
+                  cmd_len = cmd_len + 1;
+                  commands{cmd_len} = sprintf('t=%.2f,amp(%d)=%.4f\n', ...
                                               tus, chn_num, val);
                   cur_values(i) = val;
                 end
@@ -291,6 +299,7 @@ classdef FPGABackend < PulseBackend
                   pulse_cache_range(pid, 2) = end_tidx;
                   pulse_cache{pid} = pobj.calcValue(ts, pulse{5}, ...
                                                     orig_values(i));
+                  commands{cmd_len + end_tidx - glob_tidx + 1000} = [];
                   break;
                 end
                 %% Forward to the end of the pulse since it is shorter than
@@ -318,7 +327,8 @@ classdef FPGABackend < PulseBackend
               if abs(cur_values(i) - val) >= 0.4
                 tus = glob_tidx * MIN_DELAY_US + start_us;
                 glob_tidx = glob_tidx + 1;
-                commands{end + 1} = sprintf('t=%.2f,freq(%d)=%.1f\n', ...
+                cmd_len = cmd_len + 1;
+                commands{cmd_len} = sprintf('t=%.2f,freq(%d)=%.1f\n', ...
                                             tus, chn_num, val);
                 cur_values(i) = val;
               end
@@ -328,7 +338,8 @@ classdef FPGABackend < PulseBackend
               if abs(cur_values(i) - val) >= 0.0002
                 tus = glob_tidx * MIN_DELAY_US + start_us;
                 glob_tidx = glob_tidx + 1;
-                commands{end + 1} = sprintf('t=%.2f,amp(%d)=%.4f\n', ...
+                cmd_len = cmd_len + 1;
+                commands{cmd_len} = sprintf('t=%.2f,amp(%d)=%.4f\n', ...
                                             tus, chn_num, val);
                 cur_values(i) = val;
               end
@@ -352,7 +363,8 @@ classdef FPGABackend < PulseBackend
             if abs(cur_values(i) - val) >= 0.4
               tus = glob_tidx * MIN_DELAY_US + start_us;
               glob_tidx = glob_tidx + 1;
-              commands{end + 1} = sprintf('t=%.2f,freq(%d)=%.1f\n', ...
+              cmd_len = cmd_len + 1;
+              commands{cmd_len} = sprintf('t=%.2f,freq(%d)=%.1f\n', ...
                                           tus, chn_num, val);
               cur_values(i) = val;
             end
@@ -362,7 +374,8 @@ classdef FPGABackend < PulseBackend
             if abs(cur_values(i) - val) >= 0.0002
               tus = glob_tidx * MIN_DELAY_US + start_us;
               glob_tidx = glob_tidx + 1;
-              commands{end + 1} = sprintf('t=%.2f,amp(%d)=%.4f\n', ...
+              cmd_len = cmd_len + 1;
+              commands{cmd_len} = sprintf('t=%.2f,amp(%d)=%.4f\n', ...
                                           tus, chn_num, val);
               cur_values(i) = val;
             end
@@ -374,7 +387,8 @@ classdef FPGABackend < PulseBackend
           ttl_values = new_ttl;
           tus = glob_tidx * MIN_DELAY_US + start_us;
           glob_tidx = glob_tidx + 1;
-          commands{end + 1} = sprintf('t=%.2f,TTL(all)=%x\n', ...
+          cmd_len = cmd_len + 1;
+          commands{cmd_len} = sprintf('t=%.2f,TTL(all)=%x\n', ...
                                       tus, ttl_values);
         end
 
@@ -388,13 +402,15 @@ classdef FPGABackend < PulseBackend
         %% This is a hack that is believed to make the NI card happy.
         tus = glob_tidx * MIN_DELAY_US + start_us;
         glob_tidx = glob_tidx + floor(self.FIN_CLOCK_DELAY / MIN_DELAY);
-        commands{end + 1} = sprintf('t=%.2f,CLOCK_OUT(100)\n', tus);
+        cmd_len = cmd_len + 1;
+        commands{cmd_len} = sprintf('t=%.2f,CLOCK_OUT(100)\n', tus);
       end
       %% We turn off the clock even when it is not used just as a place holder.
       %% for the end of the sequence.
       tus = glob_tidx * MIN_DELAY_US + start_us;
       glob_tidx = glob_tidx + 1;
-      commands{end + 1} = sprintf('t=%.2f,CLOCK_OUT(off)\n', tus);
+      cmd_len = cmd_len + 1;
+      commands{cmd_len} = sprintf('t=%.2f,CLOCK_OUT(off)\n', tus);
 
       %% Finally we construct and log the sequence.
       self.cmd_str = [commands{:}];
