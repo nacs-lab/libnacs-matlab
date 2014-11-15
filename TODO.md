@@ -3,33 +3,5 @@
 
 2. Absolute time object
 
-## Framework
-1. main sequence
-
-    1. name
-    2. findDriver
-    3. default value
-
-3. run sequence, priority
-
-## Backend
-1. NiDACBackend
-
-    1. Connect clock
-
 ## Misc
 1. Port to a real programming language.
-
-
-# Timeline
-1. main sequence
-
-    1. run sequence, priority
-
-2. NiDACBackend
-
-    1. Connect clock
-
-3. piecewise linear
-
-4. Absolute time object

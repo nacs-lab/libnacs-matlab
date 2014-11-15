@@ -76,9 +76,36 @@ classdef ExpSeq < ExpSeqBase
       end
     end
 
-    function run(self)
+    function run_async(self)
       self.generate();
-      %% TODO
+      drivers = {};
+      for driver = self.drivers.values()
+        drivers = [drivers; {driver, -driver.getPriority()}];
+      end
+      if ~isempty(drivers)
+        drivers = sortrows(drivers, [2]);
+      end
+      for i = 1:size(drivers, 1)
+        drivers{i, 1}.run();
+      end
+    end
+
+    function wait(self)
+      drivers = {};
+      for driver = self.drivers.values()
+        drivers = [drivers; {driver, -driver.getPriority()}];
+      end
+      if ~isempty(drivers)
+        drivers = sortrows(drivers, [2]);
+      end
+      for i = 1:size(drivers, 1)
+        drivers{i, 1}.wait();
+      end
+    end
+
+    function run(self)
+      self.run_async();
+      self.wait();
     end
   end
 
