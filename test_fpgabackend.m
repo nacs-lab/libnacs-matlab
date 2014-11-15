@@ -38,6 +38,7 @@ function test_fpgabackend()
   backend.initChannel(seq.translateChannel('FPGA1/DDS3/FREQ'));
   backend.initChannel(seq.translateChannel('FPGA1/DDS1/AMP'));
 
+  backend.initChannel(seq.translateChannel('FPGA1/TTL1'));
   backend.initChannel(seq.translateChannel('FPGA1/TTL2'));
   backend.initChannel(seq.translateChannel('FPGA1/TTL3'));
   backend.initChannel(seq.translateChannel('FPGA1/TTL5'));

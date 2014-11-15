@@ -194,6 +194,7 @@ classdef FPGABackend < PulseBackend
         next_tidx = nstep;
 
         for i = 1:nchn
+          cid = cids(i);
           if pulse_mask(i)
             %% Check pulse_mask first since it is the most likely case.
             pulse = cur_pulses{i};
@@ -204,8 +205,8 @@ classdef FPGABackend < PulseBackend
               %% variables, and proceed to the next channel.
               val = pulse_cache{pid}(glob_tidx - pulse_cache_range(pid, 1));
               next_tidx = glob_tidx + 1;
-              chn_type = type_cache(i);
-              chn_num = num_cache(i);
+              chn_type = type_cache(cid);
+              chn_num = num_cache(cid);
               if chn_type == DDS_FREQ
                 if abs(cur_values(i) - val) >= 0.4
                   tus = glob_tidx * MIN_DELAY_US + start_us;
@@ -320,8 +321,8 @@ classdef FPGABackend < PulseBackend
           %%     if we need to update the device using orig_values(i)
           if ~pulse_mask(i)
             val = orig_values(i);
-            chn_type = type_cache(i);
-            chn_num = num_cache(i);
+            chn_type = type_cache(cid);
+            chn_num = num_cache(cid);
             if chn_type == TTL_CHN
               val = logical(val);
               new_ttl = bitset(new_ttl, chn_num + 1, val);
@@ -356,8 +357,8 @@ classdef FPGABackend < PulseBackend
           pid = pulse{7};
           val = pulse_cache{pid}(glob_tidx - pulse_cache_range(pid, 1));
           next_tidx = glob_tidx + 1;
-          chn_type = type_cache(i);
-          chn_num = num_cache(i);
+          chn_type = type_cache(cid);
+          chn_num = num_cache(cid);
           if chn_type == TTL_CHN
             val = logical(val);
             cur_values(i) = val;
