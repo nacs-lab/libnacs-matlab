@@ -82,7 +82,7 @@ classdef FPGABackend < PulseBackend
 
       nchn = size(cids, 2);
       total_t = self.seq.length();
-      nstep = floor(total_t / dt);
+      nstep = floor(total_t / self.MIN_DELAY);
 
       pulse_mask = false(1, nchn);
       cur_pulses = cell(1, nchn);
@@ -90,8 +90,7 @@ classdef FPGABackend < PulseBackend
       pidxs = ones(1, nchn);
       %% The first command can only be run one time period after the clock_out
       %% command.
-      glob_itdx = 1;
-      tidxs = zeros(1, nchn);
+      glob_tidx = 1;
       all_pulses = cell(1, nchn);
       npulses = zeros(1, nchn);
       orig_values = zeros(1, nchn);
@@ -107,6 +106,7 @@ classdef FPGABackend < PulseBackend
         if self.type_cache(cid) ~= self.TTL_CHN
           t = t + self.MIN_DELAY * 10;
           chn_num = self.num_cache(cid);
+          chn_type = self.type_cache(cid);
           if chn_type == self.DDS_FREQ
             self.commands{end + 1} = sprintf('t=%.2f,freq(%d) = %f\n', ...
                                              t * 1e6, chn_num, cur_values(i));
@@ -135,14 +135,10 @@ classdef FPGABackend < PulseBackend
         %% time is glob_tidx * self.MIN_DELAY and the corresponding FPGA
         %% time is glob_tidx * self.MIN_DELAY + start_t
         %%
-        %% @tidxs the time index processed for this channel last time. For each
-        %% channel, each loop needs to propagate the channel from tidxs(i)
-        %% to right before glob_tidx + 1. (This might not be necessary).
-        %%
         %% @pidxs points to the pulse for each channel to be processed
         %% in @all_pulses (0 if there's not more pulses for the channel).
         %% It might point to non-existing pulse when the last pulse is being
-        %% processed.
+        %% processed. @pidxs should never points to a end pulse.
         %%
         %% @pulse_mask and @cur_pulses determines if there's a pulse running
         %% during the last time point (which might finish before the next
@@ -155,9 +151,7 @@ classdef FPGABackend < PulseBackend
         %%
         %% @cur_values is the value at the last time step this can be used
         %% to only update the channel when the value has changed by more than
-        %% the resolution. This might not be the same with the value at
-        %% tidxs(i) when the update last time is too small and it was uncessary
-        %% to generate a new command.
+        %% the resolution.
         %%
         %% @ttl_values is the value of all the TTL channels in the previous
         %% time point.
@@ -190,14 +184,13 @@ classdef FPGABackend < PulseBackend
               %% variables, and proceed to the next channel.
               val = pulse{3}.calcValue(t_seq - pulse{4}, pulse{5}, ...
                                        orig_values(i));
-              tidxs(i) = glob_tidx;
               next_tidx = glob_tidx + 1;
               chn_type = self.type_cache(i);
               chn_num = self.num_cache(i);
               if chn_type == self.TTL_CHN
                 val = logical(val);
                 cur_values(i) = val;
-                new_ttl = bitset(new_ttl, chn_num, val);
+                new_ttl = bitset(new_ttl, chn_num + 1, val);
               elseif chn_type == self.DDS_FREQ
                 if abs(cur_values(i) - val) >= 0.4
                   t = glob_tidx * self.MIN_DELAY + start_t;
@@ -233,7 +226,129 @@ classdef FPGABackend < PulseBackend
           %% value is necessary since we might need to finish up a previous
           %% pulse.
           %% Also needs to update next_tidx according to the next time pulse.
-          %% TODO
+
+          while true
+            pidx = pidxs(i);
+            if pidx > npulses(i)
+              pidxs(i) = 0;
+              break;
+            end
+
+            %% So the next pulse is good, let's process it.
+            pulse = all_pulses{i}(pidx, :);
+            %% Well, not quite yet, we need to make sure it is no later than
+            %% the next time point.
+            step_tidx = ceil(pulse{1} / self.MIN_DELAY);
+            if step_tidx > glob_tidx
+              %% if it is too late just update next_tidx to make sure we
+              %% catch it next time and exit.
+              next_tidx = min(next_tidx, step_tidx);
+              break;
+            end
+
+            %% So we have no excuse to not process this pulse this time.
+            %% Let's do it...
+            switch pulse{2}
+              case TimeType.Dirty
+                pidxs(i) = pidx + 1;
+                pulse_obj = pulse{3};
+                orig_values(i) = pulse_obj.calcValue(pulse{1} - pulse{4}, ...
+                                                     pulse{5}, orig_values(i));
+                continue;
+              case TimeType.Start
+                pidx = pidx + 1;
+                if pidx > npulses(i) || pulse{7} ~= all_pulses{i}{pidx, 7}
+                  error('Unmatch pulse start and end.');
+                end
+                pulse_end = all_pulses{i}(pidx, :);
+                end_tidx = ceil(pulse_end{1} / self.MIN_DELAY);
+                pidxs(i) = pidx + 1;
+                if end_tidx > glob_tidx
+                  %% If the pulse persists, record it and quit the loop.
+                  pulse_mask(i) = true;
+                  cur_pulses{i} = pulse_end;
+                  break;
+                end
+                pulse_obj = pulse{3};
+                %% Forward to the end of the pulse since it is shorter than
+                %% our time interval.
+                ptime = pulse_end{1} - pulse{4};
+                orig_values(i) = pulse_obj.calcValue(ptime, pulse{5}, ...
+                                                     orig_values(i));
+              otherwise
+                error('Invalid pulse type.');
+            end
+          end
+          %% There are three possibilities when we exit the loop
+          %% 1. Next pulse too late
+          %%     No pulse is currently running, but we do need to check
+          %%     if we need to update the device using orig_values(i)
+          if ~pulse_mask(i)
+            val = orig_values(i);
+            chn_type = self.type_cache(i);
+            chn_num = self.num_cache(i);
+            if chn_type == self.TTL_CHN
+              val = logical(val);
+              new_ttl = bitset(new_ttl, chn_num + 1, val);
+              cur_values(i) = val;
+            elseif chn_type == self.DDS_FREQ
+              if abs(cur_values(i) - val) >= 0.4
+                t = glob_tidx * self.MIN_DELAY + start_t;
+                glob_tidx = glob_tidx + 1;
+                self.commands{end + 1} = sprintf('t=%.2f,freq(%d)=%.1f\n', ...
+                                                 t * 1e6, chn_num, val);
+                cur_values(i) = val;
+              end
+            elseif chn_type == self.DDS_AMP
+              %% Maximum amplitude is 1.
+              val = min(1, val);
+              if abs(cur_values(i) - val) >= 0.0002
+                t = glob_tidx * self.MIN_DELAY + start_t;
+                glob_tidx = glob_tidx + 1;
+                self.commands{end + 1} = sprintf('t=%.2f,amp(%d)=%.4f\n', ...
+                                                 t * 1e6, chn_num, val);
+                cur_values(i) = val;
+              end
+            end
+            %% 2. End of pulse sequence
+            %%     Just proceed to the next channel.
+            if ~pidxs(i)
+              continue;
+            end
+          end
+
+          %% 3. Found a pulse that persists
+          %%     Calculate values for this pulse and run the next loop.
+          t_seq = glob_tidx * self.MIN_DELAY;
+          pulse = pulse_end;
+          val = pulse{3}.calcValue(t_seq - pulse{4}, pulse{5}, ...
+                                   orig_values(i));
+          next_tidx = glob_tidx + 1;
+          chn_type = self.type_cache(i);
+          chn_num = self.num_cache(i);
+          if chn_type == self.TTL_CHN
+            val = logical(val);
+            cur_values(i) = val;
+            new_ttl = bitset(new_ttl, chn_num + 1, val);
+          elseif chn_type == self.DDS_FREQ
+            if abs(cur_values(i) - val) >= 0.4
+              t = glob_tidx * self.MIN_DELAY + start_t;
+              glob_tidx = glob_tidx + 1;
+              self.commands{end + 1} = sprintf('t=%.2f,freq(%d)=%.1f\n', ...
+                                               t * 1e6, chn_num, val);
+              cur_values(i) = val;
+            end
+          elseif chn_type == self.DDS_AMP
+            %% Maximum amplitude is 1.
+            val = min(1, val);
+            if abs(cur_values(i) - val) >= 0.0002
+              t = glob_tidx * self.MIN_DELAY + start_t;
+              glob_tidx = glob_tidx + 1;
+              self.commands{end + 1} = sprintf('t=%.2f,amp(%d)=%.4f\n', ...
+                                               t * 1e6, chn_num, val);
+              cur_values(i) = val;
+            end
+          end
         end
 
         %% Now we need to update ttl values
@@ -342,9 +457,9 @@ classdef FPGABackend < PulseBackend
     end
 
     function val = getTTLDefault(self)
-      val = 0;
+      val = uint64(0);
       for i = 0:31
-        val = bitset(val, i, self.singleTTLDefault(i));
+        val = bitset(val, i + 1, self.singleTTLDefault(i));
       end
     end
 
