@@ -28,9 +28,7 @@ classdef TimeStep < TimeSeq
     function ret = addPulse(self, name, pulse)
       ret = self;
       cid = self.translateChannel(name);
-      if ~self.globChannelAvailable(cid, 0, self.len)
-        error('Overlaping pulses.');
-      elseif isnumeric(pulse)
+      if isnumeric(pulse)
         if ~isscalar(pulse)
           error('Pulse cannot be a non-scalar value.');
         end
@@ -38,6 +36,10 @@ classdef TimeStep < TimeSeq
       elseif ~isa(pulse, 'PulseBase')
         %% Treat as function
         pulse = FuncPulse(pulse);
+      end
+      [pstart, plen] = pulse.timeSpan(self.len);
+      if ~self.globChannelAvailable(cid, pstart, plen)
+        error('Overlaping pulses.');
       end
       if size(self.pulses, 2) < cid
         pulse_list = {};
