@@ -97,6 +97,7 @@ classdef FPGABackend < PulseBackend
       nstep = floor(total_t / MIN_DELAY);
 
       ttl_values = self.getTTLDefault();
+      %% Pre allocating memory
       commands{cmd_len + min(nstep, 100000)} = [];
       cmd_len = cmd_len + 1;
       commands{cmd_len} = sprintf('t=%.2f,TTL(all)=%x\n', ...
@@ -113,6 +114,8 @@ classdef FPGABackend < PulseBackend
       npulses = zeros(1, nchn);
       orig_values = zeros(1, nchn);
       cur_values = zeros(1, nchn);
+      %% Matlab seems to have special optimization for "for x = 1:y"
+      %% anything that is not exactly this form is much slower.
       for i = 1:nchn
         cid = cids(i);
         all_pulses{i} = self.seq.getPulseTimes(cid);
@@ -227,8 +230,6 @@ classdef FPGABackend < PulseBackend
                 val = logical(val);
                 cur_values(i) = val;
                 new_ttl = bitset(new_ttl, chn_num + 1, val);
-              else
-                error('Invalid channel type.');
               end
               continue;
             end
@@ -280,6 +281,7 @@ classdef FPGABackend < PulseBackend
                 continue;
               case TimeType.Start
                 pidx = pidx + 1;
+                %% Debug only
                 if pidx > npulses(i) || pulse{7} ~= all_pulses{i}{pidx, 7}
                   error('Unmatch pulse start and end.');
                 end
@@ -308,6 +310,7 @@ classdef FPGABackend < PulseBackend
                 orig_values(i) = pobj.calcValue(ptime, pulse{5}, ...
                                                 orig_values(i));
               otherwise
+                %% Debug only
                 error('Invalid pulse type.');
             end
           end
