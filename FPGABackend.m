@@ -21,9 +21,6 @@ classdef FPGABackend < PulseBackend
     num_cache = [];
     commands;
     cmd_str = '';
-
-    pulse_cache_offset;
-    pulse_cache;
   end
 
   properties(Constant, Hidden, Access=private)
@@ -45,8 +42,6 @@ classdef FPGABackend < PulseBackend
       self.config = loadConfig();
       self.url = self.config.fpgaUrls('FPGA1');
       self.commands = {};
-      self.pulse_cache_offset = [];
-      self.pulse_cache = {};
     end
 
     function initDev(self, did)
@@ -81,6 +76,9 @@ classdef FPGABackend < PulseBackend
       DDS_FREQ = self.DDS_FREQ;
       DDS_AMP = self.DDS_AMP;
       DDS_PHASE = self.DDS_PHASE;
+
+      pulse_cache_offset = [];
+      pulse_cache = {};
 
       t = self.INIT_DELAY;
       self.cmd_str = '';
@@ -184,8 +182,8 @@ classdef FPGABackend < PulseBackend
             %% Check pulse_mask first since it is the most likely case.
             pulse = cur_pulses{i};
             pid = pulse{7};
-            cache_idx = glob_tidx - self.pulse_cache_offset(pid);
-            cache = self.pulse_cache{pid};
+            cache_idx = glob_tidx - pulse_cache_offset(pid);
+            cache = pulse_cache{pid};
             if size(cache, 2) >= cache_idx;
               %% If the current pulse continues to the next time point,
               %% calculate the new value, add command, update necessary state
@@ -272,23 +270,26 @@ classdef FPGABackend < PulseBackend
                   error('Unmatch pulse start and end.');
                 end
                 pulse_end = all_pulses{i}(pidx, :);
-                end_tidx = ceil(pulse_end{1} / self.MIN_DELAY);
+                end_tidx = pulse_end{1} / self.MIN_DELAY;
                 pidxs(i) = pidx + 1;
-                if end_tidx > glob_tidx
+                pobj = pulse{3};
+                if ceil(end_tidx) > glob_tidx
                   %% If the pulse persists, record it and quit the loop.
                   pulse_mask(i) = true;
                   cur_pulses{i} = pulse_end;
                   %% Cache values so that we can use later.
-                  self.cachePulseVals(pulse{1}, pulse_end{1}, pulse, ...
-                                      orig_values(i));
+                  pid = pulse{7};
+                  ts = (glob_tidx:floor(end_tidx)) * self.MIN_DELAY - pulse{4};
+                  pulse_cache_offset(pid) = glob_tidx - 1;
+                  pulse_cache{pid} = pobj.calcValue(ts, pulse{5}, ...
+                                                    orig_values(i));
                   break;
                 end
-                pulse_obj = pulse{3};
                 %% Forward to the end of the pulse since it is shorter than
                 %% our time interval.
                 ptime = pulse_end{1} - pulse{4};
-                orig_values(i) = pulse_obj.calcValue(ptime, pulse{5}, ...
-                                                     orig_values(i));
+                orig_values(i) = pobj.calcValue(ptime, pulse{5}, ...
+                                                orig_values(i));
               otherwise
                 error('Invalid pulse type.');
             end
@@ -331,8 +332,8 @@ classdef FPGABackend < PulseBackend
           %%     Calculate values for this pulse and run the next loop.
           pulse = pulse_end;
           pid = pulse{7};
-          cache_idx = glob_tidx - self.pulse_cache_offset(pid);
-          val = self.pulse_cache{pid}(cache_idx);
+          cache_idx = glob_tidx - pulse_cache_offset(pid);
+          val = pulse_cache{pid}(cache_idx);
           next_tidx = glob_tidx + 1;
           chn_type = self.type_cache(i);
           chn_num = self.num_cache(i);
@@ -415,18 +416,6 @@ classdef FPGABackend < PulseBackend
   end
 
   methods(Access=private)
-    function cachePulseVals(self, tstart, tend, pulse, orig_value)
-      pid = pulse{7};
-      pobj = pulse{3};
-
-      tidx_start = ceil(tstart / self.MIN_DELAY);
-      tidx_end = floor(tend / self.MIN_DELAY);
-
-      ts = (tidx_start:tidx_end) * self.MIN_DELAY - pulse{4};
-      self.pulse_cache_offset(pid) = tidx_start - 1;
-      self.pulse_cache{pid} = pulse{3}.calcValue(ts, pulse{5}, orig_value);
-    end
-
     function [chn_type, chn_num] = parseCId(self, cid)
       cpath = strsplit(cid, '/');
       if strncmp(cpath{1}, 'TTL', 3)
