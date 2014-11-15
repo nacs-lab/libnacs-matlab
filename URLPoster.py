@@ -12,31 +12,33 @@
 # License along with this library.
 
 import requests
-from threading import Thread
+from http import client as http_client
+
+try:
+    import urlparse
+except ImportError:
+    import urllib.parse as urlparse
 
 class URLPoster(object):
     def __init__(self, url, data=None, files=None):
-        self.__url = url
-        self.__data = data
-        self.__files = files
-        self.__except = None
+        self.__req = requests.Request('POST', url, data=data,
+                                      files=files).prepare()
+        o = urlparse.urlparse(url)
+        if o.scheme == 'https':
+            self.__conn = http_client.HTTPSConnection(o.netloc)
+        else:
+            self.__conn = http_client.HTTPConnection(o.netloc)
 
-    def __post(self):
-        try:
-            self.__reply = requests.post(self.__url, data=self.__data,
-                                         files=self.__files)
-        except Exception as e:
-            self.__except = e
+    def _post(self):
+        return requests.post(self._url, data=self._data, files=self._files)
 
     def post(self):
-        self.__t = Thread(target=self.__post)
-        self.__t.start()
+        self.__conn.request('POST', self.__req.url, body=self.__req.body,
+                            headers=self.__req.headers)
 
     def reply(self):
-        self.__t.join()
-        if self.__except is not None:
-            raise self.__except
-        if self.__reply.status_code != 200:
+        res = self.__conn.getresponse()
+        if res.status != 200:
             # TODO use appropriate error
-            raise RuntimeError("HTTP error %d" % self.__reply.status_code)
-        return self.__reply.text
+            raise RuntimeError("HTTP error %d" % res.status)
+        return res.read()
