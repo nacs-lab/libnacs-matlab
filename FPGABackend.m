@@ -127,11 +127,11 @@ classdef FPGABackend < PulseBackend
           chn_type = type_cache(cid);
           if chn_type == DDS_FREQ
             cmd_len = cmd_len + 1;
-            commands{cmd_len} = sprintf('t=%.2f,freq(%d) = %f\n', ...
+            commands{cmd_len} = sprintf('t=%.2f,freq(%d)=%f\n', ...
                                         start_us, chn_num, cur_values(i));
           elseif chn_type == DDS_AMP
             cmd_len = cmd_len + 1;
-            commands{cmd_len} = sprintf('t=%.2f,amp(%d) = %f\n', ...
+            commands{cmd_len} = sprintf('t=%.2f,amp(%d)=%f\n', ...
                                         start_us, chn_num, cur_values(i));
           end
         end
