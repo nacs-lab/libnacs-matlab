@@ -77,6 +77,11 @@ classdef FPGABackend < PulseBackend
     end
 
     function generate(self, cids)
+      TTL_CHN = self.TTL_CHN;
+      DDS_FREQ = self.DDS_FREQ;
+      DDS_AMP = self.DDS_AMP;
+      DDS_PHASE = self.DDS_PHASE;
+
       t = self.INIT_DELAY;
       self.cmd_str = '';
       self.commands = {};
@@ -108,14 +113,14 @@ classdef FPGABackend < PulseBackend
         cur_values(i) = orig_values(i);
 
         %% TTL defaults are already set.
-        if self.type_cache(cid) ~= self.TTL_CHN
+        if self.type_cache(cid) ~= TTL_CHN
           t = t + self.MIN_DELAY * 10;
           chn_num = self.num_cache(cid);
           chn_type = self.type_cache(cid);
-          if chn_type == self.DDS_FREQ
+          if chn_type == DDS_FREQ
             self.commands{end + 1} = sprintf('t=%.2f,freq(%d) = %f\n', ...
                                              t * 1e6, chn_num, cur_values(i));
-          elseif chn_type == self.DDS_AMP
+          elseif chn_type == DDS_AMP
             self.commands{end + 1} = sprintf('t=%.2f,amp(%d) = %f\n', ...
                                              t * 1e6, chn_num, cur_values(i));
           end
@@ -189,7 +194,7 @@ classdef FPGABackend < PulseBackend
               next_tidx = glob_tidx + 1;
               chn_type = self.type_cache(i);
               chn_num = self.num_cache(i);
-              if chn_type == self.DDS_FREQ
+              if chn_type == DDS_FREQ
                 if abs(cur_values(i) - val) >= 0.4
                   t = glob_tidx * self.MIN_DELAY + start_t;
                   glob_tidx = glob_tidx + 1;
@@ -197,7 +202,7 @@ classdef FPGABackend < PulseBackend
                                                    t * 1e6, chn_num, val);
                   cur_values(i) = val;
                 end
-              elseif chn_type == self.DDS_AMP
+              elseif chn_type == DDS_AMP
                 %% Maximum amplitude is 1.
                 val = min(1, val);
                 if abs(cur_values(i) - val) >= 0.0002
@@ -207,7 +212,7 @@ classdef FPGABackend < PulseBackend
                                                    t * 1e6, chn_num, val);
                   cur_values(i) = val;
                 end
-              elseif chn_type == self.TTL_CHN
+              elseif chn_type == TTL_CHN
                 val = logical(val);
                 cur_values(i) = val;
                 new_ttl = bitset(new_ttl, chn_num + 1, val);
@@ -296,11 +301,11 @@ classdef FPGABackend < PulseBackend
             val = orig_values(i);
             chn_type = self.type_cache(i);
             chn_num = self.num_cache(i);
-            if chn_type == self.TTL_CHN
+            if chn_type == TTL_CHN
               val = logical(val);
               new_ttl = bitset(new_ttl, chn_num + 1, val);
               cur_values(i) = val;
-            elseif chn_type == self.DDS_FREQ
+            elseif chn_type == DDS_FREQ
               if abs(cur_values(i) - val) >= 0.4
                 t = glob_tidx * self.MIN_DELAY + start_t;
                 glob_tidx = glob_tidx + 1;
@@ -308,7 +313,7 @@ classdef FPGABackend < PulseBackend
                                                  t * 1e6, chn_num, val);
                 cur_values(i) = val;
               end
-            elseif chn_type == self.DDS_AMP
+            elseif chn_type == DDS_AMP
               %% Maximum amplitude is 1.
               val = min(1, val);
               if abs(cur_values(i) - val) >= 0.0002
@@ -331,11 +336,11 @@ classdef FPGABackend < PulseBackend
           next_tidx = glob_tidx + 1;
           chn_type = self.type_cache(i);
           chn_num = self.num_cache(i);
-          if chn_type == self.TTL_CHN
+          if chn_type == TTL_CHN
             val = logical(val);
             cur_values(i) = val;
             new_ttl = bitset(new_ttl, chn_num + 1, val);
-          elseif chn_type == self.DDS_FREQ
+          elseif chn_type == DDS_FREQ
             if abs(cur_values(i) - val) >= 0.4
               t = glob_tidx * self.MIN_DELAY + start_t;
               glob_tidx = glob_tidx + 1;
@@ -343,7 +348,7 @@ classdef FPGABackend < PulseBackend
                                                t * 1e6, chn_num, val);
               cur_values(i) = val;
             end
-          elseif chn_type == self.DDS_AMP
+          elseif chn_type == DDS_AMP
             %% Maximum amplitude is 1.
             val = min(1, val);
             if abs(cur_values(i) - val) >= 0.0002
