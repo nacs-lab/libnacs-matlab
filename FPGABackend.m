@@ -244,16 +244,17 @@ classdef FPGABackend < PulseBackend
             end
 
             %% So the next pulse is good, let's process it.
-            pulse = all_pulses{i}(pidx, :);
+            pulses = all_pulses{i};
             %% Well, not quite yet, we need to make sure it is no later than
             %% the next time point.
-            step_tidx = ceil(pulse{1} / self.MIN_DELAY);
+            step_tidx = ceil(pulses{pidx, 1} / self.MIN_DELAY);
             if step_tidx > glob_tidx
               %% if it is too late just update next_tidx to make sure we
               %% catch it next time and exit.
               next_tidx = min(next_tidx, step_tidx);
               break;
             end
+            pulse = pulses(pidx, :);
 
             %% So we have no excuse to not process this pulse this time.
             %% Let's do it...
