@@ -108,16 +108,16 @@ classdef TimeSeq < handle
           if ~isempty(dirty_times)
             for t = dirty_times
               res = [res; {t + toffset, int32(TimeType.Dirty), pulse_obj, ...
-                           toffset, step_len, cid, pulse_obj.id}];
+                           toffset, step_len, cid, pulse_obj.id, t}];
             end
           else
             %% Maybe treating a zero length pulse as hasDirtyTime?
             tstart = pulse{1};
             tlen = pulse{2};
             res = [res; {tstart, int32(TimeType.Start), pulse_obj, ...
-                         toffset, step_len, cid, pulse_obj.id}];
+                         toffset, step_len, cid, pulse_obj.id, 0}];
             res = [res; {tstart + tlen, int32(TimeType.End), pulse_obj, ...
-                         toffset, step_len, cid, pulse_obj.id}];
+                         toffset, step_len, cid, pulse_obj.id, tlen}];
           end
         end
       end
@@ -173,8 +173,7 @@ classdef TimeSeq < handle
             switch pulse{2}
               case TimeType.Dirty
                 pulse_obj = pulse{3};
-                cur_value = pulse_obj.calcValue(pulse{1} - pulse{4}, ...
-                                                pulse{5}, cur_value);
+                cur_value = pulse_obj.calcValue(pulse{8}, pulse{5}, cur_value);
                 pidx = pidx + 1;
                 if pidx > npulses
                   %% End of pulses

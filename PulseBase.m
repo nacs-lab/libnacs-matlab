@@ -42,6 +42,10 @@ classdef(Abstract) PulseBase < handle
     end
 
     function times = dirtyTime(self, ~)
+      %% Returns the time when the value changes. Return empty matrix if
+      %% this is a continuous ramp. For pulses that implement this function
+      %% calcValue should return the new value after the change when the input
+      %% time is the time returned by this function.
       times = [];
     end
   end

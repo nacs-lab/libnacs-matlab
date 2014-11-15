@@ -277,7 +277,7 @@ classdef FPGABackend < PulseBackend
               case TimeType.Dirty
                 pidxs(i) = pidx + 1;
                 pulse_obj = pulse{3};
-                orig_values(i) = pulse_obj.calcValue(pulse{1} - pulse{4}, ...
+                orig_values(i) = pulse_obj.calcValue(pulse{8}, ...
                                                      pulse{5}, orig_values(i));
                 continue;
               case TimeType.Start
