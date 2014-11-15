@@ -267,6 +267,14 @@ classdef TimeSeq < handle
         cid = self.chn_manager.getId(name);
       end
     end
+
+    function id = curPulseId(self)
+      if self.hasParent()
+        id = self.parent.curPulseId();
+      else
+        id = self.pulse_id_counter;
+      end
+    end
   end
 
   methods(Access=protected)

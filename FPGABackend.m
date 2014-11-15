@@ -77,8 +77,9 @@ classdef FPGABackend < PulseBackend
       DDS_AMP = self.DDS_AMP;
       DDS_PHASE = self.DDS_PHASE;
 
-      pulse_cache_offset = [];
-      pulse_cache = {};
+      max_pulse_id = self.seq.curPulseId();
+      pulse_cache_offset = zeros(1, max_pulse_id);
+      pulse_cache = cell(1, max_pulse_id);
 
       t = self.INIT_DELAY;
       self.cmd_str = '';
