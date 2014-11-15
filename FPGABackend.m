@@ -136,7 +136,7 @@ classdef FPGABackend < PulseBackend
         %%
         %% @tidxs the time index processed for this channel last time. For each
         %% channel, each loop needs to propagate the channel from tidxs(i)
-        %% to right before glob_tidx + 1.
+        %% to right before glob_tidx + 1. (This might not be necessary).
         %%
         %% @pidxs points to the pulse for each channel to be processed
         %% in @all_pulses (0 if there's not more pulses for the channel).
@@ -188,11 +188,27 @@ classdef FPGABackend < PulseBackend
               chn_type = self.type_cache(i);
               chn_num = self.num_cache(i);
               if chn_type == self.TTL_CHN
-                %% TODO update cur_values, ttl_values
+                val = logical(val);
+                cur_values(i) = val;
+                ttl_values = bitset(ttl_values, chn_num, val);
               elseif chn_type == self.DDS_FREQ
-                %% TODO update cur_values
+                if abs(cur_values(i) - val) >= 0.4
+                  t = glob_tidx * self.MIN_DELAY + start_t;
+                  glob_tidx = glob_tidx + 1;
+                  self.commands{end + 1} = sprintf('t=%.2f,freq(%d)=%.1f\n', ...
+                                                   t * 1e6, chn_num, val);
+                  cur_values(i) = val;
+                end
               elseif chn_type == self.DDS_AMP
-                %% TODO update cur_values
+                %% Maximum amplitude is 1.
+                val = min(1, val);
+                if abs(cur_values(i) - val) >= 0.0002
+                  t = glob_tidx * self.MIN_DELAY + start_t;
+                  glob_tidx = glob_tidx + 1;
+                  self.commands{end + 1} = sprintf('t=%.2f,amp(%d)=%.4f\n', ...
+                                                   t * 1e6, chn_num, val);
+                  cur_values(i) = val;
+                end
               else
                 error('Invalid channel type.');
               end
@@ -200,7 +216,8 @@ classdef FPGABackend < PulseBackend
             end
             %% Otherwise, finish up the pulse and proceed to check for
             %% new pulses.
-            %% TODO
+            %% TODO update pulse_mask, (cur_pulses can be leave unchanged)
+            %% orig_values, cur_values, ttl_values
           end
           %% Find and process pulses that starts no later than the next time
           %% point. If no new pulses are found we still need to check if a new
@@ -360,11 +377,11 @@ classdef FPGABackend < PulseBackend
     end
 
     function val = singleTTLDefault(self, chn)
-      val = uint64(0);
+      val = false;
       try
         cid = self.seq.findChannelId(sprintf('FPGA1/TTL%d', chn));
         if cid > 0 && self.seq.getDefaults(cid)
-          val = uint64(1);
+          val = true;
         end
       catch
       end
@@ -373,7 +390,7 @@ classdef FPGABackend < PulseBackend
     function val = getTTLDefault(self)
       val = 0;
       for i = 0:31
-        val = val | bitshift(self.singleTTLDefault(i), i);
+        val = bitset(val, i, self.singleTTLDefault(i));
       end
     end
 
