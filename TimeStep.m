@@ -25,6 +25,10 @@ classdef TimeStep < TimeSeq
       end
     end
 
+    function res = add(self, varargin)
+      res = self.addPulse(varargin{:});
+    end
+
     function ret = addPulse(self, name, pulse)
       ret = self;
       cid = self.translateChannel(name);
