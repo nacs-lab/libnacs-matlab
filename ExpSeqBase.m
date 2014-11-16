@@ -24,6 +24,11 @@ classdef ExpSeqBase < TimeSeq
       self = self@TimeSeq(varargin{:});
     end
 
+    function res = wait(self, t)
+      self.curTime = self.curTime + t;
+      res = self;
+    end
+
     function step = addStep(self, first_arg, varargin)
       %% addStep(len[, offset=0])
       %%     Add a #TimeStep with len and offset from the last step
