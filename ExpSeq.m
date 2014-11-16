@@ -16,6 +16,7 @@ classdef ExpSeq < ExpSeqBase
     drivers;
     driver_cids;
     generated = false;
+    default_override;
   end
 
   methods
@@ -29,6 +30,7 @@ classdef ExpSeq < ExpSeqBase
       self.drivers = containers.Map();
       self.driver_cids = containers.Map();
       self.name_map = containers.Map();
+      self.default_override = {};
     end
 
     function cid = translateChannel(self, name)
@@ -107,10 +109,22 @@ classdef ExpSeq < ExpSeqBase
       self.run_async();
       self.wait();
     end
+
+    function setDefault(self, name, val)
+      cid = self.translateChannel(name);
+      self.default_override{cid} = val;
+    end
   end
 
   methods(Acess=protected)
     function val = getDefault(self, cid)
+      try
+        val = self.default_override{cid};
+        if ~isempty(val)
+          return;
+        end
+      catch
+      end
       name = self.channelName(cid);
       try
         val = self.config.defaultVals(name);
