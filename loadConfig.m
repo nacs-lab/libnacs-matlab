@@ -29,6 +29,7 @@ classdef loadConfig < handle
 
   methods
     function self = loadConfig()
+      self.name_map = containers.Map();
       self.load();
     end
 
@@ -90,7 +91,7 @@ classdef loadConfig < handle
         self.name_map(name) = [];
         if self.channelAlias.isKey(cpath{1})
           cpath{1} = self.channelAlias(cpath{1});
-          res = self.transChnName(strjoin(cpath, '/'));
+          res = self.translateChannel(strjoin(cpath, '/'));
         else
           res = name;
         end
