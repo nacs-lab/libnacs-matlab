@@ -110,7 +110,8 @@ classdef ExpSeq < ExpSeqBase
       self.wait();
     end
 
-    function setDefault(self, name, val)
+    function res = setDefault(self, name, val)
+      res = self;
       cid = self.translateChannel(name);
       self.default_override{cid} = val;
     end
