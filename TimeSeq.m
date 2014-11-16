@@ -377,8 +377,8 @@ classdef TimeSeq < dynamicprops
         seq_t = self.subSeqs{i};
         sub_pulses = seq_t.seq.getPulsesRaw(cid);
 
-        for i = 1:size(sub_pulses, 1)
-          sub_tuple = sub_pulses(i, :);
+        for j = 1:size(sub_pulses, 1)
+          sub_tuple = sub_pulses(j, :);
           pulse_toffset = sub_tuple{1};
           pulse_len = sub_tuple{2};
           pulse_func = sub_tuple{3};
