@@ -11,7 +11,7 @@
 %% You should have received a copy of the GNU Lesser General Public
 %% License along with this library.
 
-classdef TimeSeq < handle
+classdef TimeSeq < dynamicprops
   properties
     config;
     logger;
@@ -51,6 +51,14 @@ classdef TimeSeq < handle
         if nargin >= 3
           self.len = len;
         end
+      end
+
+      function res = get_getter(val)
+        res = @(obj) val;
+      end
+      consts = self.config.consts;
+      for key = consts.keys()
+        self.addprop(key{:}).GetMethod = get_getter(consts(key{:}));
       end
     end
 
