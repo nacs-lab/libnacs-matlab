@@ -29,6 +29,25 @@ classdef ExpSeqBase < TimeSeq
       res = self;
     end
 
+    function step = add(self, name, pulse, len)
+      if isnumeric(pulse)
+        if nargins > 3
+          error('Too many arguments for ExpSeq.add');
+        end
+        %% TODO? find a better way to determine the step length or figure out
+        %% a way to add zero length pulse.
+        len = 1e-3;
+      end
+      self.addBackground(@(s) s.addStep(len).add(name, pulse));
+      step = self;
+    end
+
+    function step = addBackground(self, varargin)
+      old_time = self.curTime;
+      step = self.addStep(varargin{:});
+      self.curTime = old_time;
+    end
+
     function step = addStep(self, first_arg, varargin)
       %% addStep(len[, offset=0])
       %%     Add a #TimeStep with len and offset from the last step
