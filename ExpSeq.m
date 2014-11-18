@@ -29,7 +29,6 @@ classdef ExpSeq < ExpSeqBase
       self = self@ExpSeqBase(name);
       self.drivers = containers.Map();
       self.driver_cids = containers.Map();
-      self.name_map = containers.Map();
       self.default_override = {};
     end
 

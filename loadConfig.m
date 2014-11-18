@@ -66,8 +66,8 @@ classdef loadConfig < handle
 
       for key = pulseDrivers.keys()
         key = key{:};
-        if ischar(pulseDrivers(key))
-          pulseDrivers(key) = str2func(pulseDrivers(key));
+        if ~ischar(pulseDrivers(key))
+          error('pulseDrivers should be a string');
         end
       end
       self.pulseDrivers = pulseDrivers;
