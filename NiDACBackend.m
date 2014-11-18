@@ -40,7 +40,7 @@ classdef NiDACBackend < PulseBackend
       val = 1;
     end
 
-    function initDev(self, did)
+    function initDevLate(self, did)
       if ~self.clock_connected.isKey(did)
         self.clock_connected(did) = true;
         fpgadriver = self.seq.findDriver('FPGABackend');
@@ -76,6 +76,7 @@ classdef NiDACBackend < PulseBackend
       else
         [~, nicid] = self.session.addAnalogOutputChannel(dev_name, ...
                                                          output_id, 'Voltage');
+        self.initDevLate(div_name);
       end
       self.cid_map(cid) = nicid;
       self.cids(nicid) = cid;
