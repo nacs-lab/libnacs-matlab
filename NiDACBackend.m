@@ -13,28 +13,17 @@
 
 classdef NiDACBackend < PulseBackend
   properties(Hidden, Access=private)
-    dry_run = false;
     session;
-    nicid_count = 1;
     cid_map;
-    clock_connected;
     cids;
     data;
   end
 
   methods
-    function self = NiDACBackend(seq, dry_run)
+    function self = NiDACBackend(seq)
       self = self@PulseBackend(seq);
-      if nargin > 1
-        self.dry_run = dry_run;
-      else
-        self.dry_run = false;
-      end
-      if ~self.dry_run
-        self.session = daq.createSession('ni');
-        self.session.Rate = 5e5;
-      end
-      self.clock_connected = containers.Map();
+      self.cid_map = {};
+      self.cids = [];
     end
 
     function val = getPriority(self)
@@ -42,20 +31,6 @@ classdef NiDACBackend < PulseBackend
     end
 
     function initDev(self, did)
-    end
-
-    function initDevLate(self, did)
-      if ~self.clock_connected.isKey(did)
-        self.clock_connected(did) = true;
-        fpgadriver = self.seq.findDriver('FPGABackend');
-        fpgadriver.enableClockOut(101);
-        if ~self.dry_run
-          self.session.addClockConnection('external', ...
-                                          [did, '/', ...
-                                           self.seq.config.niClocks(did)], ...
-                                          'ScanClock');
-        end
-      end
     end
 
     function initChannel(self, cid)
@@ -74,16 +49,17 @@ classdef NiDACBackend < PulseBackend
       end
       output_id = str2double(matches{1}{1});
 
-      if self.dry_run
-        nicid = self.nicid_count;
-        self.nicid_count = self.nicid_count + 1;
-      else
-        [~, nicid] = self.session.addAnalogOutputChannel(dev_name, ...
-                                                         output_id, 'Voltage');
-        self.initDevLate(dev_name);
-      end
-      self.cid_map(cid) = nicid;
-      self.cids(nicid) = cid;
+      self.cid_map = [self.cid_map; {dev_name, output_id}];
+      self.cids(end + 1) = cid;
+    end
+
+    function connectClock(self, did)
+      fpgadriver = self.seq.findDriver('FPGABackend');
+      fpgadriver.enableClockOut(101);
+      self.session.addClockConnection('external', ...
+                                      [did, '/', ...
+                                       self.seq.config.niClocks(did)], ...
+                                      'ScanClock');
     end
 
     function generate(self, cids)
@@ -95,16 +71,28 @@ classdef NiDACBackend < PulseBackend
     end
 
     function run(self)
-      if ~self.dry_run
-        self.session.queueOutputData(self.data);
-        self.session.startBackground();
+      self.session = daq.createSession('ni');
+      self.session.Rate = 5e5;
+      inited_devs = containers.Map();
+
+      for i = 1:size(self.cids, 2)
+        cid = self.cids(i);
+        dev_name = self.cid_map{i, 1};
+        output_id = self.cid_map{i, 2};
+        self.session.addAnalogOutputChannel(dev_name, output_id, 'Voltage');
+        if ~inited_devs.isKey(dev_name)
+          self.connectClock(dev_name);
+          inited_devs(dev_name) = true;
+        end
       end
+      self.session.queueOutputData(self.data);
+      self.session.startBackground();
     end
 
     function wait(self)
-      if ~self.dry_run
-        self.session.wait();
-      end
+      self.session.wait();
+      delete(self.session);
+      self.session = [];
     end
   end
 end
