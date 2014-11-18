@@ -50,26 +50,53 @@ function runSeq(func, varargin)
   nseq = size(arglist, 2);
   seqlist = cell(1, nseq);
 
-  %% TODO generate next sequence while the last one is running.
-  for i = 1:nseq
-    seqlist{i} = func(arglist{i}{:});
-    seqlist{i}.generate();
+  function prepare_seq(idx)
+    if ~isempty(seqlist{idx})
+      return;
+    end
+    seqlist{idx} = func(arglist{idx}{:});
+    seqlist{idx}.generate();
+  end
+
+  function run_seq(idx, next_idx)
+    prepare_seq(idx);
+    seqlist{idx}.run_async();
+    if next_idx > 0
+      prepare_seq(next_idx);
+    end
+    seqlist{idx}.wait();
   end
 
   if random
     if rep <= 0
+      idx = randi(nseq);
       while true
-        idx = randi(nseq);
-        seqlist{idx}.run();
+        idx_new = randi(nseq);
+        run_seq(idx, idx_new);
+        idx = idx_new;
       end
     else
       idxs = repmat(1:nseq, [1, rep]);
-      glob_idxs = randperm(nseq * rep);
-      for i = 1:(nseq * rep)
-        seqlist{idxs(glob_idxs(i))}.run();
+      total_len = nseq * rep;
+      glob_idxs = randperm(total_len);
+      for i = 1:total_len
+        cur_idx = idxs(glob_idxs(i));
+        if cur_idx >= total_len
+          next_idx = 0;
+        else
+          next_idx = idxs(glob_idxs(i + 1));
+        end
+        run_seq(cur_idx, next_idx);
       end
     end
   else
+    for i = 1:nseq
+      if i < nseq
+        run_seq(i, i + 1);
+      else
+        seqlist{i}.run();
+      end
+    end
     if rep <= 0
       while true
         for i = 1:nseq
@@ -77,7 +104,7 @@ function runSeq(func, varargin)
         end
       end
     else
-      for j = 1:rep
+      for j = 2:rep
         for i = 1:nseq
           seqlist{i}.run();
         end
