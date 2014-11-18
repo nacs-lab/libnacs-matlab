@@ -41,4 +41,4 @@ class URLPoster(object):
         if res.status != 200:
             # TODO use appropriate error
             raise RuntimeError("HTTP error %d" % res.status)
-        return res.read()
+        return res.read().decode('utf-8', 'ignore')
