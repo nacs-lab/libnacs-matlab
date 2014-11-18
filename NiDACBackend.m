@@ -86,7 +86,7 @@ classdef NiDACBackend < PulseBackend
     end
 
     function generate(self, cids)
-      if ~all(sort(cids), sort(self.cids))
+      if ~all(sort(cids) == sort(self.cids))
         error('Channel mismatch.');
       end
       data = self.seq.getValues(2e-6, self.cids);
