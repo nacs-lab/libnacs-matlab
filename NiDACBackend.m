@@ -79,7 +79,7 @@ classdef NiDACBackend < PulseBackend
       else
         [~, nicid] = self.session.addAnalogOutputChannel(dev_name, ...
                                                          output_id, 'Voltage');
-        self.initDevLate(div_name);
+        self.initDevLate(dev_name);
       end
       self.cid_map(cid) = nicid;
       self.cids(nicid) = cid;
