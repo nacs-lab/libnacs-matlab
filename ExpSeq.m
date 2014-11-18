@@ -81,7 +81,7 @@ classdef ExpSeq < ExpSeqBase
       self.generate();
       drivers = {};
       for driver = self.drivers.values()
-        drivers = [drivers; {driver, -driver.getPriority()}];
+        drivers = [drivers; {driver{:}, -driver{:}.getPriority()}];
       end
       if ~isempty(drivers)
         drivers = sortrows(drivers, [2]);
@@ -94,7 +94,7 @@ classdef ExpSeq < ExpSeqBase
     function wait(self)
       drivers = {};
       for driver = self.drivers.values()
-        drivers = [drivers; {driver, -driver.getPriority()}];
+        drivers = [drivers; {driver{:}, -driver{:}.getPriority()}];
       end
       if ~isempty(drivers)
         drivers = sortrows(drivers, [2]);

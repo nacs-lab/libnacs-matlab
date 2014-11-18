@@ -19,6 +19,7 @@ classdef NiDACBackend < PulseBackend
     cid_map;
     clock_connected;
     cids;
+    data;
   end
 
   methods
@@ -89,14 +90,13 @@ classdef NiDACBackend < PulseBackend
       if ~all(sort(cids) == sort(self.cids))
         error('Channel mismatch.');
       end
-      data = self.seq.getValues(2e-6, self.cids);
-      if ~self.dry_run
-        self.session.queueOutputData(data);
-      end
+      cids = num2cell(self.cids);
+      self.data = self.seq.getValues(2e-6, cids{:})';
     end
 
     function run(self)
       if ~self.dry_run
+        self.session.queueOutputData(self.data);
         self.session.startBackground();
       end
     end
