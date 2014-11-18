@@ -81,7 +81,7 @@ function runSeq(func, varargin)
       glob_idxs = randperm(total_len);
       for i = 1:total_len
         cur_idx = idxs(glob_idxs(i));
-        if cur_idx >= total_len
+        if i >= total_len
           next_idx = 0;
         else
           next_idx = idxs(glob_idxs(i + 1));
