@@ -43,7 +43,7 @@ classdef NiDACBackend < PulseBackend
     function initDev(self, did)
       if ~self.clock_connected.isKey(did)
         self.clock_connected(did) = true;
-        fpgadriver = self.seq.findDriver('FPGAPulseBackend');
+        fpgadriver = self.seq.findDriver('FPGABackend');
         fpgadriver.enableClockOut(101);
         if ~self.dry_run
           self.session.addClockConnect('external', ...
