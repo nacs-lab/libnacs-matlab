@@ -40,6 +40,9 @@ classdef NiDACBackend < PulseBackend
       val = 1;
     end
 
+    function initDev(self, did)
+    end
+
     function initDevLate(self, did)
       if ~self.clock_connected.isKey(did)
         self.clock_connected(did) = true;
