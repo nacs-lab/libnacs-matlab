@@ -117,7 +117,7 @@ classdef ExpSeq < ExpSeqBase
     end
   end
 
-  methods(Acess=protected)
+  methods(Access=protected)
     function val = getDefault(self, cid)
       try
         val = self.default_override{cid};
