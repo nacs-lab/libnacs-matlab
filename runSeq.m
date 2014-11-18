@@ -94,7 +94,7 @@ function runSeq(func, varargin)
       if i < nseq
         run_seq(i, i + 1);
       else
-        seqlist{i}.run();
+        run_seq(i, 0);
       end
     end
     if rep <= 0
