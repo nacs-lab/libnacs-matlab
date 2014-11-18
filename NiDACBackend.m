@@ -67,7 +67,7 @@ classdef NiDACBackend < PulseBackend
         error('Invalid NI channel "%s".', name);
       end
       dev_name = cpath{1};
-      matches = regexp(cpath{2}, '^([1-9]\d*)$', 'tokens');
+      matches = regexp(cpath{2}, '^([1-9]\d*|0)$', 'tokens');
       if isempty(matches)
         error('No NI channel number');
       end

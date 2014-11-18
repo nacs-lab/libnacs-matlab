@@ -448,7 +448,7 @@ classdef FPGABackend < PulseBackend
         if size(cpath, 2) ~= 1
           error('Invalid TTL channel id "%s".', cid);
         end
-        matches = regexp(cpath{1}, '^TTL([1-9]\d*)$', 'tokens');
+        matches = regexp(cpath{1}, '^TTL([1-9]\d*|0)$', 'tokens');
         if isempty(matches)
           error('No TTL channel number');
         end
@@ -461,7 +461,7 @@ classdef FPGABackend < PulseBackend
         if size(cpath, 2) ~= 2
           error('Invalid DDS channel id "%s".', cid);
         end
-        matches = regexp(cpath{1}, '^DDS([1-9]\d*)$', 'tokens');
+        matches = regexp(cpath{1}, '^DDS([1-9]\d*|0)$', 'tokens');
         if isempty(matches)
           error('No DDS channel number');
         end
