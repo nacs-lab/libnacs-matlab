@@ -39,7 +39,7 @@ function runSeq(func, varargin)
         error('Invalid option %s.', arg);
       end
     elseif iscell(arg)
-      arglist = varargin{argidx:end};
+      arglist = {varargin{argidx:end}};
       break;
     else
       error('Invalid argument.');
