@@ -12,7 +12,19 @@
 %% License along with this library.
 
 function runSeq(func, varargin)
-  %% runSeq(func, [rep], ['random'], [{arguments}])
+  %% runSeq(func, [options], [{arguments}])
+  %%    @func: the function or otherwise callable object (or the name of it)
+  %%        to construct the sequence to run.
+  %%    @options (optional): parameter to define how the sequences are run.
+  %%        Currently supported options includes
+  %%        <number> (default: 1): How many times each sequence will be run.
+  %%            If the number is equal to 0, run the sequence continiously.
+  %%        'random': run the sequences in random order
+  %%    @arguments (optional, multiple): cell arrays of the arguments to
+  %%        construct the sequence. Each argument will be used to construct
+  %%        a sequence.
+  %%
+  %%    Run the sequence constructed by func.
   rep = 1;
   has_rep = false;
   random = false;
@@ -67,8 +79,12 @@ function runSeq(func, varargin)
     seqlist{idx}.wait();
   end
 
+  if rep < 0
+    error('Cannot run the sequence by negative times.');
+  end
+
   if random
-    if rep <= 0
+    if rep == 0
       idx = randi(nseq);
       while true
         idx_new = randi(nseq);
@@ -97,7 +113,7 @@ function runSeq(func, varargin)
         run_seq(i, 0);
       end
     end
-    if rep <= 0
+    if rep == 0
       while true
         for i = 1:nseq
           seqlist{i}.run();
