@@ -26,7 +26,7 @@ classdef FPGABackend < PulseBackend
   properties(Constant, Hidden, Access=private)
     INIT_DELAY = 100e-6;
     CLOCK_DELAY = 100e-6;
-    START_DELAY = 0.5e-6;
+    START_DELAY = 0.1e-6;
     FIN_CLOCK_DELAY = 100e-6;
     MIN_DELAY_REAL = 1e-6;
 
@@ -157,6 +157,7 @@ classdef FPGABackend < PulseBackend
         commands{cmd_len} = sprintf('t=%.2f,CLOCK_OUT(%d)\n', ...
                                     start_us, self.clock_div);
         if self.START_TRIGGER_TTL >= 0
+          start_us = start_us + self.MIN_DELAY_US * 10; % global time offset
           cmd_len = cmd_len + 1;
           commands{cmd_len} = sprintf('t=%.2f,TTL(%d)=1\n', ...
                                       start_us, self.START_TRIGGER_TTL);
@@ -421,9 +422,11 @@ classdef FPGABackend < PulseBackend
         cmd_len = cmd_len + 1;
         commands{cmd_len} = sprintf('t=%.2f,CLOCK_OUT(100)\n', tus);
         if self.START_TRIGGER_TTL >= 0
+          tus = glob_tidx * MIN_DELAY_US + start_us;
+          glob_tidx = glob_tidx + floor(self.FIN_CLOCK_DELAY / MIN_DELAY);
           cmd_len = cmd_len + 1;
-          commands{cmd_len} = sprintf('t=%.2f,TTL(%d)=0\n', ...
-                                      start_us, self.START_TRIGGER_TTL);
+          commands{cmd_len} = sprintf('t=%.2f,TTL(%d)=0\n', tus, ...
+                                      self.START_TRIGGER_TTL);
         end
       end
       %% We turn off the clock even when it is not used just as a place holder.
