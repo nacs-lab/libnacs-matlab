@@ -157,7 +157,7 @@ classdef FPGABackend < PulseBackend
         commands{cmd_len} = sprintf('t=%.2f,CLOCK_OUT(%d)\n', ...
                                     start_us, self.clock_div);
         if self.START_TRIGGER_TTL >= 0
-          start_us = start_us + self.MIN_DELAY_US * 10; % global time offset
+          start_us = start_us + MIN_DELAY_US * 10;
           cmd_len = cmd_len + 1;
           commands{cmd_len} = sprintf('t=%.2f,TTL(%d)=1\n', ...
                                       start_us, self.START_TRIGGER_TTL);
