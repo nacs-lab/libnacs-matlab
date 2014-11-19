@@ -473,7 +473,7 @@ classdef FPGABackend < PulseBackend
         if ~isfinite(chn_num) || chn_num < 0 || chn_num > 24 || ...
            mod(chn_num, 4) == 0
           error('Unconnected TTL channel %d.', chn_num);
-        elseif chn_num = self.START_TRIGGER_TTL
+        elseif chn_num == self.START_TRIGGER_TTL
           error('Channel conflict with start trigger');
         end
       elseif strncmp(cpath{1}, 'DDS', 3)
