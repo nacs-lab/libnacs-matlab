@@ -156,7 +156,7 @@ classdef TimeSeq < dynamicprops
 
         cur_value = self.getDefault(chn);
 
-        while pidx < npulses
+        while pidx <= npulses
           %% At the beginning of each loop, pidx points to the pulse to be
           %% processed, vidx points to the value to be filled, cur_value is the
           %% value of the channel right before vidx
