@@ -34,6 +34,8 @@ classdef FPGABackend < PulseBackend
     DDS_FREQ = 2;
     DDS_AMP = 3;
     DDS_PHASE = 4;
+
+    START_TRIGGER_TTL = 9;
   end
 
   methods
@@ -154,6 +156,11 @@ classdef FPGABackend < PulseBackend
         cmd_len = cmd_len + 1;
         commands{cmd_len} = sprintf('t=%.2f,CLOCK_OUT(%d)\n', ...
                                     start_us, self.clock_div);
+        if self.START_TRIGGER_TTL >= 0
+          cmd_len = cmd_len + 1;
+          commands{cmd_len} = sprintf('t=%.2f,TTL(%d)=1\n', ...
+                                      start_us, self.START_TRIGGER_TTL);
+        end
       end
       start_us = start_us + self.START_DELAY * 1e6; % global time offset
 
@@ -413,6 +420,11 @@ classdef FPGABackend < PulseBackend
         glob_tidx = glob_tidx + floor(self.FIN_CLOCK_DELAY / MIN_DELAY);
         cmd_len = cmd_len + 1;
         commands{cmd_len} = sprintf('t=%.2f,CLOCK_OUT(100)\n', tus);
+        if self.START_TRIGGER_TTL >= 0
+          cmd_len = cmd_len + 1;
+          commands{cmd_len} = sprintf('t=%.2f,TTL(%d)=0\n', ...
+                                      start_us, self.START_TRIGGER_TTL);
+        end
       end
       %% We turn off the clock even when it is not used just as a place holder.
       %% for the end of the sequence.
@@ -461,6 +473,8 @@ classdef FPGABackend < PulseBackend
         if ~isfinite(chn_num) || chn_num < 0 || chn_num > 24 || ...
            mod(chn_num, 4) == 0
           error('Unconnected TTL channel %d.', chn_num);
+        elseif chn_num = self.START_TRIGGER_TTL
+          error('Channel conflict with start trigger');
         end
       elseif strncmp(cpath{1}, 'DDS', 3)
         if size(cpath, 2) ~= 2

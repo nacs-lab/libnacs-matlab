@@ -25,6 +25,7 @@ classdef loadConfig < handle
     fpgaUrls;
 
     niClocks;
+    niStart;
   end
 
   methods
@@ -41,6 +42,7 @@ classdef loadConfig < handle
       channelAlias = containers.Map();
       defaultVals = containers.Map();
       niClocks = containers.Map();
+      niStart = containers.Map();
       consts = containers.Map();
 
       nacsConfig();
@@ -48,6 +50,7 @@ classdef loadConfig < handle
       self.logDir = logDir;
       self.fpgaUrls = fpgaUrls;
       self.niClocks = niClocks;
+      self.niStart = niStart;
       self.consts = consts;
 
       for key = channelAlias.keys()
