@@ -73,7 +73,7 @@ classdef NiDACBackend < PulseBackend
     end
 
     function generate(self, cids)
-      if ~all(sort(unique(cids)) == sort(self.cids))
+      if ~all(sort(cids) == sort(self.cids))
         error('Channel mismatch.');
       end
       cids = num2cell(self.cids);

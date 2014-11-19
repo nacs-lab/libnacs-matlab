@@ -40,7 +40,7 @@ classdef ExpSeq < ExpSeqBase
       cid = translateChannel@ExpSeqBase(self, name);
       driver.initChannel(cid);
       cur_cids = self.driver_cids(driver_name);
-      self.driver_cids(driver_name) = [cur_cids, cid];
+      self.driver_cids(driver_name) = unique([cur_cids, cid]);
     end
 
     function cid = findChannelId(self, name)
