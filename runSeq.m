@@ -76,7 +76,7 @@ function runSeq(func, varargin)
     if next_idx > 0
       prepare_seq(next_idx);
     end
-    seqlist{idx}.wait();
+    seqlist{idx}.waitFinish();
   end
 
   if rep < 0

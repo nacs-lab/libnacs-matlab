@@ -91,7 +91,7 @@ classdef ExpSeq < ExpSeqBase
       end
     end
 
-    function wait(self)
+    function waitFinish(self)
       drivers = {};
       for driver = self.drivers.values()
         drivers = [drivers; {driver{:}, -driver{:}.getPriority()}];
@@ -106,7 +106,7 @@ classdef ExpSeq < ExpSeqBase
 
     function run(self)
       self.run_async();
-      self.wait();
+      self.waitFinish();
     end
 
     function res = setDefault(self, name, val)
