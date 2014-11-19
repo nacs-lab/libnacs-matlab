@@ -27,7 +27,7 @@ classdef FPGABackend < PulseBackend
     INIT_DELAY = 100e-6;
     CLOCK_DELAY = 2e-6;
     START_DELAY = 0.1e-6;
-    FIN_CLOCK_DELAY = 100e-6;
+    FIN_CLOCK_DELAY = 30e-3;
     MIN_DELAY_REAL = 1e-6;
 
     TTL_CHN = 1;
@@ -169,8 +169,12 @@ classdef FPGABackend < PulseBackend
         cmd_len = cmd_len + 1;
         commands{cmd_len} = sprintf('t=%.2f,CLOCK_OUT(%d)\n', ...
                                     start_us, self.clock_div);
+        %% Delay everything by half a clock out cycle so that everything
+        %% updates at the same time.
+        start_us = start_us + self.clock_div * 10e-3;
+      else
+        start_us = start_us + self.START_DELAY * 1e6; % global time offset
       end
-      start_us = start_us + self.START_DELAY * 1e6; % global time offset
 
       %% We run the loop as long as there's any pulses left.
       while any(pidxs ~= 0)
@@ -427,7 +431,7 @@ classdef FPGABackend < PulseBackend
         tus = glob_tidx * MIN_DELAY_US + start_us;
         glob_tidx = glob_tidx + floor(self.FIN_CLOCK_DELAY / MIN_DELAY);
         cmd_len = cmd_len + 1;
-        commands{cmd_len} = sprintf('t=%.2f,CLOCK_OUT(100)\n', tus);
+        commands{cmd_len} = sprintf('t=%.2f,CLOCK_OUT(60)\n', tus);
       end
       %% We turn off the clock even when it is not used just as a place holder.
       %% for the end of the sequence.
@@ -473,7 +477,7 @@ classdef FPGABackend < PulseBackend
           error('No TTL channel number');
         end
         chn_num = str2double(matches{1}{1});
-        if ~isfinite(chn_num) || chn_num < 0 || chn_num > 24 || ...
+        if ~isfinite(chn_num) || chn_num < 0 || chn_num > 28 || ...
            mod(chn_num, 4) == 0
           error('Unconnected TTL channel %d.', chn_num);
         elseif chn_num == self.START_TRIGGER_TTL

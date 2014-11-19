@@ -34,7 +34,7 @@ classdef NiDACBackend < PulseBackend
 
     function initDev(self, did)
       fpgadriver = self.seq.findDriver('FPGABackend');
-      fpgadriver.enableClockOut(101);
+      fpgadriver.enableClockOut(100);
     end
 
     function initChannel(self, cid)
@@ -82,13 +82,11 @@ classdef NiDACBackend < PulseBackend
 
     function run(self)
       self.session = daq.createSession('ni');
-      if self.EXTERNAL_CLOCK
-        %% Setting to a higher rate cause the NI card to wait for much
-        %% more clock cycles after the sequence is finished.
-        self.session.Rate = 100;
-      else
-        self.session.Rate = 5e5;
-      end
+      %% Setting to a high clock rate makes the NI card to wait for more
+      %% clock cycles after the sequence finished. However, setting to
+      %% a rate lower than the real one cause the card to not update
+      %% at the end of the sequence.
+      self.session.Rate = 5e5;
       inited_devs = containers.Map();
 
       for i = 1:size(self.cids, 2)
