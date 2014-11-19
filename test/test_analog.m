@@ -12,16 +12,18 @@
 %% License along with this library.
 
 s = daq.createSession('ni');
-s.Rate = 5e5;
+s.Rate = 100;
 s.addAnalogOutputChannel('Dev2', 0, 'Voltage');
 s.addTriggerConnection('External', 'Dev2/PFI1', 'StartTrigger');
 s.addClockConnection('External', 'Dev2/PFI0', 'ScanClock');
 s.addAnalogOutputChannel('Dev2', 1, 'Voltage');
 s.addAnalogOutputChannel('Dev2', 2, 'Voltage');
-s.addAnalogOutputChannel('Dev2', 3, 'Voltage');
-s.queueOutputData(zeros(6, 4));
+s.addAnalogOutputChannel('Dev2', 4, 'Voltage');
+data = zeros(6, 4);
+data(2:4, 4) = 1;
+s.queueOutputData(data);
 s.startBackground();
 disp('Start Pause');
-pause(10);
+pause(3);
 disp('Finish Pause');
 s.wait();

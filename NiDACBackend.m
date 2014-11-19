@@ -17,6 +17,8 @@ classdef NiDACBackend < PulseBackend
     cid_map;
     cids;
     data;
+
+    EXTERNAL_CLOCK = true;
   end
 
   methods
@@ -61,6 +63,9 @@ classdef NiDACBackend < PulseBackend
                                         [did, '/', ...
                                          self.seq.config.niStart(did)], ...
                                         'StartTrigger');
+      if ~self.EXTERNAL_CLOCK
+        return;
+      end
       self.session.addClockConnection('External', ...
                                       [did, '/', ...
                                        self.seq.config.niClocks(did)], ...
@@ -77,7 +82,13 @@ classdef NiDACBackend < PulseBackend
 
     function run(self)
       self.session = daq.createSession('ni');
-      self.session.Rate = 5e5;
+      if self.EXTERNAL_CLOCK
+        %% Setting to a higher rate cause the NI card to wait for much
+        %% more clock cycles after the sequence is finished.
+        self.session.Rate = 100;
+      else
+        self.session.Rate = 5e5;
+      end
       inited_devs = containers.Map();
 
       for i = 1:size(self.cids, 2)
