@@ -32,6 +32,8 @@ classdef ExpSeq < ExpSeqBase
       self.drivers = containers.Map();
       self.driver_cids = containers.Map();
       self.default_override = {};
+
+      self.logDefault();
     end
 
     function cid = translateChannel(self, name)
@@ -130,6 +132,9 @@ classdef ExpSeq < ExpSeqBase
       res = self;
       cid = self.translateChannel(name);
       self.default_override{cid} = val;
+
+      self.logf('# Override default value %s(%s) = %f', ...
+                name, self.channelName(cid), val);
     end
   end
 
@@ -156,6 +161,13 @@ classdef ExpSeq < ExpSeqBase
       driver_name = self.config.pulseDrivers(did);
       driver = self.findDriver(driver_name);
       driver.initDev(did);
+    end
+
+    function logDefault(self)
+      for key = self.config.defaultVals.keys
+        self.logf('# Default value %s = %f', ...
+                  key{:}, self.config.defaultVals(key{:}));
+      end
     end
   end
 end
