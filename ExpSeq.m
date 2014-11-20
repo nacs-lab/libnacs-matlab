@@ -153,8 +153,8 @@ classdef ExpSeq < ExpSeqBase
 
       cids = [];
       names = {};
-      for i = 2:nargin
-        arg = vargargin{i};
+      for i = 1:(nargin - 1)
+        arg = varargin{i};
         if ~ischar(arg)
           error('Channel name has to be a string');
         end
