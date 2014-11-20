@@ -70,9 +70,9 @@ function runSeq(func, varargin)
     global nacsTimeSeqNameSuffixHack;
     nacsTimeSeqDisableRunHack = 1;
     if is_random
-      nacsTimeSeqNameSuffixHack = sprintf('-runRandom_%d-%d', idx, rep);
+      nacsTimeSeqNameSuffixHack = sprintf('-runRandom_%d-%d', idx, nseq);
     else
-      nacsTimeSeqNameSuffixHack = sprintf('-runSeq_%d-%d', idx, rep);
+      nacsTimeSeqNameSuffixHack = sprintf('-runSeq_%d-%d', idx, nseq);
     end
     seqlist{idx} = func(arglist{idx}{:});
     nacsTimeSeqDisableRunHack = 0;
