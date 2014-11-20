@@ -27,7 +27,7 @@ function runSeq(func, varargin)
   %%    Run the sequence constructed by func.
   rep = 1;
   has_rep = false;
-  random = false;
+  is_random = false;
 
   arglist = {{}};
 
@@ -46,7 +46,7 @@ function runSeq(func, varargin)
       rep = arg;
     elseif ischar(arg)
       if strcmp(arg, 'random')
-        random = true;
+        is_random = true;
       else
         error('Invalid option %s.', arg);
       end
@@ -69,7 +69,7 @@ function runSeq(func, varargin)
     global nacsTimeSeqDisableRunHack;
     global nacsTimeSeqNameSuffixHack;
     nacsTimeSeqDisableRunHack = 1;
-    if random
+    if is_random
       nacsTimeSeqNameSuffixHack = sprintf('-runRandom_%d-%d', idx, rep);
     else
       nacsTimeSeqNameSuffixHack = sprintf('-runSeq_%d-%d', idx, rep);
@@ -93,7 +93,7 @@ function runSeq(func, varargin)
     error('Cannot run the sequence by negative times.');
   end
 
-  if random
+  if is_random
     if rep == 0
       idx = randi(nseq);
       while true
