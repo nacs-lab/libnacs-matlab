@@ -17,6 +17,7 @@ classdef ExpSeq < ExpSeqBase
     driver_cids;
     generated = false;
     default_override;
+    orig_channel_names;
   end
 
   methods
@@ -32,16 +33,24 @@ classdef ExpSeq < ExpSeqBase
       self.drivers = containers.Map();
       self.driver_cids = containers.Map();
       self.default_override = {};
+      self.orig_channel_names = {};
 
       self.logDefault();
     end
 
     function cid = translateChannel(self, name)
+      orig_name = name;
       name = self.config.translateChannel(name);
       cpath = strsplit(name, '/');
       did = cpath{1};
       [driver, driver_name] = self.initDeviceDriver(did);
       cid = translateChannel@ExpSeqBase(self, name);
+
+      if (cid > size(self.orig_channel_names, 2) || ...
+          isempty(self.orig_channel_names{cid}))
+        self.orig_channel_names{cid} = orig_name;
+      end
+
       driver.initChannel(cid);
       cur_cids = self.driver_cids(driver_name);
       self.driver_cids(driver_name) = unique([cur_cids, cid]);
