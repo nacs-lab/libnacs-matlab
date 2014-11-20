@@ -145,6 +145,52 @@ classdef ExpSeq < ExpSeqBase
       self.logf('# Override default value %s(%s) = %f', ...
                 name, self.channelName(cid), val);
     end
+
+    function plot(self, varargin)
+      if nargin <= 1
+        error('Please specify at least one channel to plot.');
+      end
+
+      cids = [];
+      names = {};
+      for i = 2:nargin
+        arg = vargargin{i};
+        if ~ischar(arg)
+          error('Channel name has to be a string');
+        end
+        if arg(end) == '/'
+          matches = regexp(arg, '^(.*[^/])/*$', 'tokens');
+          prefix = self.config.translateChannel(matches{1}{1});
+          prefix_len = size(prefix, 2);
+
+          for cid = 1:size(self.orig_channel_names, 2)
+            orig_name = self.orig_channel_names{cid};
+            if isempty(orig_name)
+              continue;
+            end
+            name = self.config.translateChannel(orig_name);
+            if strncmp(prefix, name, prefix_len)
+              cids(end + 1) = cid;
+              names{end + 1} = orig_name;
+            end
+          end
+        else
+          try
+            cid = self.findChannelId(arg);
+          catch
+            error('Channel does not exist.');
+          end
+          cids(end + 1) = cid;
+          names{end + 1} = arg;
+        end
+      end
+
+      if size(cids, 2) == 0
+        error('No channel to plot.');
+      end
+
+      self.plotReal(cids, names);
+    end
   end
 
   methods(Access=protected)
@@ -177,6 +223,17 @@ classdef ExpSeq < ExpSeqBase
         self.logf('# Default value %s = %f', ...
                   key{:}, self.config.defaultVals(key{:}));
       end
+    end
+
+    function plotReal(self, cids, names)
+      cids = num2cell(cids);
+      len = self.length();
+      dt = len / 1e4;
+      data = self.getValues(dt, cids{:})';
+      ts = (1:size(data, 1)) * dt;
+      plot(ts, data);
+      xlabel('t / s');
+      legend(names{:});
     end
   end
 end
