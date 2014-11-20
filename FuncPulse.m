@@ -14,15 +14,23 @@
 classdef FuncPulse < PulseBase
   properties(Access=private)
     func;
+    narg;
   end
 
   methods
     function self = FuncPulse(func)
       self = self@PulseBase();
       self.func = func;
+      self.narg = nargin(func);
     end
     function val = calcValue(self, t, len, old_val)
-      val = self.func(t, len, old_val);
+      if self.narg == 1
+        val = self.func(t);
+      elseif self.narg == 2
+        val = self.func(t, len);
+      else
+        val = self.func(t, len, old_val);
+      end
     end
   end
 end
