@@ -18,6 +18,14 @@ classdef jumpTo < PulseBase
   end
 
   methods
+    function val = getVal(self)
+      val = self.val;
+    end
+
+    function time = getTime(self)
+      time = self.time;
+    end
+
     function self = jumpTo(v, t)
       self = self@PulseBase();
       if nargin <= 1
