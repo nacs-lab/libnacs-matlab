@@ -53,6 +53,10 @@ classdef TimeStep < TimeSeq
       pulse.id = self.nextPulseId();
       pulse_list{end + 1} = pulse;
       self.pulses{cid} = pulse_list;
+
+      self.logf('# Pulse(id=%d) added to TimeStep(id=%d)', ...
+                pulse.id, self.seq_id);
+      self.log(['# Pulse type: ', pulse.toString()]);
     end
   end
 

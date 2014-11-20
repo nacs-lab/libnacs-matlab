@@ -18,12 +18,8 @@ classdef jumpTo < PulseBase
   end
 
   methods
-    function val = getVal(self)
-      val = self.val;
-    end
-
-    function time = getTime(self)
-      time = self.time;
+    function s = toString(self)
+      s = sprintf('jumpTo(val=%f, time=%f)', self.val, self.time);
     end
 
     function self = jumpTo(v, t)

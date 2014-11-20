@@ -20,6 +20,7 @@ classdef TimeSeq < dynamicprops
 
   properties(Hidden, Access=protected)
     len = 0;
+    seq_id;
   end
 
   properties(Hidden, Access=private)
@@ -28,7 +29,6 @@ classdef TimeSeq < dynamicprops
     parent = 0;
     pulse_id_counter = 0;
     seq_id_counter = 0;
-    seq_id;
   end
 
   methods
@@ -63,7 +63,7 @@ classdef TimeSeq < dynamicprops
         self.addprop(key{:}).GetMethod = get_getter(consts(key{:}));
       end
 
-      self.logf('# TimeSeq id=%d created.', self.seq_id);
+      self.logf('# TimeSeq(id=%d) created.', self.seq_id);
     end
 
     function res = logFile(self)
@@ -365,8 +365,8 @@ classdef TimeSeq < dynamicprops
       end
       sub_seq.seq_id = self.nextSeqId();
       self.subSeqs{end + 1} = struct('offset', toffset, 'seq', sub_seq);
-      self.logf(['# Adding sub sequence id=%d ', ...
-                 '@ toffset=%f to sequence id=%d'], ...
+      self.logf(['# Adding sub sequence(id=%d) ', ...
+                 '@ toffset=%f to sequence(id=%d)'], ...
                 sub_seq.seq_id, toffset, self.seq_id);
     end
 

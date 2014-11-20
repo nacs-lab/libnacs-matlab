@@ -18,11 +18,20 @@ classdef FuncPulse < PulseBase
   end
 
   methods
+    function s = toString(self)
+      try
+        s = sprintf('FuncPulse(func=%s)', char(self.func));
+      catch
+        s = 'FuncPulse(func=<unknown>)';
+      end
+    end
+
     function self = FuncPulse(func)
       self = self@PulseBase();
       self.func = func;
       self.narg = nargin(func);
     end
+
     function val = calcValue(self, t, len, old_val)
       if self.narg == 1
         val = self.func(t);

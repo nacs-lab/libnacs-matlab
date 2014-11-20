@@ -21,6 +21,10 @@ classdef(Abstract) PulseBase < handle
   end
 
   methods
+    function s = toString(self)
+      s = [class(self), '()'];
+    end
+
     function self = PulseBase()
     end
 
