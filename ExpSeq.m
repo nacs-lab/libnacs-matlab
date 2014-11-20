@@ -174,6 +174,20 @@ classdef ExpSeq < ExpSeqBase
               names{end + 1} = orig_name;
             end
           end
+        elseif arg(1) == '~'
+          arg = arg(2:end);
+
+          for cid = 1:size(self.orig_channel_names, 2)
+            orig_name = self.orig_channel_names{cid};
+            if isempty(orig_name)
+              continue;
+            end
+            name = self.config.translateChannel(orig_name);
+            if ~isempty(regexp(name, arg))
+              cids(end + 1) = cid;
+              names{end + 1} = orig_name;
+            end
+          end
         else
           try
             cid = self.findChannelId(arg);
