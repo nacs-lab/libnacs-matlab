@@ -62,6 +62,10 @@ classdef TimeSeq < dynamicprops
       end
     end
 
+    function res = logFile(self)
+      res = self.logger.getPath();
+    end
+
     function log(self, s)
       self.logger.log(s);
     end

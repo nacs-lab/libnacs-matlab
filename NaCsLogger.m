@@ -14,6 +14,7 @@
 classdef NaCsLogger < handle
   properties(Hidden, Access=protected)
     fd = -1;
+    fpath;
   end
 
   methods
@@ -29,9 +30,13 @@ classdef NaCsLogger < handle
       end
       timestamp = datestr(now, 'yyyy-mm-dd_HH-MM-SS');
       fname = [name, '-', timestamp, '.log'];
-      fpath = fullfile(log_dir, fname);
+      self.fpath = fullfile(log_dir, fname);
 
-      self.fd = fopen(fpath, 'a');
+      self.fd = fopen(self.fpath, 'a');
+    end
+
+    function res = getPath(self)
+      res = self.fpath;
     end
 
     function delete(self)
