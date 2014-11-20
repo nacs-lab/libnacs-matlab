@@ -27,6 +27,8 @@ classdef TimeSeq < dynamicprops
     tOffset;
     parent = 0;
     pulse_id_counter = 0;
+    seq_id_counter = 0;
+    seq_id;
   end
 
   methods
@@ -60,6 +62,8 @@ classdef TimeSeq < dynamicprops
       for key = consts.keys()
         self.addprop(key{:}).GetMethod = get_getter(consts(key{:}));
       end
+
+      self.logf('# TimeSeq id=%d created.', self.seq_id);
     end
 
     function res = logFile(self)
@@ -298,6 +302,15 @@ classdef TimeSeq < dynamicprops
       end
     end
 
+    function id = nextSeqId(self)
+      if self.hasParent()
+        id = self.parent.nextSeqId();
+      else
+        self.seq_id_counter = self.seq_id_counter + 1;
+        id = self.seq_id_counter;
+      end
+    end
+
     function res = getPulses(self, cid)
       %% Return a array of tuples (toffset, length, pulse_obj,
       %%                           step_start, step_len, cid)
@@ -350,7 +363,11 @@ classdef TimeSeq < dynamicprops
       if sub_seq.hasParent() && sub_seq.getParent() ~= self
         error('Reparenting time sequence is not allowed.');
       end
+      sub_seq.seq_id = self.nextSeqId();
       self.subSeqs{end + 1} = struct('offset', toffset, 'seq', sub_seq);
+      self.logf(['# Adding sub sequence id=%d ', ...
+                 '@ toffset=%f to sequence id=%d'], ...
+                sub_seq.seq_id, toffset, self.seq_id);
     end
 
     function avail = channelAvailable(self, cid, t, dt)
