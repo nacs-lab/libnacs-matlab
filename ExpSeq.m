@@ -63,6 +63,8 @@ classdef ExpSeq < ExpSeqBase
 
     function generate(self)
       if ~self.generated
+        disp('Generating ...');
+        self.log(['# Generating @ ', datestr(now, 'yyyy-mm-dd_HH-MM-SS')]);
         for key = self.drivers.keys()
           driver_name = key{:};
           driver = self.drivers(driver_name);
@@ -92,9 +94,12 @@ classdef ExpSeq < ExpSeqBase
       if ~isempty(drivers)
         drivers = sortrows(drivers, [2]);
       end
+      disp('Running ...');
+      self.log(['# Start running @ ', datestr(now, 'yyyy-mm-dd_HH-MM-SS')]);
       for i = 1:size(drivers, 1)
         drivers{i, 1}.run();
       end
+      self.log(['# Started @ ', datestr(now, 'yyyy-mm-dd_HH-MM-SS')]);
     end
 
     function waitFinish(self)
@@ -109,9 +114,11 @@ classdef ExpSeq < ExpSeqBase
       if ~isempty(drivers)
         drivers = sortrows(drivers, [2]);
       end
+      self.log(['# Start waiting @ ', datestr(now, 'yyyy-mm-dd_HH-MM-SS')]);
       for i = 1:size(drivers, 1)
         drivers{i, 1}.wait();
       end
+      self.log(['# Done @ ', datestr(now, 'yyyy-mm-dd_HH-MM-SS')]);
     end
 
     function run(self)
