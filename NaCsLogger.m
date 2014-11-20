@@ -33,6 +33,8 @@ classdef NaCsLogger < handle
       self.fpath = fullfile(log_dir, fname);
 
       self.fd = fopen(self.fpath, 'a');
+
+      disp(['Log "', self.fpath, '" created.']);
     end
 
     function res = getPath(self)
