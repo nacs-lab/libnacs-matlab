@@ -26,6 +26,8 @@ classdef ExpSeq < ExpSeqBase
       elseif ~ischar(name)
         error('Sequence name must be a string.');
       end
+      global nacsTimeSeqNameSuffixHack;
+      name = [name, nacsTimeSeqNameSuffixHack];
       self = self@ExpSeqBase(name);
       self.drivers = containers.Map();
       self.driver_cids = containers.Map();

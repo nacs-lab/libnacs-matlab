@@ -67,9 +67,16 @@ function runSeq(func, varargin)
       return;
     end
     global nacsTimeSeqDisableRunHack;
+    global nacsTimeSeqNameSuffixHack;
     nacsTimeSeqDisableRunHack = 1;
+    if random
+      nacsTimeSeqNameSuffixHack = sprintf('-runRandom_%d-%d', idx, rep);
+    else
+      nacsTimeSeqNameSuffixHack = sprintf('-runSeq_%d-%d', idx, rep);
+    end
     seqlist{idx} = func(arglist{idx}{:});
     nacsTimeSeqDisableRunHack = 0;
+    nacsTimeSeqNameSuffixHack = [];
     seqlist{idx}.generate();
   end
 
