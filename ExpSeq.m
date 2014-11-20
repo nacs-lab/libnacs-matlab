@@ -79,6 +79,10 @@ classdef ExpSeq < ExpSeqBase
 
     function run_async(self)
       self.generate();
+      global nacsTimeSeqDisableRunHack;
+      if ~isempty(nacsTimeSeqDisableRunHack) && nacsTimeSeqDisableRunHack
+        return;
+      end
       drivers = {};
       for driver = self.drivers.values()
         drivers = [drivers; {driver{:}, -driver{:}.getPriority()}];
@@ -92,6 +96,10 @@ classdef ExpSeq < ExpSeqBase
     end
 
     function waitFinish(self)
+      global nacsTimeSeqDisableRunHack;
+      if ~isempty(nacsTimeSeqDisableRunHack) && nacsTimeSeqDisableRunHack
+        return;
+      end
       drivers = {};
       for driver = self.drivers.values()
         drivers = [drivers; {driver{:}, -driver{:}.getPriority()}];

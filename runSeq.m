@@ -66,7 +66,10 @@ function runSeq(func, varargin)
     if ~isempty(seqlist{idx})
       return;
     end
+    global nacsTimeSeqDisableRunHack;
+    nacsTimeSeqDisableRunHack = 1;
     seqlist{idx} = func(arglist{idx}{:});
+    nacsTimeSeqDisableRunHack = 0;
     seqlist{idx}.generate();
   end
 
