@@ -32,7 +32,7 @@ classdef TimeStep < TimeSeq
     function ret = addPulse(self, name, pulse)
       ret = self;
       cid = self.translateChannel(name);
-      if isnumeric(pulse)
+      if isnumeric(pulse) || islogical(pulse)
         if ~isscalar(pulse)
           error('Pulse cannot be a non-scalar value.');
         end
