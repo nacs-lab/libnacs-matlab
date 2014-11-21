@@ -293,6 +293,13 @@ classdef TimeSeq < dynamicprops
   end
 
   methods(Access=protected)
+    function subSeqForeach(self, func)
+      nsub = size(self.subSeqs, 2);
+      for i = 1:nsub
+        func(self.subSeqs{i});
+      end
+    end
+
     function id = nextPulseId(self)
       if self.hasParent()
         id = self.parent.nextPulseId();

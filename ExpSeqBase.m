@@ -29,6 +29,30 @@ classdef ExpSeqBase < TimeSeq
       res = self;
     end
 
+    function res = waitAll(self)
+      %% Wait for everything that have been currently added to finish.
+      self.curTime = self.length();
+      res = self;
+    end
+
+    function res = waitBackground(self)
+      %% Wait for background steps that are added directly to this sequence
+      %% to finish
+      function checkBackgroundTime(sub_seq)
+        if ~isa(sub_seq.seq, 'ExpSeqBase')
+          len = sub_seq.seq.len;
+        else
+          len = sub_seq.seq.curTime;
+        end
+        sub_cur = sub_seq.offset + len;
+        if sub_cur > self.curTime
+          self.curTime = sub_cur;
+        end
+      end
+      self.subSeqForeach(checkBackgroundTime);
+      res = self;
+    end
+
     function step = add(self, name, pulse, len)
       if isnumeric(pulse)
         if nargin > 3
@@ -93,6 +117,7 @@ classdef ExpSeqBase < TimeSeq
       step = TimeStep(self, self.curTime, len);
       self.curTime = self.curTime + len;
     end
+
     function step = addCustomStep(self, offset, cls, varargin)
       if ischar(cls)
         cls = str2func(cls);
