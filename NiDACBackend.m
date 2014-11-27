@@ -18,7 +18,13 @@ classdef NiDACBackend < PulseBackend
     cids;
     data;
 
+    clk_period;
+    clk_rate;
+  end
+
+  properties(Constant, Hidden, Access=private)
     EXTERNAL_CLOCK = true;
+    CLOCK_DIVIDER = 100;
   end
 
   methods
@@ -26,6 +32,9 @@ classdef NiDACBackend < PulseBackend
       self = self@PulseBackend(seq);
       self.cid_map = {};
       self.cids = [];
+
+      self.clk_period = 10e-9 * self.CLOCK_DIVIDER * 2;
+      self.clk_rate = 1 / self.clk_period;
     end
 
     function val = getPriority(self)
@@ -34,7 +43,7 @@ classdef NiDACBackend < PulseBackend
 
     function initDev(self, did)
       fpgadriver = self.seq.findDriver('FPGABackend');
-      fpgadriver.enableClockOut(100);
+      fpgadriver.enableClockOut(self.CLOCK_DIVIDER);
     end
 
     function initChannel(self, cid)
@@ -77,7 +86,7 @@ classdef NiDACBackend < PulseBackend
         error('Channel mismatch.');
       end
       cids = num2cell(self.cids);
-      self.data = self.seq.getValues(2e-6, cids{:})';
+      self.data = self.seq.getValues(self.clk_period, cids{:})';
     end
 
     function run(self)
@@ -86,7 +95,7 @@ classdef NiDACBackend < PulseBackend
       %% clock cycles after the sequence finished. However, setting to
       %% a rate lower than the real one cause the card to not update
       %% at the end of the sequence.
-      self.session.Rate = 5e5;
+      self.session.Rate = self.clk_rate;
       inited_devs = containers.Map();
 
       for i = 1:size(self.cids, 2)
