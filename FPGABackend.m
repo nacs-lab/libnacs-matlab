@@ -35,7 +35,7 @@ classdef FPGABackend < PulseBackend
     DDS_AMP = 3;
     DDS_PHASE = 4;
 
-    START_TRIGGER_TTL = 9;
+    START_TRIGGER_TTL = 0;
   end
 
   methods
