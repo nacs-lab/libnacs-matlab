@@ -68,11 +68,17 @@ classdef ExpSeqBase < TimeSeq
 
     function step = addBackground(self, varargin)
       old_time = self.curTime;
-      step = self.addStep(varargin{:});
+      step = self.addStepReal(true, varargin{:});
       self.curTime = old_time;
     end
 
-    function step = addStep(self, first_arg, varargin)
+    function step = addStep(self, varargin)
+      step = self.addStepReal(false, varargin{:});
+    end
+  end
+
+  methods(Access=private)
+    function step = addStepReal(self, is_background, first_arg, varargin)
       %% addStep(len[, offset=0])
       %%     Add a #TimeStep with len and offset from the last step
       %% addStep([offset=0, ]class_or_func, *extra_args)
@@ -80,7 +86,7 @@ classdef ExpSeqBase < TimeSeq
 
       %%     If offset is not an absolute time (TODO: abstime not supported yet),
       %%     forward @self.curTime by the length of the step.
-      if nargin <= 1
+      if nargin <= 2
         error('addStep called with too few arguments.');
       elseif ~isnumeric(first_arg)
         %% If first arg is not a number, assume to be a custom step.
@@ -89,10 +95,14 @@ classdef ExpSeqBase < TimeSeq
         %% TODO: for absolute time, also check if the first arg is an absolute
         %% time object.
         step = self.addCustomStep(0, first_arg, varargin{:});
-      elseif nargin == 2
+      elseif nargin == 3
         %% If we only have one numerical argument it must be a simple time step.
         %% What fall through should be (number, at_least_another_arg, *arg)
-        step = self.addTimeStep(first_arg, 0);
+        if first_arg < 0
+          step = self.addTimeStep(-first_arg, first_arg);
+        else
+          step = self.addTimeStep(first_arg, 0);
+        end
       elseif isnumeric(varargin{1})
         %% If we only have two numerical argument it must be a simple time step
         %% with custom offset.
@@ -100,19 +110,24 @@ classdef ExpSeqBase < TimeSeq
 
         %% TODO: for absolute time, also check if the first arg is an absolute
         %% time object.
-        if nargin > 3
+        if nargin > 4
           error('addStep called with too many arguments.');
         end
-        step = self.addTimeStep(first_arg, varargin{1});
+        offset = varargin{1};
+        if ~is_background && offset + first_arg < 0
+          error('Implicitly going back in time is not allowed.');
+        end
+        step = self.addTimeStep(first_arg, offset);
       else
         %% The not_number must be a custom step. Do it.
         step = self.addCustomStep(first_arg, varargin{:});
       end
     end
-  end
 
-  methods(Access=private)
     function step = addTimeStep(self, len, offset)
+      if len <= 0
+        error('Length of time step must be positive.');
+      end
       self.curTime = self.curTime + offset;
       step = TimeStep(self, self.curTime, len);
       self.curTime = self.curTime + len;
