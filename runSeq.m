@@ -137,4 +137,5 @@ function runSeq(func, varargin)
       end
     end
   end
+  beep
 end
