@@ -11,7 +11,7 @@
 %% You should have received a copy of the GNU Lesser General Public
 %% License along with this library.
 
-function runSeq(func, varargin)
+function params = runSeq(func, varargin)
   %% runSeq(func, [options], [{arguments}])
   %%    @func: the function or otherwise callable object (or the name of it)
   %%        to construct the sequence to run.
@@ -25,6 +25,7 @@ function runSeq(func, varargin)
   %%        a sequence.
   %%
   %%    Run the sequence constructed by func.
+  params = {};
   rep = 1;
   has_rep = false;
   is_random = false;
@@ -84,6 +85,7 @@ function runSeq(func, varargin)
     prepare_seq(idx);
     disp('Running with arguments:');
     disp(arglist{idx});
+    params = {params{:}, arglist{idx}};
     seqlist{idx}.run_async();
     if next_idx > 0
       prepare_seq(next_idx);
