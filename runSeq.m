@@ -37,14 +37,24 @@ function params = runSeq(func, varargin)
   end
 
   argidx = 1;
+  arglist_set = false;
+
   while argidx < nargin
     arg = varargin{argidx};
     if isnumeric(arg)
-      if has_rep
-        error('Repetition can only be specified once.');
+      if has_rep || length(arg) > 1
+        if arglist_set
+            error('Argument list can only be specified once');
+        end
+        arglist_set = true;
+        arglist = {};
+        for i = 1:size(arg, 2)
+          arglist{end + 1} = num2cell(arg(:, i)');
+        end
+      else
+        has_rep = true;
+        rep = arg;
       end
-      has_rep = true;
-      rep = arg;
     elseif ischar(arg)
       if strcmp(arg, 'random')
         is_random = true;
@@ -52,6 +62,9 @@ function params = runSeq(func, varargin)
         error('Invalid option %s.', arg);
       end
     elseif iscell(arg)
+      if arglist_set
+        error('Argument list can only be specified once');
+      end
       arglist = {varargin{argidx:end}};
       break;
     else
@@ -81,11 +94,15 @@ function params = runSeq(func, varargin)
     seqlist{idx}.generate();
   end
 
+  function log_run(idx)
+    disp(['Running with ' int2str(length(arglist{idx})) ' arguments:']);
+    disp(arglist{idx});
+    params{end + 1} = arglist{idx};
+  end
+
   function run_seq(idx, next_idx)
     prepare_seq(idx);
-    disp('Running with arguments:');
-    disp(arglist{idx});
-    params = {params{:}, arglist{idx}};
+    log_run(idx);
     seqlist{idx}.run_async();
     if next_idx > 0
       prepare_seq(next_idx);
@@ -130,12 +147,14 @@ function params = runSeq(func, varargin)
     if rep == 0
       while true
         for i = 1:nseq
+          log_run(i);
           seqlist{i}.run();
         end
       end
     else
       for j = 2:rep
         for i = 1:nseq
+          log_run(i);
           seqlist{i}.run();
         end
       end
