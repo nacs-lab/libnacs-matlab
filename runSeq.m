@@ -29,6 +29,7 @@ function params = runSeq(func, varargin)
   rep = 1;
   has_rep = false;
   is_random = false;
+  return_array = false;
 
   arglist = {{}};
 
@@ -47,6 +48,7 @@ function params = runSeq(func, varargin)
             error('Argument list can only be specified once');
         end
         arglist_set = true;
+        return_array = true;
         arglist = {};
         for i = 1:size(arg, 2)
           arglist{end + 1} = num2cell(arg(:, i)');
@@ -159,6 +161,13 @@ function params = runSeq(func, varargin)
         end
       end
     end
+  end
+  if return_array
+    params_array = [];
+    for i = 1:length(params)
+      params_array = [params_array; params{i}{:}];
+    end
+    params = params_array;
   end
   beep;
 end
