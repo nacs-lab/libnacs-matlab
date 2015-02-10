@@ -82,6 +82,8 @@ function runSeq(func, varargin)
 
   function run_seq(idx, next_idx)
     prepare_seq(idx);
+    disp('Running with arguments:');
+    disp(arglist{idx});
     seqlist{idx}.run_async();
     if next_idx > 0
       prepare_seq(next_idx);
@@ -137,5 +139,5 @@ function runSeq(func, varargin)
       end
     end
   end
-  beep
+  beep;
 end
