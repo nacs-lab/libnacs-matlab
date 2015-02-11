@@ -135,6 +135,11 @@ classdef ExpSeq < ExpSeqBase
     function run(self)
       self.run_async();
       self.waitFinish();
+      global nacsTimeSeqDisableRunHack;
+      if ~isempty(nacsTimeSeqDisableRunHack) && nacsTimeSeqDisableRunHack
+        return;
+      end
+      beep;
     end
 
     function res = setDefault(self, name, val)

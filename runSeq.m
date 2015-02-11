@@ -169,5 +169,5 @@ function params = runSeq(func, varargin)
     end
     params = params_array;
   end
-  beep;
+ %beep;
 end
