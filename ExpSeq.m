@@ -139,7 +139,7 @@ classdef ExpSeq < ExpSeqBase
       if ~isempty(nacsTimeSeqDisableRunHack) && nacsTimeSeqDisableRunHack
         return;
       end
-      beep;
+%       beep;
     end
 
     function res = setDefault(self, name, val)
