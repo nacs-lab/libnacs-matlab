@@ -34,7 +34,7 @@ classdef NaCsLogger < handle
 
       self.fd = fopen(self.fpath, 'a');
 
-      disp(['Log "', self.fpath, '" created.']);
+      % disp(['Log "', self.fpath, '" created.']);
     end
 
     function res = getPath(self)
@@ -48,12 +48,14 @@ classdef NaCsLogger < handle
     end
 
     function logf(self, fmt, varargin)
-      fmt = [fmt, '\n'];
-      fprintf(self.fd, fmt, varargin{:});
+      if 0
+        fmt = [fmt, '\n'];
+        fprintf(self.fd, fmt, varargin{:});
+      end
     end
 
     function log(self, s)
-      self.logf('%s', s);
+      % self.logf('%s', s);
     end
   end
 end
