@@ -20,19 +20,21 @@ classdef NaCsLogger < handle
   methods
     function self = NaCsLogger(name)
       config = loadConfig();
-      log_dir = fullfile(config.logDir, datestr(now, 'yyyy-mm-dd'));
-      if ~isdir(log_dir)
-        mkdir(log_dir);
-      end
+      if 0
+        log_dir = fullfile(config.logDir, datestr(now, 'yyyy-mm-dd'));
+        if ~isdir(log_dir)
+          mkdir(log_dir);
+        end
 
-      if nargin < 1
-        name = 'nacs-log';
-      end
-      timestamp = datestr(now, 'yyyy-mm-dd_HH-MM-SS');
-      fname = [name, '-', timestamp, '.log'];
-      self.fpath = fullfile(log_dir, fname);
+        if nargin < 1
+          name = 'nacs-log';
+        end
+        timestamp = datestr(now, 'yyyy-mm-dd_HH-MM-SS');
+        fname = [name, '-', timestamp, '.log'];
+        self.fpath = fullfile(log_dir, fname);
 
-      self.fd = fopen(self.fpath, 'a');
+        self.fd = fopen(self.fpath, 'a');
+      end
 
       % disp(['Log "', self.fpath, '" created.']);
     end
