@@ -460,7 +460,7 @@ classdef FPGABackend < PulseBackend
 
     function wait(self)
       output = self.poster.reply();
-      disp(output);
+      % disp(output);
     end
   end
 
