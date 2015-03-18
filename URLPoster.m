@@ -37,7 +37,9 @@ classdef URLPoster < handle
     end
 
     function output = reply(self)
-      output = char(self.pyconn.reply());
+%       self.pyconn.reply();
+      output = [];
+      % output = char(self.pyconn.reply());
     end
   end
 end
