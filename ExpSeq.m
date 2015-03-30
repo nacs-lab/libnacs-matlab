@@ -12,247 +12,259 @@
 %% License along with this library.
 
 classdef ExpSeq < ExpSeqBase
-  properties(Access=private)
-    drivers;
-    driver_cids;
-    generated = false;
-    default_override;
-    orig_channel_names;
-  end
-
-  methods
-    function self = ExpSeq(name)
-      if nargin < 1
-        name = 'seq';
-      elseif ~ischar(name)
-        error('Sequence name must be a string.');
-      end
-      global nacsTimeSeqNameSuffixHack;
-      name = [name, nacsTimeSeqNameSuffixHack];
-      self = self@ExpSeqBase(name);
-      self.drivers = containers.Map();
-      self.driver_cids = containers.Map();
-      self.default_override = {};
-      self.orig_channel_names = {};
-
-      self.logDefault();
+    properties(Access=private)
+        drivers;
+        driver_cids;
+        generated = false;
+        default_override;
+        orig_channel_names;
     end
-
-    function cid = translateChannel(self, name)
-      orig_name = name;
-      name = self.config.translateChannel(name);
-      cpath = strsplit(name, '/');
-      did = cpath{1};
-      [driver, driver_name] = self.initDeviceDriver(did);
-      cid = translateChannel@ExpSeqBase(self, name);
-
-      if (cid > size(self.orig_channel_names, 2) || ...
-          isempty(self.orig_channel_names{cid}))
-        self.orig_channel_names{cid} = orig_name;
-      end
-
-      driver.initChannel(cid);
-      cur_cids = self.driver_cids(driver_name);
-      self.driver_cids(driver_name) = unique([cur_cids, cid]);
-    end
-
-    function cid = findChannelId(self, name)
-      name = self.config.translateChannel(name);
-      cid = findChannelId@ExpSeqBase(self, name);
-    end
-
-    function driver = findDriver(self, driver_name)
-      try
-        driver = self.drivers(driver_name);
-      catch
-        driver_func = str2func(driver_name);
-        driver = driver_func(self);
-        self.drivers(driver_name) = driver;
-        self.driver_cids(driver_name) = [];
-      end
-    end
-
-    function generate(self)
-      if ~self.generated
-        disp('Generating ...');
-        self.log(['# Generating @ ', datestr(now, 'yyyy-mm-dd_HH-MM-SS')]);
-        for key = self.drivers.keys()
-          driver_name = key{:};
-          driver = self.drivers(driver_name);
-          cids = self.driver_cids(driver_name);
-          driver.prepare(cids);
+    
+    methods
+        function self = ExpSeq(name)
+            if nargin < 1
+                name = 'seq';
+            elseif ~ischar(name)
+                error('Sequence name must be a string.');
+            end
+            global nacsTimeSeqNameSuffixHack;
+            name = [name, nacsTimeSeqNameSuffixHack];
+            self = self@ExpSeqBase(name);
+            self.drivers = containers.Map();
+            self.driver_cids = containers.Map();
+            self.default_override = {};
+            self.orig_channel_names = {};
+            
+            self.logDefault();
         end
-        for key = self.drivers.keys()
-          driver_name = key{:};
-          driver = self.drivers(driver_name);
-          cids = self.driver_cids(driver_name);
-          driver.generate(cids);
+        
+        function cid = translateChannel(self, name)
+            orig_name = name;
+            name = self.config.translateChannel(name);
+            cpath = strsplit(name, '/');
+            did = cpath{1};
+            [driver, driver_name] = self.initDeviceDriver(did);
+            cid = translateChannel@ExpSeqBase(self, name);
+            
+            if (cid > size(self.orig_channel_names, 2) || ...
+                    isempty(self.orig_channel_names{cid}))
+                self.orig_channel_names{cid} = orig_name;
+            end
+            
+            driver.initChannel(cid);
+            cur_cids = self.driver_cids(driver_name);
+            self.driver_cids(driver_name) = unique([cur_cids, cid]);
         end
-        self.generated = true;
-      end
-    end
-
-    function run_async(self)
-      self.generate();
-      global nacsTimeSeqDisableRunHack;
-      if ~isempty(nacsTimeSeqDisableRunHack) && nacsTimeSeqDisableRunHack
-        return;
-      end
-      drivers = {};
-      for driver = self.drivers.values()
-        drivers = [drivers; {driver{:}, -driver{:}.getPriority()}];
-      end
-      if ~isempty(drivers)
-        drivers = sortrows(drivers, [2]);
-      end
-      disp('Running ...');
-      self.log(['# Start running @ ', datestr(now, 'yyyy-mm-dd_HH-MM-SS')]);
-      for i = 1:size(drivers, 1)
-        drivers{i, 1}.run();
-      end
-      self.log(['# Started @ ', datestr(now, 'yyyy-mm-dd_HH-MM-SS')]);
-    end
-
-    function waitFinish(self)
-      global nacsTimeSeqDisableRunHack;
-      if ~isempty(nacsTimeSeqDisableRunHack) && nacsTimeSeqDisableRunHack
-        return;
-      end
-      drivers = {};
-      for driver = self.drivers.values()
-        drivers = [drivers; {driver{:}, -driver{:}.getPriority()}];
-      end
-      if ~isempty(drivers)
-        drivers = sortrows(drivers, [2]);
-      end
-      self.log(['# Start waiting @ ', datestr(now, 'yyyy-mm-dd_HH-MM-SS')]);
-      for i = 1:size(drivers, 1)
-        drivers{i, 1}.wait();
-      end
-      self.log(['# Done @ ', datestr(now, 'yyyy-mm-dd_HH-MM-SS')]);
-    end
-
-    function run(self)
-      self.run_async();
-      self.waitFinish();
-      global nacsTimeSeqDisableRunHack;
-      if ~isempty(nacsTimeSeqDisableRunHack) && nacsTimeSeqDisableRunHack
-        return;
-      end
-%       beep;
-    end
-
-    function res = setDefault(self, name, val)
-      res = self;
-      cid = self.translateChannel(name);
-      self.default_override{cid} = val;
-
-      self.logf('# Override default value %s(%s) = %f', ...
+        
+        function cid = findChannelId(self, name)
+            name = self.config.translateChannel(name);
+            cid = findChannelId@ExpSeqBase(self, name);
+        end
+        
+        function driver = findDriver(self, driver_name)
+            try
+                driver = self.drivers(driver_name);
+            catch
+                driver_func = str2func(driver_name);
+                driver = driver_func(self);
+                self.drivers(driver_name) = driver;
+                self.driver_cids(driver_name) = [];
+            end
+        end
+        
+        function generate(self)
+            if ~self.generated
+                disp('Generating ...');
+                self.log(['# Generating @ ', datestr(now, 'yyyy-mm-dd_HH-MM-SS')]);
+                for key = self.drivers.keys()
+                    driver_name = key{:};
+                    driver = self.drivers(driver_name);
+                    cids = self.driver_cids(driver_name);
+                    driver.prepare(cids);
+                end
+                for key = self.drivers.keys()
+                    driver_name = key{:};
+                    driver = self.drivers(driver_name);
+                    cids = self.driver_cids(driver_name);
+                    driver.generate(cids);
+                end
+                self.generated = true;
+            end
+        end
+        
+        function run_async(self)
+            %Set up memory map to share variables between MATLAB instances.
+            m = MemoryMap;
+            self.generate();
+            global nacsTimeSeqDisableRunHack;
+            if ~isempty(nacsTimeSeqDisableRunHack) && nacsTimeSeqDisableRunHack
+                return;
+            end
+            %       if m.Data(1).AbortRunSeq == 1;
+            %           return;
+            %       end
+            drivers = {};
+            for driver = self.drivers.values()
+                drivers = [drivers; {driver{:}, -driver{:}.getPriority()}];
+            end
+            if ~isempty(drivers)
+                drivers = sortrows(drivers, [2]);
+            end
+            disp('Running ...');
+            self.log(['# Start running @ ', datestr(now, 'yyyy-mm-dd_HH-MM-SS')]);
+            for i = 1:size(drivers, 1)
+                drivers{i, 1}.run();
+            end
+            self.log(['# Started @ ', datestr(now, 'yyyy-mm-dd_HH-MM-SS')]);
+            % See if another MATLAB instance has asked runSeq to pause.
+            if m.Data(1).PauseRunSeq == 1
+                disp('PauseRunSeq set to 1.  runSeq is paused.  Set PauseRunSeq = 0 to continue.')
+                while m.Data(1).PauseRunSeq
+                    pause(1)
+                end
+            end
+        end
+        
+        function waitFinish(self)
+            global nacsTimeSeqDisableRunHack;
+            if ~isempty(nacsTimeSeqDisableRunHack) && nacsTimeSeqDisableRunHack
+                return;
+            end
+            drivers = {};
+            for driver = self.drivers.values()
+                drivers = [drivers; {driver{:}, -driver{:}.getPriority()}];
+            end
+            if ~isempty(drivers)
+                drivers = sortrows(drivers, [2]);
+            end
+            self.log(['# Start waiting @ ', datestr(now, 'yyyy-mm-dd_HH-MM-SS')]);
+            for i = 1:size(drivers, 1)
+                drivers{i, 1}.wait();
+            end
+            self.log(['# Done @ ', datestr(now, 'yyyy-mm-dd_HH-MM-SS')]);
+        end
+        
+        function run(self)
+            self.run_async();
+            self.waitFinish();
+            global nacsTimeSeqDisableRunHack;
+            if ~isempty(nacsTimeSeqDisableRunHack) && nacsTimeSeqDisableRunHack
+                return;
+            end
+            %       beep;
+        end
+        
+        function res = setDefault(self, name, val)
+            res = self;
+            cid = self.translateChannel(name);
+            self.default_override{cid} = val;
+            
+            self.logf('# Override default value %s(%s) = %f', ...
                 name, self.channelName(cid), val);
-    end
-
-    function plot(self, varargin)
-      if nargin <= 1
-        error('Please specify at least one channel to plot.');
-      end
-
-      cids = [];
-      names = {};
-      for i = 1:(nargin - 1)
-        arg = varargin{i};
-        if ~ischar(arg)
-          error('Channel name has to be a string');
         end
-        if arg(end) == '/'
-          matches = regexp(arg, '^(.*[^/])/*$', 'tokens');
-          prefix = self.config.translateChannel(matches{1}{1});
-          prefix_len = size(prefix, 2);
-
-          for cid = 1:size(self.orig_channel_names, 2)
-            orig_name = self.orig_channel_names{cid};
-            if isempty(orig_name)
-              continue;
+        
+        function plot(self, varargin)
+            if nargin <= 1
+                error('Please specify at least one channel to plot.');
             end
-            name = self.config.translateChannel(orig_name);
-            if strncmp(prefix, name, prefix_len)
-              cids(end + 1) = cid;
-              names{end + 1} = orig_name;
+            
+            cids = [];
+            names = {};
+            for i = 1:(nargin - 1)
+                arg = varargin{i};
+                if ~ischar(arg)
+                    error('Channel name has to be a string');
+                end
+                if arg(end) == '/'
+                    matches = regexp(arg, '^(.*[^/])/*$', 'tokens');
+                    prefix = self.config.translateChannel(matches{1}{1});
+                    prefix_len = size(prefix, 2);
+                    
+                    for cid = 1:size(self.orig_channel_names, 2)
+                        orig_name = self.orig_channel_names{cid};
+                        if isempty(orig_name)
+                            continue;
+                        end
+                        name = self.config.translateChannel(orig_name);
+                        if strncmp(prefix, name, prefix_len)
+                            cids(end + 1) = cid;
+                            names{end + 1} = orig_name;
+                        end
+                    end
+                elseif arg(1) == '~'
+                    arg = arg(2:end);
+                    
+                    for cid = 1:size(self.orig_channel_names, 2)
+                        orig_name = self.orig_channel_names{cid};
+                        if isempty(orig_name)
+                            continue;
+                        end
+                        name = self.config.translateChannel(orig_name);
+                        if ~isempty(regexp(name, arg))
+                            cids(end + 1) = cid;
+                            names{end + 1} = orig_name;
+                        end
+                    end
+                else
+                    try
+                        cid = self.findChannelId(arg);
+                    catch
+                        error('Channel does not exist.');
+                    end
+                    cids(end + 1) = cid;
+                    names{end + 1} = arg;
+                end
             end
-          end
-        elseif arg(1) == '~'
-          arg = arg(2:end);
-
-          for cid = 1:size(self.orig_channel_names, 2)
-            orig_name = self.orig_channel_names{cid};
-            if isempty(orig_name)
-              continue;
+            
+            if size(cids, 2) == 0
+                error('No channel to plot.');
             end
-            name = self.config.translateChannel(orig_name);
-            if ~isempty(regexp(name, arg))
-              cids(end + 1) = cid;
-              names{end + 1} = orig_name;
-            end
-          end
-        else
-          try
-            cid = self.findChannelId(arg);
-          catch
-            error('Channel does not exist.');
-          end
-          cids(end + 1) = cid;
-          names{end + 1} = arg;
+            
+            self.plotReal(cids, names);
         end
-      end
-
-      if size(cids, 2) == 0
-        error('No channel to plot.');
-      end
-
-      self.plotReal(cids, names);
     end
-  end
-
-  methods(Access=protected)
-    function val = getDefault(self, cid)
-      try
-        val = self.default_override{cid};
-        if ~isempty(val)
-          return;
+    
+    methods(Access=protected)
+        function val = getDefault(self, cid)
+            try
+                val = self.default_override{cid};
+                if ~isempty(val)
+                    return;
+                end
+            catch
+            end
+            name = self.channelName(cid);
+            try
+                val = self.config.defaultVals(name);
+            catch
+                val = 0;
+            end
         end
-      catch
-      end
-      name = self.channelName(cid);
-      try
-        val = self.config.defaultVals(name);
-      catch
-        val = 0;
-      end
     end
-  end
-
-  methods(Access=private)
-    function [driver, driver_name] = initDeviceDriver(self, did)
-      driver_name = self.config.pulseDrivers(did);
-      driver = self.findDriver(driver_name);
-      driver.initDev(did);
+    
+    methods(Access=private)
+        function [driver, driver_name] = initDeviceDriver(self, did)
+            driver_name = self.config.pulseDrivers(did);
+            driver = self.findDriver(driver_name);
+            driver.initDev(did);
+        end
+        
+        function logDefault(self)
+            for key = self.config.defaultVals.keys
+                self.logf('# Default value %s = %f', ...
+                    key{:}, self.config.defaultVals(key{:}));
+            end
+        end
+        
+        function plotReal(self, cids, names)
+            cids = num2cell(cids);
+            len = self.length();
+            dt = len / 1e4;
+            data = self.getValues(dt, cids{:})';
+            ts = (1:size(data, 1)) * dt;
+            plot(ts, data);
+            xlabel('t / s');
+            legend(names{:});
+        end
     end
-
-    function logDefault(self)
-      for key = self.config.defaultVals.keys
-        self.logf('# Default value %s = %f', ...
-                  key{:}, self.config.defaultVals(key{:}));
-      end
-    end
-
-    function plotReal(self, cids, names)
-      cids = num2cell(cids);
-      len = self.length();
-      dt = len / 1e4;
-      data = self.getValues(dt, cids{:})';
-      ts = (1:size(data, 1)) * dt;
-      plot(ts, data);
-      xlabel('t / s');
-      legend(names{:});
-    end
-  end
 end
