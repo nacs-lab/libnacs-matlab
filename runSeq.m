@@ -11,7 +11,7 @@
 %% You should have received a copy of the GNU Lesser General Public
 %% License along with this library.
 
-function params = runSeq(func, varargin)
+function params = runSeq2(func, varargin)
 %% runSeq(func, [options], [{arguments}])
 %%    @func: the function or otherwise callable object (or the name of it)
 %%        to construct the sequence to run.
@@ -35,7 +35,7 @@ return_array = false;
 m = MemoryMap;
 
 % Current sequence number.  Will be incremented at the end of each sequence
-% execution.
+% execution in ExpSeq.
 m.Data(1).CurrentSeqNum = 0;
 
 arglist = {{}};
@@ -204,5 +204,5 @@ if return_array
     end
     params = params_array;
 end
-%beep;
+m.Data(1).CurrentSeqNum = 0;
 end

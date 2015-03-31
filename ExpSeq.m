@@ -95,14 +95,20 @@ classdef ExpSeq < ExpSeqBase
         function run_async(self)
             %Set up memory map to share variables between MATLAB instances.
             m = MemoryMap;
+            % See if another MATLAB instance has asked runSeq to pause.
+            if m.Data(1).PauseRunSeq == 1
+                disp('PauseRunSeq set to 1.  runSeq is paused.  Set PauseRunSeq = 0 to continue.')
+                while m.Data(1).PauseRunSeq
+                    pause(1)
+                end
+            end
             self.generate();
             global nacsTimeSeqDisableRunHack;
             if ~isempty(nacsTimeSeqDisableRunHack) && nacsTimeSeqDisableRunHack
                 return;
             end
-            %       if m.Data(1).AbortRunSeq == 1;
-            %           return;
-            %       end
+            %Increment current sequence number
+            m.Data(1).CurrentSeqNum = m.Data(1).CurrentSeqNum + 1;
             drivers = {};
             for driver = self.drivers.values()
                 drivers = [drivers; {driver{:}, -driver{:}.getPriority()}];
@@ -116,13 +122,6 @@ classdef ExpSeq < ExpSeqBase
                 drivers{i, 1}.run();
             end
             self.log(['# Started @ ', datestr(now, 'yyyy-mm-dd_HH-MM-SS')]);
-            % See if another MATLAB instance has asked runSeq to pause.
-            if m.Data(1).PauseRunSeq == 1
-                disp('PauseRunSeq set to 1.  runSeq is paused.  Set PauseRunSeq = 0 to continue.')
-                while m.Data(1).PauseRunSeq
-                    pause(1)
-                end
-            end
         end
         
         function waitFinish(self)
