@@ -93,22 +93,11 @@ classdef ExpSeq < ExpSeqBase
         end
         
         function run_async(self)
-            %Set up memory map to share variables between MATLAB instances.
-            m = MemoryMap;
-            % See if another MATLAB instance has asked runSeq to pause.
-            if m.Data(1).PauseRunSeq == 1
-                disp('PauseRunSeq set to 1.  runSeq is paused.  Set PauseRunSeq = 0 to continue.')
-                while m.Data(1).PauseRunSeq
-                    pause(1)
-                end
-            end
             self.generate();
             global nacsTimeSeqDisableRunHack;
             if ~isempty(nacsTimeSeqDisableRunHack) && nacsTimeSeqDisableRunHack
                 return;
             end
-            %Increment current sequence number
-            m.Data(1).CurrentSeqNum = m.Data(1).CurrentSeqNum + 1;
             drivers = {};
             for driver = self.drivers.values()
                 drivers = [drivers; {driver{:}, -driver{:}.getPriority()}];
@@ -116,11 +105,12 @@ classdef ExpSeq < ExpSeqBase
             if ~isempty(drivers)
                 drivers = sortrows(drivers, [2]);
             end
-            disp('Running ...');
+            disp(['Running ...']);
             self.log(['# Start running @ ', datestr(now, 'yyyy-mm-dd_HH-MM-SS')]);
             for i = 1:size(drivers, 1)
                 drivers{i, 1}.run();
             end
+            
             self.log(['# Started @ ', datestr(now, 'yyyy-mm-dd_HH-MM-SS')]);
         end
         
@@ -144,8 +134,34 @@ classdef ExpSeq < ExpSeqBase
         end
         
         function run(self)
+            %Set up memory map to share variables between MATLAB instances.
+            m = MemoryMap;
+            
+            % See if another MATLAB instance has asked runSeq to pause.  If
+            % we are aborting, don't bother pausing.
+            if (m.Data(1).PauseRunSeq == 1) && (m.Data(1).AbortRunSeq == 0)
+                m.Data(1).IsPausedRunSeq = 1;
+                disp('PauseRunSeq set to 1. Run ContinueRunSeq to continue, AbortRunSeq to abort. Hit ctrl+c and run ResetMemoryMap if all else fails.')
+                while m.Data(1).PauseRunSeq
+                    pause(1)
+                    if m.Data(1).AbortRunSeq
+                        break
+                    end
+                end
+            end
+            m.Data(1).IsPausedRunSeq = 0;
+            
             self.run_async();
             self.waitFinish();
+            %Increment current sequence number
+            m.Data(1).CurrentSeqNum = m.Data(1).CurrentSeqNum + 1;
+            
+            %If we are using NumGroup to run sequences in groups, pause every
+            %NumGroup sequences.
+            if ~mod(m.Data(1).CurrentSeqNum, m.Data(1).NumPerGroup) &&  (m.Data(1).NumPerGroup>0)
+                m.Data(1).PauseRunSeq = 1;
+            end
+            
             global nacsTimeSeqDisableRunHack;
             if ~isempty(nacsTimeSeqDisableRunHack) && nacsTimeSeqDisableRunHack
                 return;

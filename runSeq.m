@@ -11,7 +11,7 @@
 %% You should have received a copy of the GNU Lesser General Public
 %% License along with this library.
 
-function params = runSeq2(func, varargin)
+function params = runSeq(func, varargin)
 %% runSeq(func, [options], [{arguments}])
 %%    @func: the function or otherwise callable object (or the name of it)
 %%        to construct the sequence to run.
@@ -104,12 +104,14 @@ seqlist = cell(1, nseq);
     end
 
     function log_run(idx)
+        %         m = MemoryMap;
         arglist_str = [];
         for j = 1:length(arglist{idx})
             arglist_str = [arglist_str ', ' num2str(arglist{idx}{j})];
         end
         arglist_str(1) = ' ';
-        disp(['Running with ' int2str(length(arglist{idx})) ' arguments:' arglist_str]);
+        disp(['Preparing to run sequence #' int2str(m.Data(1).CurrentSeqNum)...
+            ' with ' int2str(length(arglist{idx})) ' arguments:' arglist_str]);
         params{end + 1} = arglist{idx};
     end
 
@@ -131,21 +133,27 @@ if is_random
     if rep == 0
         idx = randi(nseq);
         while true
-            idx_new = randi(nseq);
-            run_seq(idx, idx_new);
-            idx = idx_new;
             % If another instance has asked runSeq to abort, exit gracefully
             if m.Data(1).AbortRunSeq == 1
                 disp('AbortRunSeq set to 1.  Stopping gracefully.')
-                m.Data(1).AbortRunSeq = 0;
+                %                 m.Data(1).AbortRunSeq = 0;
                 break
             end
+            idx_new = randi(nseq);
+            run_seq(idx, idx_new);
+            idx = idx_new;
         end
     else
         idxs = repmat(1:nseq, [1, rep]);
         total_len = nseq * rep;
         glob_idxs = randperm(total_len);
         for i = 1:total_len
+            % If another instance has asked runSeq to abort, exit gracefully
+            if m.Data(1).AbortRunSeq == 1
+                disp('AbortRunSeq set to 1.  Stopping gracefully.')
+                %                 m.Data(1).AbortRunSeq = 0;
+                break
+            end
             cur_idx = idxs(glob_idxs(i));
             if i >= total_len
                 next_idx = 0;
@@ -153,16 +161,17 @@ if is_random
                 next_idx = idxs(glob_idxs(i + 1));
             end
             run_seq(cur_idx, next_idx);
-            % If another instance has asked runSeq to abort, exit gracefully
-            if m.Data(1).AbortRunSeq == 1
-                disp('AbortRunSeq set to 1.  Stopping gracefully.')
-                m.Data(1).AbortRunSeq = 0;
-                break
-            end
+            
         end
     end
 else
     for i = 1:nseq
+        % If another instance has asked runSeq to abort, exit gracefully
+        if m.Data(1).AbortRunSeq == 1
+            disp('AbortRunSeq set to 1.  Stopping gracefully.')
+            %                 m.Data(1).AbortRunSeq = 0;
+            break
+        end
         if i < nseq
             run_seq(i, i + 1);
         else
@@ -171,29 +180,42 @@ else
     end
     if rep == 0
         while true
-            for i = 1:nseq
-                log_run(i);
-                seqlist{i}.run();
-            end
             % If another instance has asked runSeq to abort, exit gracefully
             if m.Data(1).AbortRunSeq == 1
                 disp('AbortRunSeq set to 1.  Stopping gracefully.')
-                m.Data(1).AbortRunSeq = 0;
+                %                     m.Data(1).AbortRunSeq = 0;
                 break
+            end
+            for i = 1:nseq
+                % If another instance has asked runSeq to abort, exit gracefully
+                if m.Data(1).AbortRunSeq == 1
+                    disp('AbortRunSeq set to 1.  Stopping gracefully.')
+                    %                     m.Data(1).AbortRunSeq = 0;
+                    break
+                end
+                log_run(i);
+                seqlist{i}.run();
             end
         end
     else
         for j = 2:rep
-            for i = 1:nseq
-                log_run(i);
-                seqlist{i}.run();
-            end
             % If another instance has asked runSeq to abort, exit gracefully
             if m.Data(1).AbortRunSeq == 1
                 disp('AbortRunSeq set to 1.  Stopping gracefully.')
-                m.Data(1).AbortRunSeq = 0;
+                %                 m.Data(1).AbortRunSeq = 0;
                 break
             end
+            for i = 1:nseq
+                % If another instance has asked runSeq to abort, exit gracefully
+                if m.Data(1).AbortRunSeq == 1
+                    disp('AbortRunSeq set to 1.  Stopping gracefully.')
+                    %                     m.Data(1).AbortRunSeq = 0;
+                    break
+                end
+                log_run(i);
+                seqlist{i}.run();
+            end
+            
         end
     end
 end
@@ -204,5 +226,9 @@ if return_array
     end
     params = params_array;
 end
+disp(['Finished running ' int2str(m.Data(1).CurrentSeqNum) ' sequences.'])
 m.Data(1).CurrentSeqNum = 0;
+m.Data(1).AbortRunSeq = 0;
+m.Data(1).PauseRunSeq = 0;
 end
+
