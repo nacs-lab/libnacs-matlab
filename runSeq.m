@@ -202,6 +202,7 @@ else
             % If another instance has asked runSeq to abort, exit gracefully
             if m.Data(1).AbortRunSeq == 1
                 disp('AbortRunSeq set to 1.  Stopping gracefully.')
+                whos
                 %                 m.Data(1).AbortRunSeq = 0;
                 break
             end
@@ -227,6 +228,7 @@ if return_array
     params = params_array;
 end
 disp(['Finished running ' int2str(m.Data(1).CurrentSeqNum) ' sequences.'])
+whos
 m.Data(1).CurrentSeqNum = 0;
 m.Data(1).AbortRunSeq = 0;
 m.Data(1).PauseRunSeq = 0;
