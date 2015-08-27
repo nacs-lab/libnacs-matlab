@@ -227,6 +227,7 @@ if return_array
     params = params_array;
 end
 disp(['Finished running ' int2str(m.Data(1).CurrentSeqNum) ' sequences.'])
+beep
 m.Data(1).CurrentSeqNum = 0;
 m.Data(1).AbortRunSeq = 0;
 m.Data(1).PauseRunSeq = 0;
