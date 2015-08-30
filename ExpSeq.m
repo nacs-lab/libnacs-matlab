@@ -155,7 +155,6 @@ classdef ExpSeq < ExpSeqBase
             self.waitFinish();
             %Increment current sequence number
             m.Data(1).CurrentSeqNum = m.Data(1).CurrentSeqNum + 1;
-            
             %If we are using NumGroup to run sequences in groups, pause every
             %NumGroup sequences.
             if ~mod(m.Data(1).CurrentSeqNum, m.Data(1).NumPerGroup) &&  (m.Data(1).NumPerGroup>0)
