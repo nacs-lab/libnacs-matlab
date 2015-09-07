@@ -20,6 +20,8 @@ function params = runSeq(func, varargin)
 %%        <number> (default: 1): How many times each sequence will be run.
 %%            If the number is equal to 0, run the sequence continiously.
 %%        'random': run the sequences in random order
+%%        'email:xxx': send an email upon completion.  xxx can be a name 
+%%            appearing in matlabmail, or an email address.
 %%    @arguments (optional, multiple): cell arrays of the arguments to
 %%        construct the sequence. Each argument will be used to construct
 %%        a sequence.
@@ -30,6 +32,7 @@ rep = 1;
 has_rep = false;
 is_random = false;
 return_array = false;
+notify = [];
 
 %Set up memory map to share variables between MATLAB instances.
 m = MemoryMap;
@@ -67,6 +70,8 @@ while argidx < nargin
     elseif ischar(arg)
         if strcmp(arg, 'random')
             is_random = true;
+        elseif strcmp(arg(1:5), 'email')
+            notify = arg(7:end);
         else
             error('Invalid option %s.', arg);
         end
@@ -231,5 +236,9 @@ beep
 m.Data(1).CurrentSeqNum = 0;
 m.Data(1).AbortRunSeq = 0;
 m.Data(1).PauseRunSeq = 0;
+if ~isempty(notify)
+    matlabmail(notify, [], ['Molecube: finished sequence at '...
+        datestr(datenum(clock),'yyyymmdd') '-' datestr(datenum(clock),'HHMMSS')]);
+end
 end
 
