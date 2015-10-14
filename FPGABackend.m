@@ -510,7 +510,7 @@ classdef FPGABackend < PulseBackend
     function val = singleTTLDefault(self, chn)
       val = false;
       try
-        cid = self.seq.findChannelId(sprintf('FPGA1/TTL%d', chn));
+        cid = self.seq.translateChannel(sprintf('FPGA1/TTL%d', chn));
         if cid > 0 && self.seq.getDefaults(cid)
           val = true;
         end
