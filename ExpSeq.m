@@ -105,7 +105,7 @@ classdef ExpSeq < ExpSeqBase
             if ~isempty(drivers)
                 drivers = sortrows(drivers, [2]);
             end
-            disp(['Running ...']);
+            disp(['Running at ' datestr(now, 'HH:MM:SS, yyyy/mm/dd') ' ...']);
             self.log(['# Start running @ ', datestr(now, 'yyyy-mm-dd_HH-MM-SS')]);
             for i = 1:size(drivers, 1)
                 drivers{i, 1}.run();
