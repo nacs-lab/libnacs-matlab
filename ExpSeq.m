@@ -160,7 +160,7 @@ classdef ExpSeq < ExpSeqBase
             if ~mod(m.Data(1).CurrentSeqNum, m.Data(1).NumPerGroup) &&  (m.Data(1).NumPerGroup>0)
                 m.Data(1).PauseRunSeq = 1;
             end
-            
+
             global nacsTimeSeqDisableRunHack;
             if ~isempty(nacsTimeSeqDisableRunHack) && nacsTimeSeqDisableRunHack
                 return;
