@@ -42,8 +42,10 @@ classdef NiDACBackend < PulseBackend
     end
 
     function initDev(self, did)
-      fpgadriver = self.seq.findDriver('FPGABackend');
-      fpgadriver.enableClockOut(self.CLOCK_DIVIDER);
+      if self.EXTERNAL_CLOCK
+	fpgadriver = self.seq.findDriver('FPGABackend');
+	fpgadriver.enableClockOut(self.CLOCK_DIVIDER);
+      end
     end
 
     function initChannel(self, cid)

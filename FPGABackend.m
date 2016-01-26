@@ -151,20 +151,20 @@ classdef FPGABackend < PulseBackend
         end
       end
 
+      if self.START_TRIGGER_TTL >= 0
+        %% The NI Card (with the driver/interface comes with MATLAB 2014b)
+        %% seems to want a start trigger before the clock starts and
+        %% it will start running when it gets a clock.
+        start_us = start_us + MIN_DELAY_US * 100;
+        cmd_len = cmd_len + 1;
+        commands{cmd_len} = sprintf('t=%.2f,TTL(%d)=1\n', ...
+                                    start_us, self.START_TRIGGER_TTL);
+        start_us = start_us + MIN_DELAY_US / 2;
+        cmd_len = cmd_len + 1;
+        commands{cmd_len} = sprintf('t=%.2f,TTL(%d)=0\n', ...
+                                    start_us, self.START_TRIGGER_TTL);
+      end
       if self.clock_div > 0
-        if self.START_TRIGGER_TTL >= 0
-          %% The NI Card (with the driver/interface comes with MATLAB 2014b)
-          %% seems to want a start trigger before the clock starts and
-          %% it will start running when it gets a clock.
-          start_us = start_us + MIN_DELAY_US * 100;
-          cmd_len = cmd_len + 1;
-          commands{cmd_len} = sprintf('t=%.2f,TTL(%d)=1\n', ...
-                                      start_us, self.START_TRIGGER_TTL);
-          start_us = start_us + MIN_DELAY_US * 2;
-          cmd_len = cmd_len + 1;
-          commands{cmd_len} = sprintf('t=%.2f,TTL(%d)=0\n', ...
-                                      start_us, self.START_TRIGGER_TTL);
-        end
         start_us = start_us + self.CLOCK_DELAY * 1e6;
         cmd_len = cmd_len + 1;
         commands{cmd_len} = sprintf('t=%.2f,CLOCK_OUT(%d)\n', ...
