@@ -34,6 +34,7 @@ classdef FPGABackend < PulseBackend
     DDS_FREQ = 2;
     DDS_AMP = 3;
     DDS_PHASE = 4;
+    DAC_CHN = 5;
 
     START_TRIGGER_TTL = 0;
   end
@@ -83,6 +84,7 @@ classdef FPGABackend < PulseBackend
       DDS_FREQ = self.DDS_FREQ;
       DDS_AMP = self.DDS_AMP;
       DDS_PHASE = self.DDS_PHASE;
+      DAC_CHN = self.DAC_CHN;
       MIN_DELAY = self.MIN_DELAY;
 
       MIN_DELAY_US = MIN_DELAY * 1e6;
@@ -142,6 +144,10 @@ classdef FPGABackend < PulseBackend
           elseif chn_type == DDS_AMP
             cmd_len = cmd_len + 1;
             commands{cmd_len} = sprintf('t=%.2f,amp(%d)=%f\n', ...
+                                        start_us, chn_num, cur_values(i));
+          elseif chn_type == DAC_CHN
+            cmd_len = cmd_len + 1;
+            commands{cmd_len} = sprintf('t=%.2f,dac(%d)=%f\n', ...
                                         start_us, chn_num, cur_values(i));
           end
         end
@@ -255,6 +261,13 @@ classdef FPGABackend < PulseBackend
                 val = logical(val);
                 cur_values(i) = val;
                 new_ttl = bitset(new_ttl, chn_num + 1, val);
+              elseif chn_type == DAC_CHN
+                tus = glob_tidx * MIN_DELAY_US + start_us;
+                glob_tidx = glob_tidx + 1;
+                cmd_len = cmd_len + 1;
+                commands{cmd_len} = sprintf('t=%.2f,dac(%d)=%.5f\n', ...
+                                            tus, chn_num, val);
+                cur_values(i) = val;
               end
               continue;
             end
@@ -371,6 +384,13 @@ classdef FPGABackend < PulseBackend
                                             tus, chn_num, val);
                 cur_values(i) = val;
               end
+            elseif chn_type == DAC_CHN
+              tus = glob_tidx * MIN_DELAY_US + start_us;
+              glob_tidx = glob_tidx + 1;
+              cmd_len = cmd_len + 1;
+              commands{cmd_len} = sprintf('t=%.2f,dac(%d)=%.5f\n', ...
+                                          tus, chn_num, val);
+              cur_values(i) = val;
             end
             continue;
           end
@@ -407,6 +427,13 @@ classdef FPGABackend < PulseBackend
                                           tus, chn_num, val);
               cur_values(i) = val;
             end
+          elseif chn_type == DAC_CHN
+            tus = glob_tidx * MIN_DELAY_US + start_us;
+            glob_tidx = glob_tidx + 1;
+            cmd_len = cmd_len + 1;
+            commands{cmd_len} = sprintf('t=%.2f,dac(%d)=%.5f\n', ...
+                                        tus, chn_num, val);
+            cur_values(i) = val;
           end
         end
 
@@ -482,6 +509,19 @@ classdef FPGABackend < PulseBackend
           error('Unconnected TTL channel %d.', chn_num);
         elseif chn_num == self.START_TRIGGER_TTL
           error('Channel conflict with start trigger');
+        end
+      elseif strncmp(cpath{1}, 'DAC', 3)
+        chn_type = self.DAC_CHN;
+        if size(cpath, 2) ~= 1
+          error('Invalid DAC channel id "%s".', cid);
+        end
+        matches = regexp(cpath{1}, '^DAC([1-9]\d*|0)$', 'tokens');
+        if isempty(matches)
+          error('No DAC channel number');
+        end
+        chn_num = str2double(matches{1}{1});
+        if ~isfinite(chn_num) || chn_num < 0 || chn_num >= 4
+          error('Unconnected DAC channel %d.', chn_num);
         end
       elseif strncmp(cpath{1}, 'DDS', 3)
         if size(cpath, 2) ~= 2
