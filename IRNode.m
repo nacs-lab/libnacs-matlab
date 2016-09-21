@@ -12,7 +12,7 @@
 %% License along with this library.
 
 classdef IRNode < handle
-  properties(Constant, Access=protected)
+  properties(Constant, Hidden)
     OPMin = 0;
     OPRet = 1;
     OPBr = 2;
