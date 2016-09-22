@@ -161,9 +161,12 @@ classdef FPGABackend < PulseBackend
           code = [code, chn_type, chn_num, ...
                   typecast(double(t_start), 'int32'), ...
                   typecast(double(t_len), 'int32')];
-          if isnumeric(val)
+          if isnumeric(val) || islogical(val)
             code = [code, 0, typecast(double(val), 'int32')];
           else
+            if chn_type == TTL_CHN
+              error('Function pulse not allowed on TTL channel');
+            end
             func = IRFunc(2);
             func.setCode(val);
             ser = func.serialize();

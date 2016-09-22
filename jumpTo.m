@@ -43,7 +43,7 @@ classdef jumpTo < PulseBase
     end
 
     function val = calcValue(self, t, ~, old_val)
-      if isnumeric(old_val)
+      if isnumeric(old_val) || islogical(old_val)
         vals = [self.val, old_val];
         val = vals((t < self.time) + 1);
       else

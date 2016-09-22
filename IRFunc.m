@@ -88,7 +88,7 @@ classdef IRFunc < handle
       self.nvals = id + 1;
     end
     function id=addNode(self, node)
-      if isnumeric(node)
+      if isnumeric(node) || islogical(node)
         if ~isscalar(node)
           error('Non scalar constant');
         end
