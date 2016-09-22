@@ -42,9 +42,9 @@ classdef TimeStep < TimeSeq
         pulse = FuncPulse(pulse);
       end
       [pstart, plen] = pulse.timeSpan(self.len);
-      if ~self.globChannelAvailable(cid, pstart, plen)
-        error('Overlaping pulses.');
-      end
+%       if ~self.globChannelAvailable(cid, pstart, plen)
+%         error('Overlaping pulses.');
+%       end
       if size(self.pulses, 2) < cid
         pulse_list = {};
       else
