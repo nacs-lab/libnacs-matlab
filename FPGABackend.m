@@ -33,8 +33,7 @@ classdef FPGABackend < PulseBackend
     TTL_CHN = 1;
     DDS_FREQ = 2;
     DDS_AMP = 3;
-    DDS_PHASE = 4;
-    DAC_CHN = 5;
+    DAC_CHN = 4;
 
     START_TRIGGER_TTL = 0;
   end
@@ -78,401 +77,105 @@ classdef FPGABackend < PulseBackend
     end
 
     function generate(self, cids)
-      %% Load member constants/caches into local variable since matlab is super
-      %% slow at loading members.
+      %% [TTL default: 4B]
+      %% [n_non_ttl: 4B]
+      %% [[[chn_type: 4B][chn_id: 4B][defaults: 8B]] x n_non_ttl]
+      %% [n_pulses: 4B]
+      %% [[[chn_type: 4B][chn_id: 4B][t_start: 8B][t_len: 8B]
+      %%  [[0: 4B][val: 8B] / [code_len: 4B][code: code_len x 4B]]] x n_pulses]
+
       TTL_CHN = self.TTL_CHN;
       DDS_FREQ = self.DDS_FREQ;
       DDS_AMP = self.DDS_AMP;
-      DDS_PHASE = self.DDS_PHASE;
       DAC_CHN = self.DAC_CHN;
-      MIN_DELAY = self.MIN_DELAY;
-
-      MIN_DELAY_US = MIN_DELAY * 1e6;
 
       type_cache = self.type_cache;
       num_cache = self.num_cache;
-
-      max_pulse_id = self.seq.curPulseId();
-      pulse_cache_range = zeros(max_pulse_id, 2);
-      pulse_cache = cell(1, max_pulse_id);
-
-      start_us = self.INIT_DELAY * 1e6;
-      self.cmd_str = '';
-      commands = {};
-      cmd_len = 0;
-
       nchn = size(cids, 2);
-      total_t = self.seq.length();
-      nstep = floor(total_t / MIN_DELAY);
-
       ttl_values = self.getTTLDefault();
-      %% Pre allocating memory
-      commands{cmd_len + min(nstep, 100000)} = [];
-      cmd_len = cmd_len + 1;
-      commands{cmd_len} = sprintf('t=%.2f,TTL(all)=%x\n', ...
-                                  start_us, ttl_values);
+      default_values = zeros(1, nchn);
 
-      pulse_mask = false(1, nchn);
-      cur_pulses = cell(1, nchn);
+      n_non_ttl = 0;
+      n_pulses = 0;
 
-      pidxs = ones(1, nchn);
-      %% The first command can only be run one time period after the clock_out
-      %% command.
-      glob_tidx = 1;
-      all_pulses = cell(1, nchn);
-      npulses = zeros(1, nchn);
-      orig_values = zeros(1, nchn);
-      cur_values = zeros(1, nchn);
-      %% Matlab seems to have special optimization for "for x = 1:y"
-      %% anything that is not exactly this form is much slower.
       for i = 1:nchn
         cid = cids(i);
-        all_pulses{i} = self.seq.getPulseTimes(cid);
-        npulses(i) = size(all_pulses{i}, 1);
-        orig_values(i) = self.seq.getDefaults(cid);
-        cur_values(i) = orig_values(i);
-
-        %% TTL defaults are already set.
-        if type_cache(cid) ~= TTL_CHN
-          start_us = start_us + MIN_DELAY_US * 10;
-          chn_num = num_cache(cid);
-          chn_type = type_cache(cid);
-          if chn_type == DDS_FREQ
-            cmd_len = cmd_len + 1;
-            commands{cmd_len} = sprintf('t=%.2f,freq(%d)=%f\n', ...
-                                        start_us, chn_num, cur_values(i));
-          elseif chn_type == DDS_AMP
-            cmd_len = cmd_len + 1;
-            commands{cmd_len} = sprintf('t=%.2f,amp(%d)=%f\n', ...
-                                        start_us, chn_num, cur_values(i));
-          elseif chn_type == DAC_CHN
-            cmd_len = cmd_len + 1;
-            commands{cmd_len} = sprintf('t=%.2f,dac(%d)=%f\n', ...
-                                        start_us, chn_num, cur_values(i));
-          end
+        pulses = self.seq.getPulseTimes(cid);
+        all_pulses{i} = pulses;
+        np = size(pulses, 1);
+        if np == 0
+          continue;
         end
-
-        if npulses(i) == 0
-          pidxs(i) = 0;
+        n_pulses = n_pulses + np;
+        chn_type = type_cache(cid);
+        if chn_type ~= TTL_CHN
+          n_non_ttl = n_non_ttl + 1;
         end
+        default_values(i) = self.seq.getDefaults(cid);
       end
 
-      if self.START_TRIGGER_TTL >= 0
-        %% The NI Card (with the driver/interface comes with MATLAB 2014b)
-        %% seems to want a start trigger before the clock starts and
-        %% it will start running when it gets a clock.
-        start_us = start_us + MIN_DELAY_US * 100;
-        cmd_len = cmd_len + 1;
-        commands{cmd_len} = sprintf('t=%.2f,TTL(%d)=1\n', ...
-                                    start_us, self.START_TRIGGER_TTL);
-        start_us = start_us + MIN_DELAY_US / 2;
-        cmd_len = cmd_len + 1;
-        commands{cmd_len} = sprintf('t=%.2f,TTL(%d)=0\n', ...
-                                    start_us, self.START_TRIGGER_TTL);
+      code = int32([]);
+      code = [code, ttl_values, n_non_ttl];
+
+      for i = 1:nchn
+        cid = cids(i);
+        chn_type = type_cache(cid);
+        if chn_type == TTL_CHN
+          continue;
+        end
+        chn_num = num_cache(cid);
+        default_val = default_values(i);
+        code = [code, chn_type, chn_num, ...
+                typecast(double(default_val), 'int32')];
       end
-      if self.clock_div > 0
-        start_us = start_us + self.CLOCK_DELAY * 1e6;
-        cmd_len = cmd_len + 1;
-        commands{cmd_len} = sprintf('t=%.2f,CLOCK_OUT(%d)\n', ...
-                                    start_us, self.clock_div);
-        %% Delay everything by half a clock out cycle so that everything
-        %% updates at the same time.
-        start_us = start_us + self.clock_div * 10e-3;
-      else
-        start_us = start_us + self.START_DELAY * 1e6; % global time offset
-      end
-
-      %% We run the loop as long as there's any pulses left.
-      while any(pidxs ~= 0)
-        %% At the beginning of each loop:
-        %% @glob_tidx the time index to be filled. The corresponding sequence
-        %% time is glob_tidx * MIN_DELAY and the corresponding FPGA
-        %% time in us is glob_tidx * MIN_DELAY_US + start_us
-        %%
-        %% @pidxs points to the pulse for each channel to be processed
-        %% in @all_pulses (0 if there's not more pulses for the channel).
-        %% It might point to non-existing pulse when the last pulse is being
-        %% processed. @pidxs should never points to a end pulse.
-        %%
-        %% @pulse_mask and @cur_pulses determines if there's a pulse running
-        %% during the last time point (which might finish before the next
-        %% time point). The pulse stored in @cur_pulses should be the end
-        %% pulse.
-        %%
-        %% @orig_values is the start value to calculate the value for the
-        %% current pulse. If there is no current pulse, this is the value at
-        %% the beginning of the next pulse.
-        %%
-        %% @cur_values is the value at the last time step this can be used
-        %% to only update the channel when the value has changed by more than
-        %% the resolution.
-        %%
-        %% @ttl_values is the value of all the TTL channels in the previous
-        %% time point.
-
-        %% For DDS frequency, resolution is 0.4Hz (1.75GHz / 2**32)
-        %% For DDS amplitude, resolution is 0.0002 (1 / 2**12)
-        %% For TTL, resolution is, ... well, .... 0 or 1...
-        %% No DDS phase for now.
-
-        %% In each loop, we propagate each active channel (determined by
-        %% @pulse_mask) by one time period. For each DDS channels, we
-        %% append a command and increment the time if the value changes.
-        %% For each TTL channels, we update the TTL values and add a command
-        %% at the end of the loop to update all TTL values.
-        new_ttl = ttl_values;
-        next_tidx = nstep;
-
-        for i = 1:nchn
-          cid = cids(i);
-          if pulse_mask(i)
-            %% Check pulse_mask first since it is the most likely case.
-            pulse = cur_pulses{i};
-            pid = pulse{7};
-            if pulse_cache_range(pid, 2) >= glob_tidx;
-              %% If the current pulse continues to the next time point,
-              %% calculate the new value, add command, update necessary state
-              %% variables, and proceed to the next channel.
-              val = pulse_cache{pid}(glob_tidx - pulse_cache_range(pid, 1));
-              next_tidx = glob_tidx + 1;
-              chn_type = type_cache(cid);
-              chn_num = num_cache(cid);
-              if chn_type == DDS_FREQ
-                if abs(cur_values(i) - val) >= 0.4
-                  tus = glob_tidx * MIN_DELAY_US + start_us;
-                  glob_tidx = glob_tidx + 1;
-                  cmd_len = cmd_len + 1;
-                  commands{cmd_len} = sprintf('t=%.2f,freq(%d)=%.1f\n', ...
-                                              tus, chn_num, val);
-                  cur_values(i) = val;
-                end
-              elseif chn_type == DDS_AMP
-                %% Maximum amplitude is 1.
-                val = min(1, val);
-                if abs(cur_values(i) - val) >= 0.0002
-                  tus = glob_tidx * MIN_DELAY_US + start_us;
-                  glob_tidx = glob_tidx + 1;
-                  cmd_len = cmd_len + 1;
-                  commands{cmd_len} = sprintf('t=%.2f,amp(%d)=%.4f\n', ...
-                                              tus, chn_num, val);
-                  cur_values(i) = val;
-                end
-              elseif chn_type == TTL_CHN
-                val = logical(val);
-                cur_values(i) = val;
-                new_ttl = bitset(new_ttl, chn_num + 1, val);
-              elseif chn_type == DAC_CHN
-                tus = glob_tidx * MIN_DELAY_US + start_us;
-                glob_tidx = glob_tidx + 1;
-                cmd_len = cmd_len + 1;
-                commands{cmd_len} = sprintf('t=%.2f,dac(%d)=%.5f\n', ...
-                                            tus, chn_num, val);
-                cur_values(i) = val;
+      code = [code, n_pulses];
+      targ = IRNode.getArg(1);
+      oldarg = IRNode.getArg(2);
+      for i = 1:nchn
+        cid = cids(i);
+        chn_type = type_cache(cid);
+        chn_num = num_cache(cid);
+        pulses = all_pulses{i};
+        for j = 1:size(pulses, 1)
+          pulse = pulses(j, :);
+          switch pulse{2}
+            case TimeType.Dirty
+              t_start = pulse{1};
+              t_len = 0;
+              pulse_obj = pulse{3};
+              val = pulse_obj.calcValue(pulse{8}, pulse{5}, oldarg);
+            case TimeType.Start
+              if chn_type == TTL_CHN
+                error('Function pulse not allowed on TTL channel');
               end
-              continue;
-            end
-            %% Otherwise, finish up the pulse and proceed to check for
-            %% new pulses.
-            pulse_mask(i) = false;
-            %% pulse{1} is the end of the pulse.
-            orig_values(i) = pulse{3}.calcValue(pulse{1} - pulse{4}, ...
-                                                pulse{5}, orig_values(i));
+              pulse_end = all_pulses{i}(j + 1, :);
+              t_start = pulse{1};
+              t_len = pulse_end{8};
+              pulse_obj = pulse{3};
+              val = pulse_obj.calcValue(targ, pulse{5}, oldarg);
+            case TimeType.End
+            otherwise
+              %% Debug only
+              error('Invalid pulse type.');
           end
-          if pidxs(i) == 0
-            %% pulse index is only 0 when all the pulses are done.
-            continue;
-          end
-          %% Find and process pulses that starts no later than the next time
-          %% point. If no new pulses are found we still need to check if a new
-          %% value is necessary since we might need to finish up a previous
-          %% pulse.
-          %% Also needs to update next_tidx according to the next time pulse.
-
-          while true
-            pidx = pidxs(i);
-            if pidx > npulses(i)
-              pidxs(i) = 0;
-              break;
-            end
-
-            %% So the next pulse is good, let's process it.
-            pulses = all_pulses{i};
-            %% Well, not quite yet, we need to make sure it is no later than
-            %% the next time point.
-            step_tidx = ceil(pulses{pidx, 1} / MIN_DELAY);
-            if step_tidx > glob_tidx
-              %% if it is too late just update next_tidx to make sure we
-              %% catch it next time and exit.
-              next_tidx = min(next_tidx, step_tidx);
-              break;
-            end
-            pulse = pulses(pidx, :);
-
-            %% So we have no excuse to not process this pulse this time.
-            %% Let's do it...
-            switch pulse{2}
-              case TimeType.Dirty
-                pidxs(i) = pidx + 1;
-                pulse_obj = pulse{3};
-                orig_values(i) = pulse_obj.calcValue(pulse{8}, ...
-                                                     pulse{5}, orig_values(i));
-                continue;
-              case TimeType.Start
-                pidx = pidx + 1;
-                %% Debug only
-                if pidx > npulses(i) || pulse{7} ~= all_pulses{i}{pidx, 7}
-                  error('Unmatch pulse start and end.');
-                end
-                pulse_end = all_pulses{i}(pidx, :);
-                end_tidx = pulse_end{1} / MIN_DELAY;
-                pidxs(i) = pidx + 1;
-                pobj = pulse{3};
-                if ceil(end_tidx) > glob_tidx
-                  %% If the pulse persists, record it and quit the loop.
-                  pulse_mask(i) = true;
-                  cur_pulses{i} = pulse_end;
-                  %% Cache values so that we can use later.
-                  pid = pulse{7};
-                  end_tidx = floor(end_tidx);
-                  ts = (glob_tidx:end_tidx) * MIN_DELAY - pulse{4};
-                  pulse_cache_range(pid, 1) = glob_tidx - 1;
-                  pulse_cache_range(pid, 2) = end_tidx;
-                  pulse_cache{pid} = pobj.calcValue(ts, pulse{5}, ...
-                                                    orig_values(i));
-                  commands{cmd_len + end_tidx - glob_tidx + 1000} = [];
-                  break;
-                end
-                %% Forward to the end of the pulse since it is shorter than
-                %% our time interval.
-                ptime = pulse_end{1} - pulse{4};
-                orig_values(i) = pobj.calcValue(ptime, pulse{5}, ...
-                                                orig_values(i));
-              otherwise
-                %% Debug only
-                error('Invalid pulse type.');
-            end
-          end
-          %% There are two possibilities when we exit the loop
-          %% 1. Next pulse too late or not exist
-          %%     No pulse is currently running, but we do need to check
-          %%     if we need to update the device using orig_values(i)
-          if ~pulse_mask(i)
-            val = orig_values(i);
-            chn_type = type_cache(cid);
-            chn_num = num_cache(cid);
-            if chn_type == TTL_CHN
-              val = logical(val);
-              new_ttl = bitset(new_ttl, chn_num + 1, val);
-              cur_values(i) = val;
-            elseif chn_type == DDS_FREQ
-              if abs(cur_values(i) - val) >= 0.4
-                tus = glob_tidx * MIN_DELAY_US + start_us;
-                glob_tidx = glob_tidx + 1;
-                cmd_len = cmd_len + 1;
-                commands{cmd_len} = sprintf('t=%.2f,freq(%d)=%.1f\n', ...
-                                            tus, chn_num, val);
-                cur_values(i) = val;
-              end
-            elseif chn_type == DDS_AMP
-              %% Maximum amplitude is 1.
-              val = min(1, val);
-              if abs(cur_values(i) - val) >= 0.0002
-                tus = glob_tidx * MIN_DELAY_US + start_us;
-                glob_tidx = glob_tidx + 1;
-                cmd_len = cmd_len + 1;
-                commands{cmd_len} = sprintf('t=%.2f,amp(%d)=%.4f\n', ...
-                                            tus, chn_num, val);
-                cur_values(i) = val;
-              end
-            elseif chn_type == DAC_CHN
-              tus = glob_tidx * MIN_DELAY_US + start_us;
-              glob_tidx = glob_tidx + 1;
-              cmd_len = cmd_len + 1;
-              commands{cmd_len} = sprintf('t=%.2f,dac(%d)=%.5f\n', ...
-                                          tus, chn_num, val);
-              cur_values(i) = val;
-            end
-            continue;
-          end
-
-          %% 2. Found a pulse that persists
-          %%     Calculate values for this pulse and run the next loop.
-          pulse = pulse_end;
-          pid = pulse{7};
-          val = pulse_cache{pid}(glob_tidx - pulse_cache_range(pid, 1));
-          next_tidx = glob_tidx + 1;
-          chn_type = type_cache(cid);
-          chn_num = num_cache(cid);
-          if chn_type == TTL_CHN
-            val = logical(val);
-            cur_values(i) = val;
-            new_ttl = bitset(new_ttl, chn_num + 1, val);
-          elseif chn_type == DDS_FREQ
-            if abs(cur_values(i) - val) >= 0.4
-              tus = glob_tidx * MIN_DELAY_US + start_us;
-              glob_tidx = glob_tidx + 1;
-              cmd_len = cmd_len + 1;
-              commands{cmd_len} = sprintf('t=%.2f,freq(%d)=%.1f\n', ...
-                                          tus, chn_num, val);
-              cur_values(i) = val;
-            end
-          elseif chn_type == DDS_AMP
-            %% Maximum amplitude is 1.
-            val = min(1, val);
-            if abs(cur_values(i) - val) >= 0.0002
-              tus = glob_tidx * MIN_DELAY_US + start_us;
-              glob_tidx = glob_tidx + 1;
-              cmd_len = cmd_len + 1;
-              commands{cmd_len} = sprintf('t=%.2f,amp(%d)=%.4f\n', ...
-                                          tus, chn_num, val);
-              cur_values(i) = val;
-            end
-          elseif chn_type == DAC_CHN
-            tus = glob_tidx * MIN_DELAY_US + start_us;
-            glob_tidx = glob_tidx + 1;
-            cmd_len = cmd_len + 1;
-            commands{cmd_len} = sprintf('t=%.2f,dac(%d)=%.5f\n', ...
-                                        tus, chn_num, val);
-            cur_values(i) = val;
+          code = [code, chn_type, chn_num, ...
+                  typecast(double(t_start), 'int32'), ...
+                  typecast(double(t_len), 'int32')];
+          if isnumeric(val)
+            code = [code, 0, typecast(double(val), 'int32')];
+          else
+            func = IRFunc(2);
+            func.setCode(val);
+            ser = func.serialize();
+            code = [code, length(ser), ser];
           end
         end
-
-        %% Now we need to update ttl values
-        if new_ttl ~= ttl_values
-          ttl_values = new_ttl;
-          tus = glob_tidx * MIN_DELAY_US + start_us;
-          glob_tidx = glob_tidx + 1;
-          cmd_len = cmd_len + 1;
-          commands{cmd_len} = sprintf('t=%.2f,TTL(all)=%x\n', ...
-                                      tus, ttl_values);
-        end
-
-        %% And check if we can skip some time points.
-        glob_tidx = max(glob_tidx, next_tidx);
       end
-
-      %% Now we wait till the end of the sequence.
-      glob_tidx = max(nstep, glob_tidx + 1);
-      if self.clock_div > 0
-        %% This is a hack that is believed to make the NI card happy.
-        tus = glob_tidx * MIN_DELAY_US + start_us;
-        glob_tidx = glob_tidx + floor(self.FIN_CLOCK_DELAY / MIN_DELAY);
-        cmd_len = cmd_len + 1;
-        commands{cmd_len} = sprintf('t=%.2f,CLOCK_OUT(60)\n', tus);
-      end
-      %% We turn off the clock even when it is not used just as a place holder.
-      %% for the end of the sequence.
-      tus = glob_tidx * MIN_DELAY_US + start_us;
-      glob_tidx = glob_tidx + 1;
-      cmd_len = cmd_len + 1;
-      commands{cmd_len} = sprintf('t=%.2f,CLOCK_OUT(off)\n', tus);
-
-      %% Finally we construct and log the sequence.
-      self.cmd_str = [commands{:}];
-
-      self.seq.log('#### Start Generated Sequence File ####');
-      self.seq.log(self.cmd_str);
-      self.seq.log('#### End Sequence File ####');
+      pyglob = py.dict();
+      py.exec('import base64', pyglob);
+      pylocal = py.dict(pyargs('code', code));
+      str = char(py.eval('base64.b64encode(code).decode()', pyglob, pylocal));
+      self.cmd_str = ['=', str];
     end
 
     function res = getCmd(self)
@@ -559,7 +262,7 @@ classdef FPGABackend < PulseBackend
     end
 
     function val = getTTLDefault(self)
-      val = uint64(0);
+      val = uint32(0);
       for i = 0:31
         val = bitset(val, i + 1, self.singleTTLDefault(i));
       end
