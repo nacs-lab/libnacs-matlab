@@ -120,7 +120,6 @@ classdef IRFunc < handle
         for i = 1:nargs
           code(4 + i) = self.addNode(args{1 + i});
         end
-        return;
       else
         if head == IRNode.HAdd
           opcode = IRNode.OPAdd;
