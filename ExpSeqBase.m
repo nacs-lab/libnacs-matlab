@@ -49,7 +49,7 @@ classdef ExpSeqBase < TimeSeq
           self.curTime = sub_cur;
         end
       end
-      self.subSeqForeach(checkBackgroundTime);
+      self.subSeqForeach(@checkBackgroundTime);
       res = self;
     end
 
