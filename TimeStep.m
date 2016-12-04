@@ -83,15 +83,18 @@ classdef TimeStep < TimeSeq
     end
 
     function res = getPulsesRaw(self, cid)
-      res = getPulsesRaw@TimeSeq(self, cid);
       if size(self.pulses, 2) >= cid
         step_len = self.len;
         pulses = self.pulses{cid};
-        for i = 1:size(pulses, 2)
+        npulses = size(pulses, 2);
+        res = cell(npulses, 6);
+        for i = 1:npulses
           pulse = pulses{i};
           [tstart, tlen] = pulse.timeSpan(step_len);
-          res = [res; {tstart, tlen, pulse, 0, step_len, cid}];
+          res(i, :) = {tstart, tlen, pulse, 0, step_len, cid};
         end
+      else
+        res = {};
       end
     end
   end
