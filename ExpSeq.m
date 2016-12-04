@@ -41,16 +41,18 @@ classdef ExpSeq < ExpSeqBase
         function cid = translateChannel(self, name)
             orig_name = name;
             name = self.config.translateChannel(name);
-            cpath = strsplit(name, '/');
-            did = cpath{1};
-            [driver, driver_name] = self.initDeviceDriver(did);
             cid = translateChannel@ExpSeqBase(self, name);
-            
+
             if (cid > size(self.orig_channel_names, 2) || ...
                     isempty(self.orig_channel_names{cid}))
                 self.orig_channel_names{cid} = orig_name;
+            else
+                return;
             end
-            
+            cpath = strsplit(name, '/');
+            did = cpath{1};
+            [driver, driver_name] = self.initDeviceDriver(did);
+
             driver.initChannel(cid);
             cur_cids = self.driver_cids(driver_name);
             self.driver_cids(driver_name) = unique([cur_cids, cid]);
@@ -173,8 +175,8 @@ classdef ExpSeq < ExpSeqBase
             cid = self.translateChannel(name);
             self.default_override{cid} = val;
             
-            self.logf('# Override default value %s(%s) = %f', ...
-                name, self.channelName(cid), val);
+            % self.logf('# Override default value %s(%s) = %f', ...
+            %     name, self.channelName(cid), val);
         end
         
         function plot(self, varargin)
