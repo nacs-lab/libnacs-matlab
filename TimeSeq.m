@@ -15,7 +15,6 @@ classdef TimeSeq < dynamicprops
   properties
     config;
     logger;
-    chn_manager;
   end
 
   properties(Hidden, Access=protected)
@@ -35,25 +34,20 @@ classdef TimeSeq < dynamicprops
       if nargin < 1
         self.logger = NaCsLogger('seq');
         self.config = loadConfig();
-        self.chn_manager = ChannelManager();
       elseif nargin < 2
         self.logger = NaCsLogger(parent_or_name);
         self.config = loadConfig();
-        self.chn_manager = ChannelManager();
       else
         self.parent = parent_or_name;
         self.tOffset = toffset;
 
         self.logger = parent_or_name.logger;
         self.config = parent_or_name.config;
-        self.chn_manager = parent_or_name.chn_manager;
         parent_or_name.addSubSeq(self, toffset);
         if nargin >= 3
           self.len = len;
         end
       end
-
-      % self.logf('# TimeSeq(id=%d) created.', self.seq_id);
     end
 
     function res = logFile(self)
@@ -248,14 +242,6 @@ classdef TimeSeq < dynamicprops
       end
     end
 
-    function cid = findChannelId(self, name)
-      if self.hasParent()
-        cid = self.parent.findChannelId(name);
-      else
-        cid = self.chn_manager.findId(name);
-      end
-    end
-
     function cid = translateChannel(self, name)
       cid = self.parent.translateChannel(name);
     end
@@ -292,10 +278,6 @@ classdef TimeSeq < dynamicprops
 
     function val = getDefault(self, ~)
       val = 0;
-    end
-
-    function res = hasParent(self)
-      res = isobject(self.parent);
     end
 
     function addSubSeq(self, sub_seq, toffset)

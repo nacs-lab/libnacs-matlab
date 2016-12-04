@@ -21,6 +21,7 @@ classdef ExpSeq < ExpSeqBase
         cid_cache;
         pulse_id_counter = 0;
         seq_id_counter = 0;
+        chn_manager;
     end
     
     methods
@@ -33,6 +34,7 @@ classdef ExpSeq < ExpSeqBase
             global nacsTimeSeqNameSuffixHack;
             name = [name, nacsTimeSeqNameSuffixHack];
             self = self@ExpSeqBase(name);
+            self.chn_manager = ChannelManager();
             self.drivers = containers.Map();
             self.driver_cids = containers.Map();
             self.default_override = {};
@@ -69,7 +71,7 @@ classdef ExpSeq < ExpSeqBase
 
         function cid = findChannelId(self, name)
             name = self.config.translateChannel(name);
-            cid = findChannelId@ExpSeqBase(self, name);
+            cid = self.chn_manager.findId(name);
         end
         
         function driver = findDriver(self, driver_name)
