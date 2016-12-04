@@ -54,15 +54,20 @@ classdef TimeStep < TimeSeq
 
   methods(Access=protected)
     function res = getPulsesRaw(self, cid)
-      if size(self.pulses, 2) >= cid
-        step_len = self.len;
-        pulses = self.pulses{cid};
-        npulses = size(pulses, 2);
-        res = cell(npulses, 6);
-        for i = 1:npulses
-          pulse = pulses{i};
-          [tstart, tlen] = pulse.timeSpan(step_len);
-          res(i, :) = {tstart, tlen, pulse, 0, step_len, cid};
+      all_pulses = self.pulses;
+      if size(all_pulses, 2) >= cid
+        pulses = all_pulses{cid};
+        if ~isempty(pulses)
+          step_len = self.len;
+          npulses = size(pulses, 2);
+          res = cell(npulses, 6);
+          for i = 1:npulses
+            pulse = pulses{i};
+            [tstart, tlen] = pulse.timeSpan(step_len);
+            res(i, :) = {tstart, tlen, pulse, 0, step_len, cid};
+          end
+        else
+          res = {};
         end
       else
         res = {};
