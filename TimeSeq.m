@@ -107,17 +107,17 @@ classdef TimeSeq < dynamicprops
           dirty_times = pulse_obj.dirtyTime(step_len);
           if ~isempty(dirty_times)
             for t = dirty_times
-              res = [res; {t + toffset, int32(TimeType.Dirty), pulse_obj, ...
-                           toffset, step_len, cid, pulse_obj.id, t}];
+              res(end + 1, 1:8) = {t + toffset, int32(TimeType.Dirty), pulse_obj, ...
+                                   toffset, step_len, cid, pulse_obj.id, t};
             end
           else
             %% Maybe treating a zero length pulse as hasDirtyTime?
             tstart = pulse{1};
             tlen = pulse{2};
-            res = [res; {tstart, int32(TimeType.Start), pulse_obj, ...
-                         toffset, step_len, cid, pulse_obj.id, 0}];
-            res = [res; {tstart + tlen, int32(TimeType.End), pulse_obj, ...
-                         toffset, step_len, cid, pulse_obj.id, tlen}];
+            res(end + 1, 1:8) = {tstart, int32(TimeType.Start), pulse_obj, ...
+                                 toffset, step_len, cid, pulse_obj.id, 0};
+            res(end + 1, 1:8) = {tstart + tlen, int32(TimeType.End), pulse_obj, ...
+                                 toffset, step_len, cid, pulse_obj.id, tlen};
           end
         end
       end
@@ -305,16 +305,20 @@ classdef TimeSeq < dynamicprops
         seq_t = self.subSeqs{i};
         sub_pulses = seq_t.seq.getPulsesRaw(cid);
 
-        for j = 1:size(sub_pulses, 1)
+        nsub_pulses = size(sub_pulses, 1);
+        res_offset = size(res, 1);
+        if nsub_pulses > 0
+            res(res_offset + nsub_pulses, 6) = {0};
+        end
+        for j = 1:nsub_pulses
           sub_tuple = sub_pulses(j, :);
           pulse_toffset = sub_tuple{1};
           pulse_len = sub_tuple{2};
           pulse_func = sub_tuple{3};
           step_toffset = sub_tuple{4};
           step_len = sub_tuple{5};
-
-          res = [res; {pulse_toffset + seq_t.offset, pulse_len, pulse_func, ...
-                       step_toffset + seq_t.offset, step_len, cid}];
+          res(res_offset + j, 1:6) = {pulse_toffset + seq_t.offset, pulse_len, pulse_func, ...
+                                      step_toffset + seq_t.offset, step_len, cid};
         end
       end
     end
