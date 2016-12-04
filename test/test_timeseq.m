@@ -17,19 +17,6 @@ classdef test_timeseq < TimeSeq
       self = self@TimeSeq();
       subseq1 = TimeSeq(self, 0);
       subseq2 = TimeSeq(self, 2);
-
-      assert(self.globChannelAvailable(1, 2) == 1);
-      assert(self.globChannelAvailable(1, 1) == 1);
-      assert(self.globChannelAvailable(1, 0) == 1);
-
-      assert(subseq1.globChannelAvailable(1, 2) == 1);
-      assert(subseq1.globChannelAvailable(1, 1) == 1);
-      assert(subseq1.globChannelAvailable(1, 0) == 1);
-
-      assert(subseq2.globChannelAvailable(1, 2) == 1);
-      assert(subseq2.globChannelAvailable(1, 1) == 1);
-      assert(subseq2.globChannelAvailable(1, 0) == 1);
-
       assert(isempty(self.getPulses(1)));
       assert(isempty(subseq1.getPulses(1)));
       assert(isempty(subseq2.getPulses(1)));

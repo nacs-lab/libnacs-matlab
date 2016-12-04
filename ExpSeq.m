@@ -18,6 +18,9 @@ classdef ExpSeq < ExpSeqBase
         generated = false;
         default_override;
         orig_channel_names;
+        cid_cache;
+        pulse_id_counter = 0;
+        seq_id_counter = 0;
     end
     
     methods
@@ -34,14 +37,20 @@ classdef ExpSeq < ExpSeqBase
             self.driver_cids = containers.Map();
             self.default_override = {};
             self.orig_channel_names = {};
+            self.cid_cache = containers.Map('KeyType', 'char', 'ValueType', 'double');
             
             self.logDefault();
         end
         
         function cid = translateChannel(self, name)
+            if self.cid_cache.isKey(name)
+                cid = self.cid_cache(name);
+                return;
+            end
             orig_name = name;
             name = self.config.translateChannel(name);
-            cid = translateChannel@ExpSeqBase(self, name);
+            cid = self.chn_manager.getId(name);
+            self.cid_cache(orig_name) = cid;
 
             if (cid > size(self.orig_channel_names, 2) || ...
                     isempty(self.orig_channel_names{cid}))
@@ -57,7 +66,7 @@ classdef ExpSeq < ExpSeqBase
             cur_cids = self.driver_cids(driver_name);
             self.driver_cids(driver_name) = unique([cur_cids, cid]);
         end
-        
+
         function cid = findChannelId(self, name)
             name = self.config.translateChannel(name);
             cid = findChannelId@ExpSeqBase(self, name);
@@ -238,9 +247,20 @@ classdef ExpSeq < ExpSeqBase
             
             self.plotReal(cids, names);
         end
+        function name = channelName(self, cid)
+          name = self.chn_manager.channels{cid};
+        end
     end
-    
+
     methods(Access=protected)
+        function id = nextPulseId(self)
+          self.pulse_id_counter = self.pulse_id_counter + 1;
+          id = self.pulse_id_counter;
+        end
+        function id = nextSeqId(self)
+          self.seq_id_counter = self.seq_id_counter + 1;
+          id = self.seq_id_counter;
+        end
         function val = getDefault(self, cid)
             try
                 val = self.default_override{cid};

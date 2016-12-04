@@ -21,14 +21,12 @@ classdef TimeSeq < dynamicprops
   properties(Hidden, Access=protected)
     len = 0;
     seq_id;
+    parent = 0;
   end
 
   properties(Hidden, Access=private)
     subSeqs;
     tOffset;
-    parent = 0;
-    pulse_id_counter = 0;
-    seq_id_counter = 0;
   end
 
   methods
@@ -250,14 +248,6 @@ classdef TimeSeq < dynamicprops
       end
     end
 
-    function name = channelName(self, cid)
-      if self.hasParent()
-        name = self.parent.channelName(cid);
-      else
-        name = self.chn_manager.channels{cid};
-      end
-    end
-
     function cid = findChannelId(self, name)
       if self.hasParent()
         cid = self.parent.findChannelId(name);
@@ -267,20 +257,7 @@ classdef TimeSeq < dynamicprops
     end
 
     function cid = translateChannel(self, name)
-      if self.hasParent()
-        cid = self.parent.translateChannel(name);
-      else
-        %% The top level time sequence should also implement proper check.
-        cid = self.chn_manager.getId(name);
-      end
-    end
-
-    function id = curPulseId(self)
-      if self.hasParent()
-        id = self.parent.curPulseId();
-      else
-        id = self.pulse_id_counter;
-      end
+      cid = self.parent.translateChannel(name);
     end
   end
 
@@ -293,21 +270,11 @@ classdef TimeSeq < dynamicprops
     end
 
     function id = nextPulseId(self)
-      if self.hasParent()
-        id = self.parent.nextPulseId();
-      else
-        self.pulse_id_counter = self.pulse_id_counter + 1;
-        id = self.pulse_id_counter;
-      end
+      id = self.parent.nextPulseId();
     end
 
     function id = nextSeqId(self)
-      if self.hasParent()
-        id = self.parent.nextSeqId();
-      else
-        self.seq_id_counter = self.seq_id_counter + 1;
-        id = self.seq_id_counter;
-      end
+      id = self.parent.nextSeqId();
     end
 
     function res = getPulses(self, cid)
@@ -323,27 +290,12 @@ classdef TimeSeq < dynamicprops
       end
     end
 
-    function avail = globChannelAvailable(self, cid, t, dt)
-      if nargin < 4 || dt < 0
-        dt = 0;
-      end
-      if self.hasParent()
-        avail = self.parent.globChannelAvailable(cid, t + self.tOffset, dt);
-      else
-        avail = self.channelAvailable(cid, t, dt);
-      end
-    end
-
     function val = getDefault(self, ~)
       val = 0;
     end
 
     function res = hasParent(self)
       res = isobject(self.parent);
-    end
-
-    function parent = getParent(self)
-      parent = self.parent;
     end
 
     function addSubSeq(self, sub_seq, toffset)
@@ -359,34 +311,8 @@ classdef TimeSeq < dynamicprops
           error('Too long sub-sequence.');
         end
       end
-      if sub_seq.hasParent() && sub_seq.getParent() ~= self
-        error('Reparenting time sequence is not allowed.');
-      end
       sub_seq.seq_id = self.nextSeqId();
       self.subSeqs{end + 1} = struct('offset', toffset, 'seq', sub_seq);
-      % self.logf(['# Adding sub sequence(id=%d) ', ...
-      %            '@ toffset=%f to sequence(id=%d)'], ...
-      %           sub_seq.seq_id, toffset, self.seq_id);
-    end
-
-    function avail = channelAvailable(self, cid, t, dt)
-      if nargin < 4 || dt < 0
-        dt = 0;
-      end
-      avail = true;
-      len = self.len;
-      if len > 0 && t >= len
-        return;
-      end
-      nsub = size(self.subSeqs, 2);
-      for i = 1:nsub
-        seq_t = self.subSeqs{i};
-        sub_t = t - seq_t.offset;
-        if sub_t + dt > 0 && ~seq_t.seq.channelAvailable(cid, sub_t, dt)
-          avail = false;
-          return;
-        end
-      end
     end
 
     function res = getPulsesRaw(self, cid)

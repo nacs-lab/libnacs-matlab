@@ -41,10 +41,6 @@ classdef TimeStep < TimeSeq
         %% Treat as function
         pulse = FuncPulse(pulse);
       end
-      [pstart, plen] = pulse.timeSpan(self.len);
-%       if ~self.globChannelAvailable(cid, pstart, plen)
-%         error('Overlaping pulses.');
-%       end
       if size(self.pulses, 2) < cid
         pulse_list = {};
       else
@@ -53,35 +49,10 @@ classdef TimeStep < TimeSeq
       pulse.id = self.nextPulseId();
       pulse_list{end + 1} = pulse;
       self.pulses{cid} = pulse_list;
-
-      % self.logf('# Pulse(id=%d) added to TimeStep(id=%d) on %s(%s)', ...
-      %           pulse.id, self.seq_id, name, self.channelName(cid));
-      % self.log(['# Pulse type: ', pulse.toString()]);
     end
   end
 
   methods(Access=protected)
-    function avail = channelAvailable(self, cid, t, dt)
-      if nargin < 4 || dt < 0
-        dt = 0;
-      end
-      len = self.len;
-      if t >= len || t + dt <= 0
-        avail = true;
-        return;
-      elseif size(self.pulses, 2) >= cid
-        pulses = self.pulses{cid};
-        for i = 1:size(pulses, 2)
-          pulse = pulses{i};
-          if ~pulse.available(t, dt, len)
-            avail = false;
-            return;
-          end
-        end
-      end
-      avail = channelAvailable@TimeSeq(self, cid, t, dt);
-    end
-
     function res = getPulsesRaw(self, cid)
       if size(self.pulses, 2) >= cid
         step_len = self.len;
