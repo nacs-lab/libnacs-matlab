@@ -12,9 +12,6 @@
 %% License along with this library.
 
 classdef(Abstract) PulseBase < handle
-  properties
-    id = 0;
-  end
   methods(Abstract=true)
     %% Old value is the value of the channel at tstart returned by timeSpan.
     val = calcValue(self, t, len, old_val);

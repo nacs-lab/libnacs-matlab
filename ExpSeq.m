@@ -19,8 +19,6 @@ classdef ExpSeq < ExpSeqBase
     default_override;
     orig_channel_names;
     cid_cache;
-    pulse_id_counter = 0;
-    seq_id_counter = 0;
     chn_manager;
   end
 
@@ -380,14 +378,6 @@ classdef ExpSeq < ExpSeqBase
   end
 
   methods(Access=protected)
-    function id = nextPulseId(self)
-      self.pulse_id_counter = self.pulse_id_counter + 1;
-      id = self.pulse_id_counter;
-    end
-    function id = nextSeqId(self)
-      self.seq_id_counter = self.seq_id_counter + 1;
-      id = self.seq_id_counter;
-    end
     function val = getDefault(self, cid)
       try
         val = self.default_override{cid};

@@ -42,7 +42,6 @@ classdef TimeStep < TimeSeq
       else
         pulse_list = self.pulses{cid};
       end
-      pulse.id = self.nextPulseId();
       pulse_list{end + 1} = pulse;
       self.pulses{cid} = pulse_list;
     end

@@ -19,7 +19,6 @@ classdef TimeSeq < dynamicprops
 
   properties(Hidden, Access=protected)
     len = 0;
-    seq_id;
     parent = 0;
   end
 
@@ -126,14 +125,6 @@ classdef TimeSeq < dynamicprops
       end
     end
 
-    function id = nextPulseId(self)
-      id = self.parent.nextPulseId();
-    end
-
-    function id = nextSeqId(self)
-      id = self.parent.nextSeqId();
-    end
-
     function res = getPulses(self, cid)
       %% Return a array of tuples (toffset, length, pulse_obj,
       %%                           step_start, step_len, cid)
@@ -160,7 +151,6 @@ classdef TimeSeq < dynamicprops
           error('Too long sub-sequence.');
         end
       end
-      sub_seq.seq_id = self.nextSeqId();
       self.subSeqs{end + 1} = struct('offset', toffset, 'seq', sub_seq);
     end
 
