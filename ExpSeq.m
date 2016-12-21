@@ -364,6 +364,19 @@ classdef ExpSeq < ExpSeqBase
         vals(i, vidx:end) = cur_value * scale;
       end
     end
+
+    function vals = getDefaults(self, cids)
+      %% @cid: a column array of channel id numbers
+      if isnumeric(cids)
+        vals = self.getDefault(cids);
+      else
+        nchn = size(cids, 1);
+        vals = zeros(nchn, 1);
+        for i = 1:nchn
+          vals(i) = self.getDefault(cids(i));
+        end
+      end
+    end
   end
 
   methods(Access=protected)
