@@ -38,8 +38,6 @@ classdef ExpSeq < ExpSeqBase
       self.default_override = {};
       self.orig_channel_names = {};
       self.cid_cache = containers.Map('KeyType', 'char', 'ValueType', 'double');
-
-      self.logDefault();
     end
 
     function cid = translateChannel(self, name)
@@ -86,7 +84,6 @@ classdef ExpSeq < ExpSeqBase
     function generate(self)
       if ~self.generated
         disp('Generating ...');
-        self.log(['# Generating @ ', datestr(now, 'yyyy-mm-dd_HH-MM-SS')]);
         for key = self.drivers.keys()
           driver_name = key{:};
           driver = self.drivers(driver_name);
@@ -117,12 +114,9 @@ classdef ExpSeq < ExpSeqBase
         drivers = sortrows(drivers, [2]);
       end
       disp(['Running at ' datestr(now, 'HH:MM:SS, yyyy/mm/dd') ' ...']);
-      self.log(['# Start running @ ', datestr(now, 'yyyy-mm-dd_HH-MM-SS')]);
       for i = 1:size(drivers, 1)
         drivers{i, 1}.run();
       end
-
-      self.log(['# Started @ ', datestr(now, 'yyyy-mm-dd_HH-MM-SS')]);
     end
 
     function waitFinish(self)
@@ -137,11 +131,9 @@ classdef ExpSeq < ExpSeqBase
       if ~isempty(drivers)
         drivers = sortrows(drivers, [2]);
       end
-      self.log(['# Start waiting @ ', datestr(now, 'yyyy-mm-dd_HH-MM-SS')]);
       for i = 1:size(drivers, 1)
         drivers{i, 1}.wait();
       end
-      self.log(['# Done @ ', datestr(now, 'yyyy-mm-dd_HH-MM-SS')]);
     end
 
     function run(self)
@@ -400,13 +392,6 @@ classdef ExpSeq < ExpSeqBase
       driver_name = self.config.pulseDrivers(did);
       driver = self.findDriver(driver_name);
       driver.initDev(did);
-    end
-
-    function logDefault(self)
-      for key = self.config.defaultVals.keys
-        self.logf('# Default value %s = %f', ...
-                  key{:}, self.config.defaultVals(key{:}));
-      end
     end
 
     function plotReal(self, cids, names)

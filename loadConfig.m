@@ -16,7 +16,6 @@ classdef loadConfig < handle
     name_map;
   end
   properties
-    logDir;
     pulseDrivers;
     channelAlias;
     defaultVals;
@@ -37,8 +36,6 @@ classdef loadConfig < handle
     function load(self)
       fpgaUrls = containers.Map();
       pulseDrivers = containers.Map();
-      [path, ~, ~] = fileparts(mfilename('fullpath'));
-      logDir = fullfile(path, '..', 'log');
       channelAlias = containers.Map();
       defaultVals = containers.Map();
       niClocks = containers.Map();
@@ -47,7 +44,6 @@ classdef loadConfig < handle
 
       nacsConfig();
 
-      self.logDir = logDir;
       self.fpgaUrls = fpgaUrls;
       self.niClocks = niClocks;
       self.niStart = niStart;

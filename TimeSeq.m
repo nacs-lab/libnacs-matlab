@@ -14,7 +14,6 @@
 classdef TimeSeq < dynamicprops
   properties
     config;
-    logger;
   end
 
   properties(Hidden, Access=protected)
@@ -31,34 +30,19 @@ classdef TimeSeq < dynamicprops
     function self = TimeSeq(parent_or_name, toffset, len)
       self.subSeqs = {};
       if nargin < 1
-        self.logger = NaCsLogger('seq');
         self.config = loadConfig();
       elseif nargin < 2
-        self.logger = NaCsLogger(parent_or_name);
         self.config = loadConfig();
       else
         self.parent = parent_or_name;
         self.tOffset = toffset;
 
-        self.logger = parent_or_name.logger;
         self.config = parent_or_name.config;
         parent_or_name.addSubSeq(self, toffset);
         if nargin >= 3
           self.len = len;
         end
       end
-    end
-
-    function res = logFile(self)
-      res = self.logger.getPath();
-    end
-
-    function log(self, s)
-      self.logger.log(s);
-    end
-
-    function logf(self, varargin)
-      self.logger.logf(varargin{:});
     end
 
     function res = length(self)
