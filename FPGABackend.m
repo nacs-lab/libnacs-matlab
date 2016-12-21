@@ -143,14 +143,14 @@ classdef FPGABackend < PulseBackend
               t_start = pulse{1};
               t_len = 0;
               pulse_obj = pulse{3};
-              val = pulse_obj.calcValue(pulse{8}, pulse{5}, oldarg);
+              val = pulse_obj.calcValue(pulse{7}, pulse{5}, oldarg);
             case TimeType.Start
               if chn_type == TTL_CHN
                 error('Function pulse not allowed on TTL channel');
               end
               pulse_end = all_pulses{i}(j + 1, :);
               t_start = pulse{1};
-              t_len = pulse_end{8};
+              t_len = pulse_end{7};
               pulse_obj = pulse{3};
               val = pulse_obj.calcValue(targ, pulse{5}, oldarg);
             case TimeType.End

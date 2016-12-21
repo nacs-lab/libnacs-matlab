@@ -94,17 +94,17 @@ classdef TimeSeq < dynamicprops
           dirty_times = pulse_obj.dirtyTime(step_len);
           if ~isempty(dirty_times)
             for t = dirty_times
-              res(end + 1, 1:8) = {t + toffset, int32(TimeType.Dirty), pulse_obj, ...
-                                   toffset, step_len, cid, pulse_obj.id, t};
+              res(end + 1, 1:7) = {t + toffset, int32(TimeType.Dirty), pulse_obj, ...
+                                   toffset, step_len, cid, t};
             end
           else
             %% Maybe treating a zero length pulse as hasDirtyTime?
             tstart = pulse{1};
             tlen = pulse{2};
-            res(end + 1, 1:8) = {tstart, int32(TimeType.Start), pulse_obj, ...
-                                 toffset, step_len, cid, pulse_obj.id, 0};
-            res(end + 1, 1:8) = {tstart + tlen, int32(TimeType.End), pulse_obj, ...
-                                 toffset, step_len, cid, pulse_obj.id, tlen};
+            res(end + 1, 1:7) = {tstart, int32(TimeType.Start), pulse_obj, ...
+                                 toffset, step_len, cid, 0};
+            res(end + 1, 1:7) = {tstart + tlen, int32(TimeType.End), pulse_obj, ...
+                                 toffset, step_len, cid, tlen};
           end
         end
       end

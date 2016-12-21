@@ -296,7 +296,7 @@ classdef ExpSeq < ExpSeqBase
             switch pulse{2}
               case TimeType.Dirty
                 pulse_obj = pulse{3};
-                cur_value = pulse_obj.calcValue(pulse{8}, pulse{5}, cur_value);
+                cur_value = pulse_obj.calcValue(pulse{7}, pulse{5}, cur_value);
                 pidx = pidx + 1;
                 if pidx > npulses
                   %% End of pulses
@@ -309,7 +309,7 @@ classdef ExpSeq < ExpSeqBase
                 end
               case TimeType.Start
                 pidx = pidx + 1;
-                if pidx > npulses || pulse{7} ~= pulses{pidx, 7}
+                if pidx > npulses
                   error('Unmatch pulse start and end.');
                 end
                 pulse_end = pulses(pidx, :);
