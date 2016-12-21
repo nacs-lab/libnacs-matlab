@@ -367,6 +367,53 @@ classdef ExpSeq < ExpSeqBase
         end
       end
     end
+
+    function res = getPulseTimes(self, cids)
+      %% TODOPULSE use struct
+      nchn = size(cids, 1);
+      res = {};
+      for j = 1:nchn
+        cid = cids(j);
+        pulses = self.getPulses(cid);
+        for i = 1:size(pulses, 1)
+          pulse = pulses(i, :);
+          pulse_obj = pulse{3};
+          toffset = pulse{4};
+          step_len = pulse{5};
+          dirty_times = pulse_obj.dirtyTime(step_len);
+          if ~isempty(dirty_times)
+            for t = dirty_times
+              res(end + 1, 1:7) = {t + toffset, int32(TimeType.Dirty), pulse_obj, ...
+                                   toffset, step_len, cid, t};
+            end
+          else
+            %% Maybe treating a zero length pulse as hasDirtyTime?
+            tstart = pulse{1};
+            tlen = pulse{2};
+            res(end + 1, 1:7) = {tstart, int32(TimeType.Start), pulse_obj, ...
+                                 toffset, step_len, cid, 0};
+            res(end + 1, 1:7) = {tstart + tlen, int32(TimeType.End), pulse_obj, ...
+                                 toffset, step_len, cid, tlen};
+          end
+        end
+      end
+      if ~isempty(res)
+        res = sortrows(res, [1, 2, 7]);
+      end
+    end
+
+    function res = getPulses(self, cid)
+      %% Return a array of tuples (toffset, length, pulse_obj,
+      %%                           step_start, step_len, cid)
+      %% the pulse_obj should have a method calcValue that take 3 parameters:
+      %%     time_in_pulse, length, old_val_before_pulse
+      %% and should return the new value @time_in_pulse after the step_start.
+      %% The returned value should be sorted with toffset.
+      res = self.getPulsesRaw(cid);
+      if ~isempty(res)
+        res = sortrows(res, 1);
+      end
+    end
   end
 
   methods(Access=protected)
