@@ -22,12 +22,20 @@ classdef ExpSeqBase < TimeSeq
         error('Too many arguments for ExpSeqBase.');
       end
       self = self@TimeSeq(varargin{:});
-      function res = get_getter(val)
-        res = @(obj) val;
-      end
       consts = self.config.consts;
+      function res = get_getter(key)
+        res = @(obj) consts(key);
+      end
+      function res = get_setter(key)
+        function setter(obj, val)
+          consts(key) = val;
+        end
+        res = @setter;
+      end
       for key = consts.keys()
-        self.addprop(key{:}).GetMethod = get_getter(consts(key{:}));
+        prop = self.addprop(key{:});
+        prop.GetMethod = get_getter(key{:});
+        prop.SetMethod = get_setter(key{:});
       end
     end
 
