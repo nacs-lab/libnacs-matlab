@@ -77,7 +77,7 @@ classdef ExpSeqBase < TimeSeq
         %% a way to add zero length pulse.
         len = 1e-5;
       end
-      self.addBackground(@(s) s.addStep(len).add(name, pulse));
+      self.addBackground(len).add(name, pulse);
       step = self;
     end
 

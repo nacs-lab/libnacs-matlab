@@ -12,7 +12,7 @@
 %% License along with this library.
 
 classdef NiDACBackend < PulseBackend
-  properties(Hidden, Access=private)
+  properties(Hidden)
     session;
     cid_map;
     cids;
