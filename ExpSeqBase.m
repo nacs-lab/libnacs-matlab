@@ -12,7 +12,7 @@
 %% License along with this library.
 
 classdef ExpSeqBase < TimeSeq
-  properties(Hidden, Access=protected)
+  properties(Hidden)
     curTime = 0;
   end
 
