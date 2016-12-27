@@ -19,7 +19,7 @@ classdef NiDACBackend < PulseBackend
     data;
 
     clk_period;
-    clk_rate;
+    clk_rate; % Constant
   end
 
   properties(Constant, Hidden, Access=private)
@@ -68,19 +68,19 @@ classdef NiDACBackend < PulseBackend
       self.cids(end + 1) = cid;
     end
 
-    function connectClock(self, did)
+    function connectClock(self, session, did)
       %% It seems that the trigger connection has to be added before clock.
-      [~] = self.session.addTriggerConnection('External', ...
-                                              [did, '/', ...
-                                               self.seq.config.niStart(did)], ...
-                                              'StartTrigger');
+      [~] = session.addTriggerConnection('External', ...
+                                         [did, '/', ...
+                                          self.seq.config.niStart(did)], ...
+                                          'StartTrigger');
       if ~self.EXTERNAL_CLOCK
         return;
       end
-      [~] = self.session.addClockConnection('External', ...
-                                            [did, '/', ...
-                                             self.seq.config.niClocks(did)], ...
-                                            'ScanClock');
+      [~] = session.addClockConnection('External', ...
+                                       [did, '/', ...
+                                        self.seq.config.niClocks(did)], ...
+                                        'ScanClock');
     end
 
     function generate(self, cids)
@@ -91,34 +91,71 @@ classdef NiDACBackend < PulseBackend
       self.data = self.seq.getValues(self.clk_period, cids{:})';
     end
 
-    function run(self)
-      self.session = daq.createSession('ni');
+    function session = createNewSession(self)
+      session = daq.createSession('ni');
       %% Setting to a high clock rate makes the NI card to wait for more
       %% clock cycles after the sequence finished. However, setting to
       %% a rate lower than the real one cause the card to not update
       %% at the end of the sequence.
-      self.session.Rate = self.clk_rate;
+      session.Rate = self.clk_rate;
       inited_devs = containers.Map();
 
       for i = 1:size(self.cids, 2)
         cid = self.cids(i);
         dev_name = self.cid_map{cid}{1};
         output_id = self.cid_map{cid}{2};
-        [~] = self.session.addAnalogOutputChannel(dev_name, output_id, ...
-                                                  'Voltage');
+        [~] = session.addAnalogOutputChannel(dev_name, output_id, ...
+                                             'Voltage');
         if ~inited_devs.isKey(dev_name)
-          self.connectClock(dev_name);
+          self.connectClock(session, dev_name);
           inited_devs(dev_name) = true;
         end
       end
+    end
+
+    function res = checkSession(self, session)
+      % This can be further improved by storing an age of the session and
+      % skip the check if the age didn't change. The current implementation
+      % seems to be fast enough though ;-)
+      Channels = session.Channels;
+      nchns = size(self.cids, 2);
+      if length(Channels) ~= nchns
+          res = 0;
+          return;
+      end
+      for i = 1:nchns
+        cid = self.cids(i);
+        dev_name = self.cid_map{cid}{1};
+        output_id = sprintf('ao%d', self.cid_map{cid}{2});
+        if strcmp(dev_name, Channels(i).Device.ID) == 0 || ...
+                strcmp(output_id, Channels(i).ID) == 0
+            res = 0;
+            return;
+        end
+      end
+      res = 1;
+      return;
+    end
+
+    function ensureSession(self)
+        % Use a global variable to cache the session since
+        % adding channels is really slow.... (50ms per channel)
+        global nacsNiDACBackendSession
+        if isempty(nacsNiDACBackendSession) || ~self.checkSession(nacsNiDACBackendSession)
+            delete(nacsNiDACBackendSession);
+            nacsNiDACBackendSession = self.createNewSession();
+        end
+        self.session = nacsNiDACBackendSession;
+    end
+
+    function run(self)
+      self.ensureSession();
       self.session.queueOutputData(self.data);
       self.session.startBackground();
     end
 
     function wait(self)
       self.session.wait();
-      delete(self.session);
-      self.session = [];
     end
   end
 end
