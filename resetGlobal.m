@@ -4,7 +4,7 @@ function resetGlobal()
   global nacsNiDACBackendSession;
   nacsTimeSeqDisableRunHack = 0;
   nacsTimeSeqNameSuffixHack = [];
-  if isempty(nacsNiDACBackendSession)
+  if ~isempty(nacsNiDACBackendSession)
     delete(nacsNiDACBackendSession);
     nacsNiDACBackendSession = [];
   end
