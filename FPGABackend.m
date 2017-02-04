@@ -106,6 +106,7 @@ classdef FPGABackend < PulseBackend
         if np == 0
           continue;
         end
+        n_pulses = n_pulses + np;
         chn_type = type_cache(cid);
         if chn_type ~= TTL_CHN
           n_non_ttl = n_non_ttl + 1;
@@ -127,8 +128,7 @@ classdef FPGABackend < PulseBackend
         code = [code, chn_type, chn_num, ...
                 typecast(double(default_val), 'int32')];
       end
-      code = [code, 0];
-      n_pulses_idx = length(code);
+      code = [code, n_pulses];
       targ = IRNode.getArg(1);
       oldarg = IRNode.getArg(2);
       for i = 1:nchn
@@ -154,12 +154,10 @@ classdef FPGABackend < PulseBackend
               pulse_obj = pulse{3};
               val = pulse_obj.calcValue(targ, pulse{5}, oldarg);
             case TimeType.End
-              continue
             otherwise
               %% Debug only
               error('Invalid pulse type.');
           end
-          n_pulses = n_pulses + 1;
           code = [code, chn_type, chn_num, ...
                   typecast(double(t_start), 'int32'), ...
                   typecast(double(t_len), 'int32')];
@@ -176,7 +174,6 @@ classdef FPGABackend < PulseBackend
           end
         end
       end
-      code(n_pulses_idx) = n_pulses;
       pyglob = py.dict();
       py.exec('import base64', pyglob);
       pylocal = py.dict(pyargs('code', code));
