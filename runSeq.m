@@ -20,7 +20,7 @@ function params = runSeq(func, varargin)
 %%        <number> (default: 1): How many times each sequence will be run.
 %%            If the number is equal to 0, run the sequence continiously.
 %%        'random': run the sequences in random order
-%%        'email:xxx': send an email upon completion.  xxx can be a name 
+%%        'email:xxx': send an email upon completion.  xxx can be a name
 %%            appearing in matlabmail, or an email address.
 %%    @arguments (optional, multiple): cell arrays of the arguments to
 %%        construct the sequence. Each argument will be used to construct
@@ -33,6 +33,8 @@ has_rep = false;
 is_random = false;
 return_array = false;
 notify = [];
+
+seq_map = containers.Map('KeyType', 'double', 'ValueType', 'any');
 
 %Set up memory map to share variables between MATLAB instances.
 m = MemoryMap;
@@ -102,14 +104,26 @@ seqlist = cell(1, nseq);
         else
             nacsTimeSeqNameSuffixHack = sprintf('-runSeq_%d-%d', idx, nseq);
         end
+        cache_seq = 0;
+        if length(arglist{idx}) == 1 && isnumeric(arglist{idx}{1})
+          arg = arglist{idx}{1};
+          if seq_map.isKey(arg)
+            seqlist{idx} = seq_map(arg);
+            return;
+          end
+          cache_seq = 1;
+        end
         seqlist{idx} = func(arglist{idx}{:});
         nacsTimeSeqDisableRunHack = 0;
         nacsTimeSeqNameSuffixHack = [];
         seqlist{idx}.generate();
+        if cache_seq
+          arg = arglist{idx}{1};
+          seq_map(arg) = seqlist{idx};
+        end
     end
 
     function log_run(idx)
-        %         m = MemoryMap;
         arglist_str = [];
         for j = 1:length(arglist{idx})
             arglist_str = [arglist_str ', ' num2str(arglist{idx}{j})];
@@ -141,7 +155,6 @@ if is_random
             % If another instance has asked runSeq to abort, exit gracefully
             if m.Data(1).AbortRunSeq == 1
                 disp('AbortRunSeq set to 1.  Stopping gracefully.')
-                %                 m.Data(1).AbortRunSeq = 0;
                 break
             end
             idx_new = randi(nseq);
@@ -156,7 +169,6 @@ if is_random
             % If another instance has asked runSeq to abort, exit gracefully
             if m.Data(1).AbortRunSeq == 1
                 disp('AbortRunSeq set to 1.  Stopping gracefully.')
-                %                 m.Data(1).AbortRunSeq = 0;
                 break
             end
             cur_idx = idxs(glob_idxs(i));
@@ -166,7 +178,6 @@ if is_random
                 next_idx = idxs(glob_idxs(i + 1));
             end
             run_seq(cur_idx, next_idx);
-            
         end
     end
 else
@@ -174,7 +185,6 @@ else
         % If another instance has asked runSeq to abort, exit gracefully
         if m.Data(1).AbortRunSeq == 1
             disp('AbortRunSeq set to 1.  Stopping gracefully.')
-            %                 m.Data(1).AbortRunSeq = 0;
             break
         end
         if i < nseq
@@ -188,14 +198,12 @@ else
             % If another instance has asked runSeq to abort, exit gracefully
             if m.Data(1).AbortRunSeq == 1
                 disp('AbortRunSeq set to 1.  Stopping gracefully.')
-                %                     m.Data(1).AbortRunSeq = 0;
                 break
             end
             for i = 1:nseq
                 % If another instance has asked runSeq to abort, exit gracefully
                 if m.Data(1).AbortRunSeq == 1
                     disp('AbortRunSeq set to 1.  Stopping gracefully.')
-                    %                     m.Data(1).AbortRunSeq = 0;
                     break
                 end
                 log_run(i);
@@ -220,7 +228,6 @@ else
                 log_run(i);
                 seqlist{i}.run();
             end
-            
         end
     end
 end
@@ -241,4 +248,3 @@ if ~isempty(notify)
         datestr(datenum(clock),'yyyymmdd') '-' datestr(datenum(clock),'HHMMSS')]);
 end
 end
-
