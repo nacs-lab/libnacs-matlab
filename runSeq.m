@@ -95,7 +95,7 @@ seqlist = cell(1, nseq);
     function prepare_seq(idx)
         if ~isempty(seqlist{idx})
             return;
-        elseif length(arglist{idx}) == 1 && isnumeric(arglist{idx}{1})
+        elseif 0 && length(arglist{idx}) == 1 && isnumeric(arglist{idx}{1})
           arg0 = arglist{idx}{1};
           if seq_map.isKey(arg0)
             seqlist{idx} = seqlist{seq_map(arg0)};
