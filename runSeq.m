@@ -34,7 +34,7 @@ is_random = false;
 return_array = false;
 notify = [];
 
-seq_map = containers.Map('KeyType', 'double', 'ValueType', 'any');
+seq_map = containers.Map('KeyType', 'double', 'ValueType', 'double');
 
 %Set up memory map to share variables between MATLAB instances.
 m = MemoryMap;
@@ -95,6 +95,13 @@ seqlist = cell(1, nseq);
     function prepare_seq(idx)
         if ~isempty(seqlist{idx})
             return;
+        elseif length(arglist{idx}) == 1 && isnumeric(arglist{idx}{1})
+          arg0 = arglist{idx}{1};
+          if seq_map.isKey(arg0)
+            seqlist{idx} = seqlist{seq_map(arg0)};
+            return;
+          end
+          seq_map(arg0) = idx;
         end
         global nacsTimeSeqDisableRunHack;
         global nacsTimeSeqNameSuffixHack;
@@ -104,23 +111,10 @@ seqlist = cell(1, nseq);
         else
             nacsTimeSeqNameSuffixHack = sprintf('-runSeq_%d-%d', idx, nseq);
         end
-        cache_seq = 0;
-        if length(arglist{idx}) == 1 && isnumeric(arglist{idx}{1})
-          arg = arglist{idx}{1};
-          if seq_map.isKey(arg)
-            seqlist{idx} = seq_map(arg);
-            return;
-          end
-          cache_seq = 1;
-        end
         seqlist{idx} = func(arglist{idx}{:});
         nacsTimeSeqDisableRunHack = 0;
         nacsTimeSeqNameSuffixHack = [];
         seqlist{idx}.generate();
-        if cache_seq
-          arg = arglist{idx}{1};
-          seq_map(arg) = seqlist{idx};
-        end
     end
 
     function log_run(idx)
