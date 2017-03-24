@@ -35,7 +35,7 @@ classdef IRFunc < handle
                                       'ValueType', 'double');
     end
     function setCode(self, node)
-      res_id = self.addNode(node);
+      res_id = addNode(self, node);
       ret_code = zeros(1, 2, 'int32');
       ret_code(1) = IRNode.OPRet;
       ret_code(2) = res_id;
@@ -75,7 +75,7 @@ classdef IRFunc < handle
     end
     function id=addConst(self, v)
       v = double(v);
-      if self.const_map.isKey(v)
+      if isKey(self.const_map, v)
         id = self.const_map(v);
       else
         self.consts = [self.consts, v];

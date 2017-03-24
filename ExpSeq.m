@@ -41,13 +41,13 @@ classdef ExpSeq < ExpSeqBase
     end
 
     function cid = translateChannel(self, name)
-      if self.cid_cache.isKey(name)
+      if isKey(self.cid_cache, name)
         cid = self.cid_cache(name);
         return;
       end
       orig_name = name;
-      name = self.config.translateChannel(name);
-      cid = self.chn_manager.getId(name);
+      name = translateChannel(self.config, name);
+      cid = getId(self.chn_manager, name);
       self.cid_cache(orig_name) = cid;
 
       if (cid > size(self.orig_channel_names, 2) || ...
@@ -425,7 +425,7 @@ classdef ExpSeq < ExpSeqBase
         end
       catch
       end
-      name = self.channelName(cid);
+      name = channelName(self, cid);
       try
         val = self.config.defaultVals(name);
       catch

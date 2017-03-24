@@ -27,7 +27,7 @@ classdef TimeStep < TimeSeq
 
     function ret = add(self, name, pulse)
       ret = self;
-      cid = self.translateChannel(name);
+      cid = translateChannel(self, name);
       if isnumeric(pulse) || islogical(pulse)
         if ~isscalar(pulse)
           error('Pulse cannot be a non-scalar value.');
@@ -57,7 +57,7 @@ classdef TimeStep < TimeSeq
       res = cell(npulses, 6);
       for i = 1:npulses
         pulse = pulses{i};
-        [tstart, tlen] = pulse.timeSpan(step_len);
+        [tstart, tlen] = timeSpan(pulse, step_len);
         res(i, :) = {tstart, tlen, pulse, 0, step_len, cid};
       end
     end

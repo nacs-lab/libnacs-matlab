@@ -49,7 +49,7 @@ classdef loadConfig < handle
       self.niStart = niStart;
       self.consts = consts;
 
-      for key = channelAlias.keys()
+      for key = keys(channelAlias)
         key = key{:};
 
         if ~isempty(strfind(key, '/'))
@@ -63,7 +63,7 @@ classdef loadConfig < handle
       end
       self.channelAlias = channelAlias;
 
-      for key = pulseDrivers.keys()
+      for key = keys(pulseDrivers)
         key = key{:};
         if ~ischar(pulseDrivers(key))
           error('pulseDrivers should be a string');
@@ -72,10 +72,10 @@ classdef loadConfig < handle
       self.pulseDrivers = pulseDrivers;
 
       self.defaultVals = containers.Map();
-      for key = defaultVals.keys()
+      for key = keys(defaultVals)
         key = key{:};
-        name = self.translateChannel(key);
-        if self.defaultVals.isKey(name)
+        name = translateChannel(self, key);
+        if isKey(self.defaultVals, name)
           error('Conflict default values for channel "%s" (%s).', key, name);
         end
         self.defaultVals(name) = defaultVals(key);
@@ -88,9 +88,9 @@ classdef loadConfig < handle
       catch
         cpath = strsplit(name, '/');
         self.name_map(name) = [];
-        if self.channelAlias.isKey(cpath{1})
+        if isKey(self.channelAlias, cpath{1})
           cpath{1} = self.channelAlias(cpath{1});
-          res = self.translateChannel(strjoin(cpath, '/'));
+          res = translateChannel(self, strjoin(cpath, '/'));
         else
           res = name;
         end

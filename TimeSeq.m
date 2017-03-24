@@ -110,7 +110,7 @@ classdef TimeSeq < dynamicprops
                 continue;
             end
         end
-        sub_pulses = subseq.getPulsesRaw(cid);
+        sub_pulses = getPulsesRaw(subseq, cid);
 
         nsub_pulses = size(sub_pulses, 1);
         res_offset = size(res, 1);

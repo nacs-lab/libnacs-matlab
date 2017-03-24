@@ -97,7 +97,7 @@ seqlist = cell(1, nseq);
             return;
         elseif 0 && length(arglist{idx}) == 1 && isnumeric(arglist{idx}{1})
           arg0 = arglist{idx}{1};
-          if seq_map.isKey(arg0)
+          if isKey(seq_map, arg0)
             seqlist{idx} = seqlist{seq_map(arg0)};
             return;
           end

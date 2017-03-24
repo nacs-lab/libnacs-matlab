@@ -52,7 +52,7 @@ classdef NiDACBackend < PulseBackend
       if size(self.cid_map, 2) >= cid && ~isempty(self.cid_map{cid})
         return;
       end
-      name = self.seq.channelName(cid);
+      name = channelName(self.seq, cid);
       cpath = strsplit(name, '/');
       if size(cpath, 2) ~= 2
         error('Invalid NI channel "%s".', name);
@@ -70,17 +70,15 @@ classdef NiDACBackend < PulseBackend
 
     function connectClock(self, session, did)
       %% It seems that the trigger connection has to be added before clock.
-      [~] = session.addTriggerConnection('External', ...
-                                         [did, '/', ...
-                                          self.seq.config.niStart(did)], ...
-                                          'StartTrigger');
+      [~] = addTriggerConnection(session, 'External', ...
+                                 [did, '/', self.seq.config.niStart(did)], ...
+                                 'StartTrigger');
       if ~self.EXTERNAL_CLOCK
         return;
       end
-      [~] = session.addClockConnection('External', ...
-                                       [did, '/', ...
-                                        self.seq.config.niClocks(did)], ...
-                                        'ScanClock');
+      [~] = addClockConnection(session, 'External', ...
+                               [did, '/', self.seq.config.niClocks(did)], ...
+                               'ScanClock');
     end
 
     function generate(self, cids)
@@ -88,7 +86,7 @@ classdef NiDACBackend < PulseBackend
         error('Channel mismatch.');
       end
       cids = num2cell(self.cids);
-      self.data = self.seq.getValues(self.clk_period, cids{:})';
+      self.data = getValues(self.seq, self.clk_period, cids{:})';
     end
 
     function session = createNewSession(self)
@@ -104,10 +102,10 @@ classdef NiDACBackend < PulseBackend
         cid = self.cids(i);
         dev_name = self.cid_map{cid}{1};
         output_id = self.cid_map{cid}{2};
-        [~] = session.addAnalogOutputChannel(dev_name, output_id, ...
-                                             'Voltage');
-        if ~inited_devs.isKey(dev_name)
-          self.connectClock(session, dev_name);
+        [~] = addAnalogOutputChannel(session, dev_name, output_id, ...
+                                     'Voltage');
+        if ~isKey(inited_devs, dev_name)
+          connectClock(self, session, dev_name);
           inited_devs(dev_name) = true;
         end
       end
@@ -149,13 +147,13 @@ classdef NiDACBackend < PulseBackend
     end
 
     function run(self)
-      self.ensureSession();
-      self.session.queueOutputData(self.data);
-      self.session.startBackground();
+      ensureSession(self);
+      queueOutputData(self.session, self.data);
+      startBackground(self.session);
     end
 
     function wait(self)
-      self.session.wait();
+      wait(self.session);
     end
   end
 end

@@ -59,7 +59,7 @@ classdef FPGABackend < PulseBackend
       if size(self.type_cache, 2) >= cid && self.type_cache(cid) > 0
         return;
       end
-      name = self.seq.channelName(cid);
+      name = channelName(self.seq, cid);
       if ~strncmp('FPGA1/', name, 5)
         error('Unknown channel name "%s"', name);
       end
