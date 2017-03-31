@@ -14,40 +14,33 @@
 classdef jumpTo < PulseBase
   properties(Access=private)
     val;
-    time;
   end
 
   methods
     function s = toString(self)
-      s = sprintf('jumpTo(val=%f, time=%f)', self.val, self.time);
+      s = sprintf('jumpTo(val=%f)', self.val);
     end
 
-    function self = jumpTo(v, t)
+    function self = jumpTo(v)
       self = self@PulseBase();
-      if nargin <= 1
-        t = 0;
-      elseif t < 0;
-        error('Cannot jump value at negative time.');
-      end
       self.val = v;
-      self.time = t;
     end
 
     function [tstart, tlen] = timeSpan(self, ~)
-      tstart = self.time;
+      tstart = 0;
       tlen = 0;
     end
 
     function times = dirtyTime(self, ~)
-      times = [self.time];
+      times = 0;
     end
 
     function val = calcValue(self, t, ~, old_val)
       if isnumeric(old_val) || islogical(old_val)
         vals = [self.val, old_val];
-        val = vals((t < self.time) + 1);
+        val = vals((t < 0) + 1);
       else
-        if t < self.time
+        if t < 0
           val = old_val;
         else
           val = self.val;
