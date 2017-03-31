@@ -352,14 +352,11 @@ classdef ExpSeq < ExpSeqBase
       end
     end
 
-    function res = getPulseTimes(self, cids)
+    function res = getPulseTimes(self, cid)
       %% TODOPULSE use struct
-      nchn = size(cids, 1);
       res = {};
-      for j = 1:nchn
-        cid = cids(j);
-        pulses = self.getPulses(cid);
-        for i = 1:size(pulses, 1)
+      pulses = self.getPulses(cid);
+      for i = 1:size(pulses, 1)
           pulse = pulses(i, :);
           pulse_obj = pulse{3};
           toffset = pulse{4};
@@ -379,7 +376,6 @@ classdef ExpSeq < ExpSeqBase
             res(end + 1, 1:7) = {tstart + tlen, int32(TimeType.End), pulse_obj, ...
                                  toffset, step_len, cid, tlen};
           end
-        end
       end
       if ~isempty(res)
         res = sortrows(res, [1, 2, 7]);
