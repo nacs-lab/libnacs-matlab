@@ -31,10 +31,6 @@ classdef jumpTo < PulseBase
       tlen = 0;
     end
 
-    function times = dirtyTime(self, ~)
-      times = 0;
-    end
-
     function val = calcValue(self, t, ~, old_val)
       if isnumeric(old_val) || islogical(old_val)
         vals = [self.val, old_val];

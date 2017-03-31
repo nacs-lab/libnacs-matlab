@@ -25,11 +25,6 @@ classdef(Abstract) PulseBase < handle
     function self = PulseBase()
     end
 
-    function res = hasDirtyTime(self, len)
-      %% TODO? cache
-      res = ~isempty(self.dirtyTime(len));
-    end
-
     function avail = available(self, t, dt, len)
       [tstart, tlen] = self.timeSpan(len);
       %% The time availability check (in general) might miss the case when
@@ -40,14 +35,6 @@ classdef(Abstract) PulseBase < handle
     function [tstart, tlen] = timeSpan(self, len)
       tstart = 0;
       tlen = len;
-    end
-
-    function times = dirtyTime(self, ~)
-      %% Returns the time when the value changes. Return empty matrix if
-      %% this is a continuous ramp. For pulses that implement this function
-      %% calcValue should return the new value after the change when the input
-      %% time is the time returned by this function.
-      times = [];
     end
   end
 end

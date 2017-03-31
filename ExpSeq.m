@@ -361,14 +361,10 @@ classdef ExpSeq < ExpSeqBase
           pulse_obj = pulse{3};
           toffset = pulse{4};
           step_len = pulse{5};
-          dirty_times = pulse_obj.dirtyTime(step_len);
-          if ~isempty(dirty_times)
-            for t = dirty_times
-              res(end + 1, 1:7) = {t + toffset, int32(TimeType.Dirty), pulse_obj, ...
-                                   toffset, step_len, cid, t};
-            end
+          if isa(pulse_obj, 'jumpTo')
+            res(end + 1, 1:7) = {toffset, int32(TimeType.Dirty), pulse_obj, ...
+                                 toffset, step_len, cid, 0};
           else
-            %% Maybe treating a zero length pulse as hasDirtyTime?
             tstart = pulse{1};
             tlen = pulse{2};
             res(end + 1, 1:7) = {tstart, int32(TimeType.Start), pulse_obj, ...
