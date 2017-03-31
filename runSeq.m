@@ -181,6 +181,7 @@ if is_random
         end
     end
 else
+    abort = 0;
     for i = 1:nseq
         if i < nseq
             abort = run_seq(i, i + 1);
@@ -192,9 +193,10 @@ else
         end
     end
     if rep == 0
-        while true
+        while ~abort
             for i = 1:nseq
                 if run_seq(i, 0)
+                    abort = 1;
                     break;
                 end
             end
@@ -203,8 +205,12 @@ else
         for i0 = 2:rep
             for i = 1:nseq
                 if run_seq(i, 0)
+                    abort = 1;
                     break;
                 end
+            end
+            if abort
+                break;
             end
         end
     end
