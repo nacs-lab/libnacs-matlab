@@ -101,11 +101,13 @@ classdef ExpSeq < ExpSeqBase
     end
 
     function run_async(self)
-      self.generate();
+      % Do **NOT** put anything related to runSeq in this file!!!!!!!!!!
+      % It messes up EVERYTHING!!!!!!!!!!!!!!!!!!!!!!
       global nacsTimeSeqDisableRunHack;
       if ~isempty(nacsTimeSeqDisableRunHack) && nacsTimeSeqDisableRunHack
         return;
       end
+      self.generate();
       drivers = {};
       for driver = self.drivers.values()
         drivers = [drivers; {driver{:}, -driver{:}.getPriority()}];
@@ -120,6 +122,8 @@ classdef ExpSeq < ExpSeqBase
     end
 
     function waitFinish(self)
+      % Do **NOT** put anything related to runSeq in this file!!!!!!!!!!
+      % It messes up EVERYTHING!!!!!!!!!!!!!!!!!!!!!!
       global nacsTimeSeqDisableRunHack;
       if ~isempty(nacsTimeSeqDisableRunHack) && nacsTimeSeqDisableRunHack
         return;
@@ -137,37 +141,17 @@ classdef ExpSeq < ExpSeqBase
     end
 
     function run(self)
-       %Set up memory map to share variables between MATLAB instances.
-      m = MemoryMap;
-
-       % See if another MATLAB instance has asked runSeq to pause.  If
-       % we are aborting, don't bother pausing.
-      if (m.Data(1).PauseRunSeq == 1) && (m.Data(1).AbortRunSeq == 0)
-        m.Data(1).IsPausedRunSeq = 1;
-        disp('PauseRunSeq set to 1. Run ContinueRunSeq to continue, AbortRunSeq to abort. Hit ctrl+c and run ResetMemoryMap if all else fails.')
-        while m.Data(1).PauseRunSeq
-          pause(1)
-          if m.Data(1).AbortRunSeq
-            break
-          end
-        end
-      end
-      m.Data(1).IsPausedRunSeq = 0;
-
-      self.run_async();
-      self.waitFinish();
-				%Increment current sequence number
-      m.Data(1).CurrentSeqNum = m.Data(1).CurrentSeqNum + 1;
-     %If we are using NumGroup to run sequences in groups, pause every
-     %NumGroup sequences.
-      if ~mod(m.Data(1).CurrentSeqNum, m.Data(1).NumPerGroup) &&  (m.Data(1).NumPerGroup>0)
-        m.Data(1).PauseRunSeq = 1;
-      end
-
+      % Do **NOT** put anything related to runSeq in this file!!!!!!!!!!
+      % It messes up EVERYTHING!!!!!!!!!!!!!!!!!!!!!!
+      % Also, this function has to be only run_async() and then
+      % waitFinish() do not put any more complex logic in.
+      % DisableRunHack is fine since it doesn't mutate anything.
       global nacsTimeSeqDisableRunHack;
       if ~isempty(nacsTimeSeqDisableRunHack) && nacsTimeSeqDisableRunHack
         return;
       end
+      self.run_async();
+      self.waitFinish();
     end
 
     function res = setDefault(self, name, val)
