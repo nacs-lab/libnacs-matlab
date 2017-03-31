@@ -12,7 +12,7 @@
 %% License along with this library.
 
 classdef FPGABackend < PulseBackend
-  properties(Hidden, Access=private)
+  properties(Hidden)
     url = '';
     clock_div = 0;
     config;
@@ -88,6 +88,7 @@ classdef FPGABackend < PulseBackend
       DDS_FREQ = self.DDS_FREQ;
       DDS_AMP = self.DDS_AMP;
       DAC_CHN = self.DAC_CHN;
+      ircache = IRCache.get();
 
       type_cache = self.type_cache;
       num_cache = self.num_cache;
@@ -143,7 +144,7 @@ classdef FPGABackend < PulseBackend
               t_start = pulse{1};
               t_len = 0;
               pulse_obj = pulse{3};
-              val = pulse_obj.calcValue(pulse{7}, pulse{5}, oldarg);
+              calcv_targ = pulse{7};
             case TimeType.Start
               if chn_type == TTL_CHN
                 error('Function pulse not allowed on TTL channel');
@@ -152,7 +153,7 @@ classdef FPGABackend < PulseBackend
               t_start = pulse{1};
               t_len = pulse_end{7};
               pulse_obj = pulse{3};
-              val = pulse_obj.calcValue(targ, pulse{5}, oldarg);
+              calcv_targ = targ;
             case TimeType.End
               continue
             otherwise
@@ -163,6 +164,24 @@ classdef FPGABackend < PulseBackend
           code = [code, chn_type, chn_num, ...
                   typecast(double(t_start), 'int32'), ...
                   typecast(double(t_len), 'int32')];
+          isir = 0;
+          if isa(pulse_obj, 'IRPulse')
+              if isa(calcv_targ, 'IRNode')
+                  irpulse_id = sprintf('%s::%d', pulse_obj.id, ...
+                                       typecast(double(pulse{5}), 'int64'));
+              else
+                  irpulse_id = sprintf('%s::%d-%d', pulse_obj.id, ...
+                                       typecast(double(pulse{5}), 'int64'), ...
+                                       typecast(double(calcv_targ), 'int64'));
+              end
+              ir = getindex(ircache, irpulse_id);
+              if ~isempty(ir)
+                  code = [code, ir];
+                  continue;
+              end
+              isir = 1;
+          end
+          val = calcValue(pulse_obj, calcv_targ, pulse{5}, oldarg);
           if isnumeric(val) || islogical(val)
             code = [code, 0, typecast(double(val), 'int32')];
           else
@@ -172,7 +191,11 @@ classdef FPGABackend < PulseBackend
             func = IRFunc(2);
             func.setCode(val);
             ser = func.serialize();
-            code = [code, length(ser), ser];
+            ir = [length(ser), ser];
+            code = [code, ir];
+            if isir
+                setindex(ircache, ir, irpulse_id);
+            end
           end
         end
       end

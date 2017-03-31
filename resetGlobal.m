@@ -8,4 +8,5 @@ function resetGlobal()
     delete(nacsNiDACBackendSession);
     nacsNiDACBackendSession = [];
   end
+  IRCache.get().clear();
 end
