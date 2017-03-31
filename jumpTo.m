@@ -12,7 +12,7 @@
 %% License along with this library.
 
 classdef jumpTo < PulseBase
-  properties(Access=private)
+  properties
     val;
   end
 

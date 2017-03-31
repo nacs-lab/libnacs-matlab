@@ -139,11 +139,20 @@ classdef FPGABackend < PulseBackend
         pulses = all_pulses{i};
         for j = 1:size(pulses, 1)
           pulse = pulses(j, :);
+          pulse_obj = pulse{3};
+          if isa(pulse_obj, 'jumpTo')
+              val = pulse_obj.val;
+              t_start = pulse{1};
+              n_pulses = n_pulses + 1;
+              code = [code, chn_type, chn_num, ...
+                      typecast(double(t_start), 'int32'), ...
+                      0, 0, 0, typecast(double(val), 'int32')];
+              continue;
+          end
           switch pulse{2}
             case TimeType.Dirty
               t_start = pulse{1};
               t_len = 0;
-              pulse_obj = pulse{3};
               calcv_targ = pulse{7};
             case TimeType.Start
               if chn_type == TTL_CHN
@@ -152,7 +161,6 @@ classdef FPGABackend < PulseBackend
               pulse_end = all_pulses{i}(j + 1, :);
               t_start = pulse{1};
               t_len = pulse_end{7};
-              pulse_obj = pulse{3};
               calcv_targ = targ;
             case TimeType.End
               continue
