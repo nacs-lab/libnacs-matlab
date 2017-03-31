@@ -101,7 +101,7 @@ classdef FPGABackend < PulseBackend
 
       for i = 1:nchn
         cid = cids(i);
-        pulses = self.seq.getPulseTimes(cid);
+        pulses = self.seq.getPulses(cid);
         all_pulses{i} = pulses;
         np = size(pulses, 1);
         if np == 0
@@ -140,33 +140,20 @@ classdef FPGABackend < PulseBackend
         for j = 1:size(pulses, 1)
           pulse = pulses(j, :);
           pulse_obj = pulse{3};
+          toffset = pulse{4};
           if isa(pulse_obj, 'jumpTo')
               val = pulse_obj.val;
-              t_start = pulse{1};
               n_pulses = n_pulses + 1;
               code = [code, chn_type, chn_num, ...
-                      typecast(double(t_start), 'int32'), ...
+                      typecast(double(toffset), 'int32'), ...
                       0, 0, 0, typecast(double(val), 'int32')];
               continue;
           end
-          switch pulse{2}
-            case TimeType.Dirty
-              t_start = pulse{1};
-              t_len = 0;
-              calcv_targ = pulse{7};
-            case TimeType.Start
-              if chn_type == TTL_CHN
-                error('Function pulse not allowed on TTL channel');
-              end
-              pulse_end = all_pulses{i}(j + 1, :);
-              t_start = pulse{1};
-              t_len = pulse_end{7};
-              calcv_targ = targ;
-            case TimeType.End
-              continue
-            otherwise
-              %% Debug only
-              error('Invalid pulse type.');
+          t_start = pulse{1};
+          t_len = pulse{2};
+          step_len = pulse{5};
+          if chn_type == TTL_CHN
+              error('Function pulse not allowed on TTL channel');
           end
           n_pulses = n_pulses + 1;
           code = [code, chn_type, chn_num, ...
@@ -174,14 +161,8 @@ classdef FPGABackend < PulseBackend
                   typecast(double(t_len), 'int32')];
           isir = 0;
           if isa(pulse_obj, 'IRPulse')
-              if isa(calcv_targ, 'IRNode')
-                  irpulse_id = sprintf('%s::%d', pulse_obj.id, ...
-                                       typecast(double(pulse{5}), 'int64'));
-              else
-                  irpulse_id = sprintf('%s::%d-%d', pulse_obj.id, ...
-                                       typecast(double(pulse{5}), 'int64'), ...
-                                       typecast(double(calcv_targ), 'int64'));
-              end
+              irpulse_id = sprintf('%s::%d', pulse_obj.id, ...
+                                   typecast(double(step_len), 'int64'));
               ir = getindex(ircache, irpulse_id);
               if ~isempty(ir)
                   code = [code, ir];
@@ -189,7 +170,7 @@ classdef FPGABackend < PulseBackend
               end
               isir = 1;
           end
-          val = calcValue(pulse_obj, calcv_targ, pulse{5}, oldarg);
+          val = calcValue(pulse_obj, targ, step_len, oldarg);
           if isnumeric(val) || islogical(val)
             code = [code, 0, typecast(double(val), 'int32')];
           else
