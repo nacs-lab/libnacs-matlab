@@ -17,8 +17,11 @@ classdef NiDACBackend < PulseBackend
     cid_map;
     cids;
     data;
+    all_pulses;
+    active_times;
 
     clk_period;
+    clk_period_ns;
     clk_rate; % Constant
   end
 
@@ -33,7 +36,8 @@ classdef NiDACBackend < PulseBackend
       self.cid_map = {};
       self.cids = [];
 
-      self.clk_period = 10e-9 * self.CLOCK_DIVIDER * 2;
+      self.clk_period_ns = 10 * self.CLOCK_DIVIDER * 2;
+      self.clk_period = self.clk_period_ns * 1e-9;
       self.clk_rate = 1 / self.clk_period;
     end
 
@@ -42,10 +46,6 @@ classdef NiDACBackend < PulseBackend
     end
 
     function initDev(self, did)
-      if self.EXTERNAL_CLOCK
-        fpgadriver = self.seq.findDriver('FPGABackend');
-        fpgadriver.enableClockOut(self.CLOCK_DIVIDER);
-      end
     end
 
     function initChannel(self, cid)
@@ -81,12 +81,163 @@ classdef NiDACBackend < PulseBackend
                                'ScanClock');
     end
 
-    function generate(self, cids)
-      if ~all(sort(cids) == sort(self.cids))
+    function prepare(self, cids0)
+      if ~all(sort(cids0) == sort(self.cids))
         error('Channel mismatch.');
       end
-      cids = num2cell(self.cids);
-      self.data = getValues(self.seq, self.clk_period, cids{:})';
+      clk_period = self.clk_period;
+      seq = self.seq;
+
+      all_pulses = {};
+      times = [];
+      for cid = self.cids
+        pulses = getPulses(seq, cid);
+        for i = 1:size(pulses, 1)
+          pulse = pulses(i, :);
+          pulse_obj = pulse{3};
+          toffset = pulse{1};
+          step_len = pulse{2};
+          toffset_idx = ceil(toffset / clk_period);
+          if isa(pulse_obj, 'jumpTo')
+            times(1:2, end + 1) = [toffset_idx, toffset_idx + 1];
+          else
+            tend = toffset + step_len;
+            tend_idx = ceil(tend / clk_period);
+            times(1:2, end + 1) = [toffset_idx, tend_idx + 1];
+          end
+        end
+        all_pulses{cid} = pulses;
+      end
+      self.all_pulses = all_pulses;
+      times = sortrows(times', [1, 2]);
+
+      %% `start_tidx; end_tidx; tidx_offset; end_pulseidx`
+      %% `end_tidx` and `start_tidx` are zero-based and the difference
+      %% between the two is the number of points we need to generate.
+      %% Valid tidx (0-based) are `start_tidx:(end_tidx - 1)`
+      %% The corresponding indices in the data array is
+      %% `(start_tidx - tidx_offset):(end_tidx - tidx_offset - 1)`
+      tidx_sum = 1000;
+      active_times = [0; tidx_sum; -1];
+      for i = 1:size(times, 1)
+        idx_start = times(i, 1);
+        idx_end = times(i, 2);
+        active_end = active_times(2, end);
+        if idx_start <= active_times(2, end)
+          %% merge
+          if idx_end > active_end
+            active_times(2, end) = idx_end;
+          end
+        else
+          active_times(1:3, end + 1) = [idx_start, idx_end, ...
+                                        active_times(3, end) + idx_start - active_end];
+        end
+      end
+      self.active_times = active_times;
+      fpgadriver = seq.findDriver('FPGABackend');
+      fpgadriver.enableClockOut(self.CLOCK_DIVIDER, active_times(1:2, :));
+    end
+
+    function generate(self, cids0)
+      cids = self.cids;
+      if ~all(sort(cids0) == sort(cids))
+        error('Channel mismatch.');
+      end
+      active_times = self.active_times;
+      all_pulses = self.all_pulses;
+      seq = self.seq;
+      clk_period = self.clk_period;
+
+      nstep = sum(active_times(2, :) - active_times(1, :));
+      data = zeros(nstep, length(cids));
+
+      for i = 1:length(cids)
+        chn = cids(i);
+        vidx = 1;
+        active_idx = 1;
+        cur_value = seq.getDefault(chn);
+        pulses = all_pulses{chn};
+        npulses = size(pulses, 1);
+        for pidx = 1:npulses
+          %% At the beginning of each loop:
+          %%   `pidx` points to the pulse to be processed
+          %%   `vidx` points to the slot in `data` to be filled
+          %%   `cur_value` is the value of the channel right before `vidx`
+          %%   `active_idx` points to the `active_times` being processed.
+          toffset = pulses{pidx, 1};
+
+          %% Find corresponding active_times
+          toffset_idx = ceil(toffset / clk_period);
+          while toffset_idx > active_times(2, active_idx)
+            active_idx = active_idx + 1;
+          end
+          fill_vidx = toffset_idx - active_times(3, active_idx);
+
+          %% First fill the values before the next pulse starts
+          %% Index before next time
+          if fill_vidx > vidx
+            data(vidx:(fill_vidx - 1), i) = cur_value;
+          end
+          next_time = toffset_idx * clk_period;
+          vidx = fill_vidx;
+
+          %% Now find the last pulse that starts no later than the next point.
+          has_pulse_running = 0;
+          while true
+            if pidx > npulses
+              pidx = 0;
+              break;
+            end
+            pulse = pulses(pidx, :);
+            pulse_t = pulse{1};
+            if pulse_t > next_time
+              break;
+            end
+            pulse_obj = pulse{3};
+            if isa(pulse_obj, 'jumpTo')
+              cur_value = pulse_obj.val;
+              pidx = pidx + 1;
+              continue;
+            end
+            pulse_len = pulse{2};
+            if pulse_t + pulse_len > next_time
+              has_pulse_running = 1;
+              break;
+            end
+            %% Forward to the end of the pulse since it is shorter than
+            %% our time interval.
+            cur_value = calcValue(pulse_obj, pulse_len,  pulse_len, cur_value);
+            pidx = pidx + 1;
+          end
+          %% There are three possibilities when we exit the loop
+          %% 1. we are at the end of the pulses:
+          %%     Just fill the rest of the sequence with the current value
+          %%     and done for the channel. The last processed pulse must be
+          %%     an End or Dirty.
+          if pidx == 0
+            break;
+          end
+          %% 2. all the processed pulses finishes before the next time point
+          %%     Finish the current process and run the next loop.
+          %%     We'll fill the next element when we find the next pulse to
+          %%     to process.
+          if ~has_pulse_running
+            continue;
+          end
+          %% 3. we've started a pulse and it continues pass the next time point
+          %%     Calculate values for this pulse and run the next loop.
+          idx_offset = active_times(3, active_idx);
+          last_vidx = ceil((pulse_t + pulse_len) / clk_period) - idx_offset;
+          idxs = vidx:last_vidx;
+          ts = (idxs + idx_offset) * clk_period - pulse_t;
+          data(idxs, i) = calcValue(pulse_obj, ts, pulse_len, cur_value);
+          cur_value = calcValue(pulse_obj, pulse_len, pulse_len, cur_value);
+          pidx = pidx + 1;
+          vidx = last_vidx + 1;
+        end
+        data(vidx:end, i) = cur_value;
+      end
+      self.data = data;
     end
 
     function session = createNewSession(self)

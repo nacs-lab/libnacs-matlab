@@ -21,6 +21,7 @@ classdef FPGABackend < PulseBackend
     num_cache = [];
     cmd_str = '';
     MIN_DELAY = 1e-6;
+    clock_period_tik = [];
   end
 
   properties(Constant, Hidden, Access=private)
@@ -69,11 +70,12 @@ classdef FPGABackend < PulseBackend
       self.num_cache(cid) = chn_num;
     end
 
-    function enableClockOut(self, div)
+    function enableClockOut(self, div, clock_period_tik)
       if div < 0 || div > 254
         error('Clock divider out of range.');
       end
       self.clock_div = div;
+      self.clock_period_tik = clock_period_tik;
     end
 
     function generate(self, cids)
@@ -83,6 +85,8 @@ classdef FPGABackend < PulseBackend
       %% [n_pulses: 4B]
       %% [[[chn_type: 4B][chn_id: 4B][t_start: 8B][t_len: 8B]
       %%  [[0: 4B][val: 8B] / [code_len: 4B][code: code_len x 4B]]] x n_pulses]
+      %% Optional:
+      %% [[n_clocks: 4B][[[t_start_ns: 8B][t_len_ns: 8B][clock_div: 4B]] x n_clocks]]
 
       TTL_CHN = self.TTL_CHN;
       DDS_FREQ = self.DDS_FREQ;
@@ -185,6 +189,17 @@ classdef FPGABackend < PulseBackend
             end
           end
         end
+      end
+      clock_period_tik = self.clock_period_tik;
+      clock_div = int32(self.clock_div);
+      nclocks = size(clock_period_tik, 2);
+      code = [code, int32(nclocks)];
+      for clock_i = 1:nclocks
+        tik_start = clock_period_tik(1, clock_i);
+        tik_end = clock_period_tik(2, clock_i);
+        t_start_ns = int64(tik_start) * 10;
+        t_len_ns = int64((tik_end - tik_start)) * 10;
+        code = [code, typecast(t_start_ns, 'int32'), typecast(t_len_ns, 'int32'), clock_div];
       end
       code(n_pulses_idx) = n_pulses;
       pyglob = py.dict();

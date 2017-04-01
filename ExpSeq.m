@@ -390,9 +390,6 @@ classdef ExpSeq < ExpSeqBase
         res = sortrows(res', 1);
       end
     end
-  end
-
-  methods(Access=protected)
     function val = getDefault(self, cid)
       try
         val = self.default_override{cid};
