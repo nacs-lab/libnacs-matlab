@@ -99,7 +99,6 @@ classdef TimeSeq < dynamicprops
       for i = 1:nsub
         seq_t = subSeqs{i};
         subseq = seq_t.seq;
-        seq_toffset = seq_t.offset;
         % The following code is manually inlined from TimeStep::getPulsesRaw
         % since function call is super slow...
         if isa(subseq, 'TimeStep')
@@ -111,6 +110,7 @@ classdef TimeSeq < dynamicprops
             if isempty(subseq_pulse)
                 continue;
             end
+            seq_toffset = seq_t.offset;
             res(1:3, end + 1) = {seq_toffset, subseq.len, subseq_pulse};
             continue;
         else
@@ -122,6 +122,7 @@ classdef TimeSeq < dynamicprops
         if nsub_pulses <= 0
             continue;
         end
+        seq_toffset = seq_t.offset;
         res(3, res_offset + nsub_pulses) = {0};
         for j = 1:nsub_pulses
           sub_tuple = sub_pulses(:, j);
