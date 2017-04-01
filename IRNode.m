@@ -139,6 +139,21 @@ classdef IRNode < handle
     function res=exp(a)
         res = IRNode(IRNode.HCall, {IRNode.FNexp, a});
     end
+    function res=expm1(a)
+        res = IRNode(IRNode.HCall, {IRNode.FNexpm1, a});
+    end
+    function res=log(a)
+        res = IRNode(IRNode.HCall, {IRNode.FNlog, a});
+    end
+    function res=log1p(a)
+        res = IRNode(IRNode.HCall, {IRNode.FNlog1p, a});
+    end
+    function res=log2(a)
+        res = IRNode(IRNode.HCall, {IRNode.FNlog2, a});
+    end
+    function res=log10(a)
+        res = IRNode(IRNode.HCall, {IRNode.FNlog10, a});
+    end
     function res=power(a, b)
         res = IRNode(IRNode.HCall, {IRNode.FNpow, a, b});
     end
@@ -183,6 +198,21 @@ classdef IRNode < handle
     end
     function res=tanh(a)
         res = IRNode(IRNode.HCall, {IRNode.FNtanh, a});
+    end
+    function res=hypot(a)
+        res = IRNode(IRNode.HCall, {IRNode.FNhypot, a});
+    end
+    function res=erf(a)
+        res = IRNode(IRNode.HCall, {IRNode.FNerf, a});
+    end
+    function res=erfc(a)
+        res = IRNode(IRNode.HCall, {IRNode.FNerfc, a});
+    end
+    function res=gamma(a)
+        res = IRNode(IRNode.HCall, {IRNode.FNgamma, a});
+    end
+    function res=gammaln(a)
+        res = IRNode(IRNode.HCall, {IRNode.FNlgamma, a});
     end
   end
   methods(Static)
