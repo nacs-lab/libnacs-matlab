@@ -112,6 +112,78 @@ classdef IRNode < handle
       self.head = head;
       self.args = args;
     end
+    function res=plus(a, b)
+        res = IRNode(IRNode.HAdd, {a, b});
+    end
+    function res=minus(a, b)
+        res = IRNode(IRNode.HSub, {a, b});
+    end
+    function res=times(a, b)
+        res = IRNode(IRNode.HMul, {a, b});
+    end
+    function res=uplus(a)
+        res = a;
+    end
+    function res=uminus(a)
+        res = -1 * a;
+    end
+    function res=rdivide(a, b)
+        res = IRNode(IRNode.HFDiv, {a, b});
+    end
+    function res=ldivide(b, a)
+        res = IRNode(IRNode.HFDiv, {a, b});
+    end
+    function res=abs(a)
+        res = IRNode(IRNode.HCall, {IRNode.FNabs, a});
+    end
+    function res=exp(a)
+        res = IRNode(IRNode.HCall, {IRNode.FNexp, a});
+    end
+    function res=power(a, b)
+        res = IRNode(IRNode.HCall, {IRNode.FNpow, a, b});
+    end
+    function res=sqrt(a)
+        res = IRNode(IRNode.HCall, {IRNode.FNsqrt, a});
+    end
+    function res=asin(a)
+        res = IRNode(IRNode.HCall, {IRNode.FNasin, a});
+    end
+    function res=acos(a)
+        res = IRNode(IRNode.HCall, {IRNode.FNacos, a});
+    end
+    function res=atan(a)
+        res = IRNode(IRNode.HCall, {IRNode.FNatan, a});
+    end
+    function res=atan2(a, b)
+        res = IRNode(IRNode.HCall, {IRNode.FNatan2, a, b});
+    end
+    function res=asinh(a)
+        res = IRNode(IRNode.HCall, {IRNode.FNasinh, a});
+    end
+    function res=acosh(a)
+        res = IRNode(IRNode.HCall, {IRNode.FNacosh, a});
+    end
+    function res=atanh(a)
+        res = IRNode(IRNode.HCall, {IRNode.FNatanh, a});
+    end
+    function res=sin(a)
+        res = IRNode(IRNode.HCall, {IRNode.FNsin, a});
+    end
+    function res=cos(a)
+        res = IRNode(IRNode.HCall, {IRNode.FNcos, a});
+    end
+    function res=tan(a)
+        res = IRNode(IRNode.HCall, {IRNode.FNtan, a});
+    end
+    function res=sinh(a)
+        res = IRNode(IRNode.HCall, {IRNode.FNsinh, a});
+    end
+    function res=cosh(a)
+        res = IRNode(IRNode.HCall, {IRNode.FNcosh, a});
+    end
+    function res=tanh(a)
+        res = IRNode(IRNode.HCall, {IRNode.FNtanh, a});
+    end
   end
   methods(Static)
     function res=getArg(i)
