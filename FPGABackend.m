@@ -191,15 +191,17 @@ classdef FPGABackend < PulseBackend
         end
       end
       clock_period_tik = self.clock_period_tik;
+      clock_ns = self.clock_div * 20;
       clock_div = int32(self.clock_div);
       nclocks = size(clock_period_tik, 2);
       code = [code, int32(nclocks)];
       for clock_i = 1:nclocks
         tik_start = clock_period_tik(1, clock_i);
         tik_end = clock_period_tik(2, clock_i);
-        t_start_ns = int64(tik_start) * 10;
-        t_len_ns = int64((tik_end - tik_start)) * 10;
-        code = [code, typecast(t_start_ns, 'int32'), typecast(t_len_ns, 'int32'), clock_div];
+        t_start_ns = int64(tik_start) * clock_ns;
+        t_len_ns = int64((tik_end - tik_start)) * clock_ns;
+        code = [code, typecast(t_start_ns, 'int32'), ...
+                typecast(t_len_ns, 'int32'), clock_div];
       end
       code(n_pulses_idx) = n_pulses;
       pyglob = py.dict();
