@@ -137,11 +137,11 @@ seqlist = cell(1, nseq);
         abort = 0;
         prepare_seq(idx);
         log_run(idx);
-        seqlist{idx}.run_async();
+        run_async(seqlist{idx});
         if next_idx > 0
             prepare_seq(next_idx);
         end
-        seqlist{idx}.waitFinish();
+        waitFinish(seqlist{idx});
         m.Data(1).CurrentSeqNum = m.Data(1).CurrentSeqNum + 1;
         % If we are using NumGroup to run sequences in groups, pause every
         % NumGroup sequences.

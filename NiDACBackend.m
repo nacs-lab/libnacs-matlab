@@ -148,8 +148,9 @@ classdef NiDACBackend < PulseBackend
 
     function run(self)
       ensureSession(self);
-      queueOutputData(self.session, self.data);
-      startBackground(self.session);
+      session = self.session;
+      queueOutputData(session, self.data);
+      startBackground(session);
     end
 
     function wait(self)
