@@ -214,6 +214,18 @@ classdef IRNode < handle
     function res=gammaln(a)
         res = IRNode(IRNode.HCall, {IRNode.FNlgamma, a});
     end
+    function res=besselj0(a)
+        res = IRNode(IRNode.HCall, {IRNode.FNj0, a});
+    end
+    function res=besselj1(a)
+        res = IRNode(IRNode.HCall, {IRNode.FNj1, a});
+    end
+    function res=bessely0(a)
+        res = IRNode(IRNode.HCall, {IRNode.FNy0, a});
+    end
+    function res=bessely1(a)
+        res = IRNode(IRNode.HCall, {IRNode.FNy1, a});
+    end
   end
   methods(Static)
     function res=getArg(i)
