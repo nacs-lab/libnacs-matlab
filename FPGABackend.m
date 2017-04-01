@@ -140,25 +140,23 @@ classdef FPGABackend < PulseBackend
         for j = 1:size(pulses, 1)
           pulse = pulses(j, :);
           pulse_obj = pulse{3};
-          toffset = pulse{4};
+          t_start = pulse{1};
           if isa(pulse_obj, 'jumpTo')
               val = pulse_obj.val;
               n_pulses = n_pulses + 1;
               code = [code, chn_type, chn_num, ...
-                      typecast(double(toffset), 'int32'), ...
+                      typecast(double(t_start), 'int32'), ...
                       0, 0, 0, typecast(double(val), 'int32')];
               continue;
           end
-          t_start = pulse{1};
-          t_len = pulse{2};
-          step_len = pulse{5};
+          step_len = pulse{2};
           if chn_type == TTL_CHN
               error('Function pulse not allowed on TTL channel');
           end
           n_pulses = n_pulses + 1;
           code = [code, chn_type, chn_num, ...
                   typecast(double(t_start), 'int32'), ...
-                  typecast(double(t_len), 'int32')];
+                  typecast(double(step_len), 'int32')];
           isir = 0;
           if isa(pulse_obj, 'IRPulse')
               irpulse_id = sprintf('%s::%d', pulse_obj.id, ...

@@ -359,8 +359,8 @@ classdef ExpSeq < ExpSeqBase
       for i = 1:size(pulses, 1)
           pulse = pulses(i, :);
           pulse_obj = pulse{3};
-          toffset = pulse{4};
-          step_len = pulse{5};
+          toffset = pulse{1};
+          step_len = pulse{2};
           if isa(pulse_obj, 'jumpTo')
             res(end + 1, 1:7) = {toffset, int32(TimeType.Dirty), pulse_obj, ...
                                  toffset, step_len, cid, 0};

@@ -26,11 +26,6 @@ classdef jumpTo < PulseBase
       self.val = v;
     end
 
-    function [tstart, tlen] = timeSpan(self, ~)
-      tstart = 0;
-      tlen = 0;
-    end
-
     function val = calcValue(self, t, ~, old_val)
       if isnumeric(old_val) || islogical(old_val)
         vals = [self.val, old_val];

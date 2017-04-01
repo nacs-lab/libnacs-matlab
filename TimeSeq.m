@@ -94,39 +94,41 @@ classdef TimeSeq < dynamicprops
     function res = getPulsesRaw(self, cid)
       %% TODOPULSE use struct
       res = {};
-      nsub = size(self.subSeqs, 2);
+      subSeqs = self.subSeqs;
+      nsub = size(subSeqs, 2);
       for i = 1:nsub
-        seq_t = self.subSeqs{i};
+        seq_t = subSeqs{i};
         subseq = seq_t.seq;
-        % The following code is manually inlined from TimeStep::getPulseRaw
+        seq_toffset = seq_t.offset;
+        % The following code is manually inlined from TimeStep::getPulsesRaw
         % since function call is super slow...
         if isa(subseq, 'TimeStep')
             subseq_pulses = subseq.pulses;
             if size(subseq_pulses, 2) < cid
                 continue;
             end
-            subseq_pulses2 = subseq_pulses{cid};
-            if isempty(subseq_pulses2)
+            subseq_pulse = subseq_pulses{cid};
+            if isempty(subseq_pulse)
                 continue;
             end
+            res(end + 1, 1:3) = {seq_toffset, subseq.len, subseq_pulse};
+            continue;
+        else
+            sub_pulses = getPulsesRaw(subseq, cid);
         end
-        sub_pulses = getPulsesRaw(subseq, cid);
 
         nsub_pulses = size(sub_pulses, 1);
         res_offset = size(res, 1);
         if nsub_pulses <= 0
             continue;
         end
-        res(res_offset + nsub_pulses, 6) = {0};
+        res(res_offset + nsub_pulses, 3) = {0};
         for j = 1:nsub_pulses
           sub_tuple = sub_pulses(j, :);
           pulse_toffset = sub_tuple{1};
           pulse_len = sub_tuple{2};
           pulse_func = sub_tuple{3};
-          step_toffset = sub_tuple{4};
-          step_len = sub_tuple{5};
-          res(res_offset + j, 1:6) = {pulse_toffset + seq_t.offset, pulse_len, pulse_func, ...
-                                      step_toffset + seq_t.offset, step_len, cid};
+          res(res_offset + j, 1:3) = {pulse_toffset + seq_toffset, pulse_len, pulse_func};
         end
       end
     end

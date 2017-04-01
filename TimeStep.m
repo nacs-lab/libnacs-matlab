@@ -41,29 +41,19 @@ classdef TimeStep < TimeSeq
         %% Treat as function
         pulse = FuncPulse(pulse);
       end
-      if size(self.pulses, 2) < cid
-        pulse_list = {};
-      else
-        pulse_list = self.pulses{cid};
+      if size(self.pulses, 2) >= cid && ~isempty(self.pulses{cid})
+          error('Overlapping pulses');
       end
-      pulse_list{end + 1} = pulse;
-      self.pulses{cid} = pulse_list;
+      self.pulses{cid} = pulse;
     end
   end
 
   methods(Access=protected)
     function res = getPulsesRaw(self, cid)
       % Caller checks that pulses exists
-      all_pulses = self.pulses;
-      pulses = all_pulses{cid};
       step_len = self.len;
-      npulses = size(pulses, 2);
-      res = cell(npulses, 6);
-      for i = 1:npulses
-        pulse = pulses{i};
-        [tstart, tlen] = timeSpan(pulse, step_len);
-        res(i, :) = {tstart, tlen, pulse, 0, step_len, cid};
-      end
+      pulse = self.pulses{cid};
+      res = {0, step_len, pulse};
     end
   end
 end
