@@ -11,7 +11,7 @@
 %% You should have received a copy of the GNU Lesser General Public
 %% License along with this library.
 
-classdef TimeStep < TimeSeq
+classdef (Sealed) TimeStep < TimeSeq
   properties
     pulses;
   end
@@ -33,17 +33,17 @@ classdef TimeStep < TimeSeq
         cid = translateChannel(self, name);
       end
       if isnumeric(pulse) || islogical(pulse)
-        if ~isscalar(pulse)
-          error('Pulse cannot be a non-scalar value.');
-        end
+        % if ~isscalar(pulse)
+        %   error('Pulse cannot be a non-scalar value.');
+        % end
         pulse = jumpTo(pulse);
       elseif ~isa(pulse, 'PulseBase')
         %% Treat as function
         pulse = FuncPulse(pulse);
       end
-      if size(self.pulses, 2) >= cid && ~isempty(self.pulses{cid})
-          error('Overlapping pulses');
-      end
+      % if size(self.pulses, 2) >= cid && ~isempty(self.pulses{cid})
+      %     error('Overlapping pulses');
+      % end
       self.pulses{cid} = pulse;
     end
   end
@@ -53,7 +53,7 @@ classdef TimeStep < TimeSeq
       % Caller checks that pulses exists
       step_len = self.len;
       pulse = self.pulses{cid};
-      res = {0, step_len, pulse};
+      res = {0, step_len, pulse}';
     end
   end
 end

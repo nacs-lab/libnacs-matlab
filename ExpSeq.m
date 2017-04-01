@@ -387,7 +387,7 @@ classdef ExpSeq < ExpSeqBase
       %% The returned value should be sorted with toffset.
       res = self.getPulsesRaw(cid);
       if ~isempty(res)
-        res = sortrows(res, 1);
+        res = sortrows(res', 1);
       end
     end
   end

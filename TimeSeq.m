@@ -111,24 +111,24 @@ classdef TimeSeq < dynamicprops
             if isempty(subseq_pulse)
                 continue;
             end
-            res(end + 1, 1:3) = {seq_toffset, subseq.len, subseq_pulse};
+            res(1:3, end + 1) = {seq_toffset, subseq.len, subseq_pulse};
             continue;
         else
             sub_pulses = getPulsesRaw(subseq, cid);
         end
 
-        nsub_pulses = size(sub_pulses, 1);
-        res_offset = size(res, 1);
+        nsub_pulses = size(sub_pulses, 2);
+        res_offset = size(res, 2);
         if nsub_pulses <= 0
             continue;
         end
-        res(res_offset + nsub_pulses, 3) = {0};
+        res(3, res_offset + nsub_pulses) = {0};
         for j = 1:nsub_pulses
-          sub_tuple = sub_pulses(j, :);
+          sub_tuple = sub_pulses(:, j);
           pulse_toffset = sub_tuple{1};
           pulse_len = sub_tuple{2};
           pulse_func = sub_tuple{3};
-          res(res_offset + j, 1:3) = {pulse_toffset + seq_toffset, pulse_len, pulse_func};
+          res(1:3, res_offset + j) = {pulse_toffset + seq_toffset, pulse_len, pulse_func};
         end
       end
     end
