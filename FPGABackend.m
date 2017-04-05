@@ -127,6 +127,10 @@ classdef FPGABackend < PulseBackend
         if chn_type == TTL_CHN
           continue;
         end
+        pulses = all_pulses{i};
+        if size(pulses, 1) == 0
+            continue;
+        end
         chn_num = num_cache(cid);
         default_val = default_values(i);
         code = [code, chn_type, chn_num, ...
