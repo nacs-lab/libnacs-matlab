@@ -303,16 +303,16 @@ classdef NiDACBackend < PulseBackend
     end
 
     function run(self)
-      global nacsNiDACBackendSessionUsing
       ensureSession(self);
       session = self.session;
       queueOutputData(session, self.data);
       startBackground(session);
-      nacsNiDACBackendSessionUsing = 0;
     end
 
     function wait(self)
+      global nacsNiDACBackendSessionUsing
       wait(self.session);
+      nacsNiDACBackendSessionUsing = 0;
     end
   end
 end
