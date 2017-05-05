@@ -290,18 +290,25 @@ classdef NiDACBackend < PulseBackend
         % Use a global variable to cache the session since
         % adding channels is really slow.... (50ms per channel)
         global nacsNiDACBackendSession
-        if isempty(nacsNiDACBackendSession) || ~self.checkSession(nacsNiDACBackendSession)
+        global nacsNiDACBackendSessionUsing
+        if (isempty(nacsNiDACBackendSession) || ...
+                ~self.checkSession(nacsNiDACBackendSession) || ...
+                (~isempty(nacsNiDACBackendSession) && ...
+                 nacsNiDACBackendSessionUsing))
             delete(nacsNiDACBackendSession);
             nacsNiDACBackendSession = self.createNewSession();
         end
+        nacsNiDACBackendSessionUsing = 1;
         self.session = nacsNiDACBackendSession;
     end
 
     function run(self)
+      global nacsNiDACBackendSessionUsing
       ensureSession(self);
       session = self.session;
       queueOutputData(session, self.data);
       startBackground(session);
+      nacsNiDACBackendSessionUsing = 0;
     end
 
     function wait(self)
