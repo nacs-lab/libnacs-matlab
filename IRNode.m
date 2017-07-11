@@ -23,7 +23,7 @@ classdef IRNode < handle
     OPCmp = 7;
     OPPhi = 8;
     OPCall = 9;
-    OPInterp = 9;
+    OPInterp = 10;
     OPMax = 11;
 
     TyMin = 0;
@@ -101,7 +101,7 @@ classdef IRNode < handle
     HFDiv = 3;
     HCall = 4;
     HArg = 5;
-    HInterp = 5;
+    HInterp = 6;
   end
 
   properties

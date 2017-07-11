@@ -140,10 +140,10 @@ classdef IRFunc < handle
         code(4) = self.addNode(args{2});
         code(5) = self.addNode(args{3});
         oldlen = length(self.float_table);
+        vals = args{4};
         vlen = length(vals);
         code(6) = oldlen - 1;
         code(7) = vlen;
-        vals = args{4};
         self.float_table(oldlen + 1:oldlen + vlen) = vals;
       else
         if head == IRNode.HAdd
