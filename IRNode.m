@@ -229,7 +229,7 @@ classdef IRNode < handle
         res = IRNode(IRNode.HCall, {IRNode.FNy1, a});
     end
     function res=interpolate(x, x0, x1, vals)
-        res = IRNode(IRNode.HInterp, {x, x0, x1, vals});
+        res = IRNode(IRNode.HInterp, {x, x0, x1 - x0, vals});
     end
   end
   methods(Static)

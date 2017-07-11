@@ -23,6 +23,8 @@ classdef IRFunc < handle
     %% Assume all constants are also Float64
     consts;
     const_map;
+
+    float_table;
   end
 
   methods
@@ -33,6 +35,7 @@ classdef IRFunc < handle
       self.consts = [];
       self.const_map = containers.Map('KeyType', 'double', ...
                                       'ValueType', 'double');
+      self.float_table = [];
     end
     function setCode(self, node)
       res_id = addNode(self, node);
@@ -64,7 +67,14 @@ classdef IRFunc < handle
       offset = offset + length(self.consts) * 3;
       data(offset + 1) = 1;
       data(offset + 2) = length(self.byte_code);
-      data(offset + 3:end) = self.byte_code;
+      offset = offset + 2;
+      new_offset = offset + length(self.byte_code);
+      data(offset + 1:new_offset) = self.byte_code;
+      offset = new_offset;
+      data(offset + 1) = length(self.float_table);
+      offset = offset + 1;
+      data(offset + 1:offset + length(self.float_table) * 2) = typecast(self.float_table, ...
+                                                                        'int32');
     end
   end
   methods
@@ -72,6 +82,7 @@ classdef IRFunc < handle
       sz = 1 + 1 + 1 + ceil(self.nvals / 4); % [ret][nargs][nvals][vals x nvals]
       sz = sz + 1 + length(self.consts) * 3; % [nconsts][consts x nconsts]
       sz = sz + 1 + 1 + length(self.byte_code); % [nbb][nword][code x nword]
+      sz = sz + 1 + length(self.float_table) * 2; % [nfloat][float x nfloat]
     end
     function id=addConst(self, v)
       v = double(v);
@@ -120,6 +131,20 @@ classdef IRFunc < handle
         for i = 1:nargs
           code(4 + i) = self.addNode(args{1 + i});
         end
+      elseif head == IRNode.HInterp
+        code = zeros(1, 7, 'int32');
+        code(1) = IRNode.OPInterp;
+        id = self.addVal();
+        code(2) = id;
+        code(3) = self.addNode(args{1});
+        code(4) = self.addNode(args{2});
+        code(5) = self.addNode(args{3});
+        oldlen = length(self.float_table);
+        vlen = length(vals);
+        code(6) = oldlen - 1;
+        code(7) = vlen;
+        vals = args{4};
+        self.float_table(oldlen + 1:oldlen + vlen) = vals;
       else
         if head == IRNode.HAdd
           opcode = IRNode.OPAdd;
