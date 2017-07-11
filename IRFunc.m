@@ -142,7 +142,7 @@ classdef IRFunc < handle
         oldlen = length(self.float_table);
         vals = args{4};
         vlen = length(vals);
-        code(6) = oldlen - 1;
+        code(6) = oldlen;
         code(7) = vlen;
         self.float_table(oldlen + 1:oldlen + vlen) = vals;
       else
