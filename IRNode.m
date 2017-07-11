@@ -23,7 +23,8 @@ classdef IRNode < handle
     OPCmp = 7;
     OPPhi = 8;
     OPCall = 9;
-    OPMax = 10;
+    OPInterp = 9;
+    OPMax = 11;
 
     TyMin = 0;
     TyBool = 1;
@@ -100,6 +101,7 @@ classdef IRNode < handle
     HFDiv = 3;
     HCall = 4;
     HArg = 5;
+    HInterp = 5;
   end
 
   properties
@@ -225,6 +227,9 @@ classdef IRNode < handle
     end
     function res=bessely1(a)
         res = IRNode(IRNode.HCall, {IRNode.FNy1, a});
+    end
+    function res=interpolate(x, x0, x1, vals)
+        res = IRNode(IRNode.HInterp, {x, x0, x1, vals});
     end
   end
   methods(Static)
