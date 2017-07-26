@@ -53,7 +53,12 @@ classdef ExpSeqBase < TimeSeq
     function res = waitFor(self, steps)
         t = self.curTime;
         for step = steps
-            tstep = endof(step);
+            if iscell(step)
+                real_step = step{:};
+            else
+                real_step = step;
+            end
+            tstep = endof(real_step);
             if tstep > t
                 t = tstep;
             end
