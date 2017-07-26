@@ -23,7 +23,7 @@ classdef TimeSeq < dynamicprops
 
   properties(Hidden, Access=private)
     subSeqs;
-    tOffset;
+    tOffset = 0;
   end
 
   methods
@@ -60,6 +60,10 @@ classdef TimeSeq < dynamicprops
           end
         end
       end
+    end
+
+    function res = endof(self)
+        res = self.tOffset + length(self);
     end
 
     function cid = translateChannel(self, name)

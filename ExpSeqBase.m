@@ -50,6 +50,18 @@ classdef ExpSeqBase < TimeSeq
       res = self;
     end
 
+    function res = waitFor(self, steps)
+        t = self.curTime;
+        for step = steps
+            tstep = endof(step);
+            if tstep > t
+                t = tstep;
+            end
+        end
+        self.curTime = t;
+        res = self;
+    end
+
     function res = waitBackground(self)
       %% Wait for background steps that are added directly to this sequence
       %% to finish
