@@ -58,6 +58,10 @@ classdef ExpSeqBase < TimeSeq
             else
                 real_step = step;
             end
+            if real_step.parent ~= self
+                % FIXME
+                error('Cannot wait for steps in a different sequence');
+            end
             tstep = endof(real_step);
             if tstep > t
                 t = tstep;
