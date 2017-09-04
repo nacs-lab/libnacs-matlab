@@ -18,7 +18,7 @@ classdef ExpSeqBase < TimeSeq
 
   methods
     function self = ExpSeqBase(varargin)
-      if nargin >= 3
+      if nargin > 2
         error('Too many arguments for ExpSeqBase.');
       end
       self = self@TimeSeq(varargin{:});

@@ -25,13 +25,11 @@ classdef ExpSeq < ExpSeqBase
   methods
     function self = ExpSeq(name)
       if nargin < 1
+        % Ignored
         name = 'seq';
-      elseif ~ischar(name)
-        error('Sequence name must be a string.');
       end
       global nacsTimeSeqNameSuffixHack;
-      name = [name, nacsTimeSeqNameSuffixHack];
-      self = self@ExpSeqBase(name);
+      self = self@ExpSeqBase();
       self.chn_manager = ChannelManager();
       self.drivers = containers.Map();
       self.driver_cids = containers.Map();

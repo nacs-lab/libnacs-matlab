@@ -27,21 +27,18 @@ classdef TimeSeq < dynamicprops
   end
 
   methods
-    function self = TimeSeq(parent_or_name, toffset, len)
+    function self = TimeSeq(parent, toffset, len)
       self.subSeqs = {};
-      if nargin < 1
-        self.config = loadConfig();
-      elseif nargin < 2
-        self.config = loadConfig();
-      else
-        self.parent = parent_or_name;
+      if exist('parent', 'var')
+        self.parent = parent;
         self.tOffset = toffset;
-
-        self.config = parent_or_name.config;
-        parent_or_name.addSubSeq(self, toffset);
-        if nargin >= 3
+        self.config = parent.config;
+        parent.addSubSeq(self, toffset);
+        if exist('len', 'var')
           self.len = len;
         end
+      else
+        self.config = loadConfig();
       end
     end
 
