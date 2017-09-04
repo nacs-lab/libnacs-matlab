@@ -50,6 +50,22 @@ classdef ExpSeqBase < TimeSeq
       res = self;
     end
 
+    function res = offsetDiff(self, step)
+      %% Use an array of offset to reduce the rounding error when taking the difference
+      % especially when the step we are querying shares a common parent.
+      self_offset = globalOffset(self);
+      other_offset = globalOffset(step);
+      len_self = length(self_offset);
+      len_other = length(other_offset);
+      if len_self > len_other
+        self_offset(1:len_other) = self_offset(1:len_other) - other_offset;
+        res = -sum(self_offset);
+      else
+        other_offset(1:len_self) = other_offset(1:len_self) - self_offset;
+        res = sum(other_offset);
+      end
+    end
+
     function res = waitFor(self, steps)
         t = self.curTime;
         for step = steps
@@ -58,11 +74,10 @@ classdef ExpSeqBase < TimeSeq
             else
                 real_step = step;
             end
-            if real_step.parent ~= self
-                % FIXME
-                error('Cannot wait for steps in a different sequence');
-            end
             tstep = endof(real_step);
+            if real_step.parent ~= self
+                tstep = tstep + offsetDiff(self, real_step.parent);
+            end
             if tstep > t
                 t = tstep;
             end

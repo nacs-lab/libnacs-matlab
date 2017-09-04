@@ -24,6 +24,7 @@ classdef TimeSeq < dynamicprops
   properties(Hidden, Access=private)
     subSeqs;
     tOffset = 0;
+    global_toffset = [];
   end
 
   methods
@@ -69,6 +70,14 @@ classdef TimeSeq < dynamicprops
   end
 
   methods(Access=protected)
+    function t=globalOffset(self)
+      t = self.global_toffset;
+      if isempty(t)
+        self.global_toffset = [globalOffset(self.parent), self.tOffset];
+        t = self.global_toffset;
+      end
+    end
+
     function subSeqForeach(self, func)
       nsub = size(self.subSeqs, 2);
       for i = 1:nsub

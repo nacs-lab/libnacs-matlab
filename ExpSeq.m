@@ -405,6 +405,12 @@ classdef ExpSeq < ExpSeqBase
     end
   end
 
+  methods(Access=protected)
+    function t=globalOffset(self)
+      t = [];
+    end
+  end
+
   methods(Access=private)
     function [driver, driver_name] = initDeviceDriver(self, did)
       driver_name = self.config.pulseDrivers(did);
