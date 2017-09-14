@@ -141,8 +141,8 @@ seqlist = cell(1, nseq);
         if next_idx > 0
             prepare_seq(next_idx);
         end
-        waitFinish(seqlist{idx});
         m.Data(1).CurrentSeqNum = m.Data(1).CurrentSeqNum + 1;
+        waitFinish(seqlist{idx});
         % If we are using NumGroup to run sequences in groups, pause every
         % NumGroup sequences.
         if ~mod(m.Data(1).CurrentSeqNum, m.Data(1).NumPerGroup) && (m.Data(1).NumPerGroup>0)
