@@ -126,6 +126,11 @@ classdef ExpSeqBase < TimeSeq
     function step = addStep(self, varargin)
       step = self.addStepReal(false, varargin{:});
     end
+
+    function res = endof(self)
+      %% Do not include background pulse as current time.
+      res = self.tOffset + self.curTime;
+    end
   end
 
   methods(Access=private)

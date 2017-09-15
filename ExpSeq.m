@@ -1,4 +1,4 @@
-%% Copyright (c) 2014-2014, Yichao Yu <yyc1992@gmail.com>
+%% Copyright (c) 2014-2017, Yichao Yu <yyc1992@gmail.com>
 %%
 %% This library is free software; you can redistribute it and/or
 %% modify it under the terms of the GNU Lesser General Public
@@ -81,6 +81,11 @@ classdef ExpSeq < ExpSeqBase
 
     function generate(self)
       if ~self.generated
+        if self.config.maxLength > 0 && self.length() > self.config.maxLength
+          msg = sprintf('Sequence length %f exceeds max sequence length of maxLength=%f', ...
+                        self.length(), self.config.maxLength);
+          error(msg);
+        end
         disp('Generating ...');
         for key = self.drivers.keys()
           driver_name = key{:};

@@ -25,6 +25,7 @@ classdef loadConfig < handle
 
     niClocks;
     niStart;
+    maxLength;
   end
 
   methods
@@ -41,6 +42,7 @@ classdef loadConfig < handle
       niClocks = containers.Map();
       niStart = containers.Map();
       consts = containers.Map();
+      maxLength = 0;
 
       nacsConfig();
 
@@ -48,6 +50,7 @@ classdef loadConfig < handle
       self.niClocks = niClocks;
       self.niStart = niStart;
       self.consts = consts;
+      self.maxLength = maxLength;
 
       for key = keys(channelAlias)
         key = key{:};
