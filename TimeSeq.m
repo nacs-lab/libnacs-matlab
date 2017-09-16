@@ -19,11 +19,11 @@ classdef TimeSeq < dynamicprops
   properties(Hidden, Access=protected)
     len = 0;
     parent = 0;
+    tOffset = 0;
   end
 
   properties(Hidden, Access=private)
     subSeqs;
-    tOffset = 0;
     global_toffset = [];
   end
 
