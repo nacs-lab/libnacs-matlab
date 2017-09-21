@@ -66,7 +66,10 @@ classdef ExpSeqBase < TimeSeq
       end
     end
 
-    function res = waitFor(self, steps)
+    function res = waitFor(self, steps, offset)
+        if ~exist('offset', 'var')
+            offset = 0;
+        end
         t = self.curTime;
         for step = steps
             if iscell(step)
@@ -74,7 +77,7 @@ classdef ExpSeqBase < TimeSeq
             else
                 real_step = step;
             end
-            tstep = endof(real_step);
+            tstep = endof(real_step) + offset;
             if real_step.parent ~= self
                 tstep = tstep + offsetDiff(self, real_step.parent);
             end
