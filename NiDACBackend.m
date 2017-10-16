@@ -97,12 +97,12 @@ classdef NiDACBackend < PulseBackend
           pulse_obj = pulse{3};
           toffset = pulse{1};
           step_len = pulse{2};
-          toffset_idx = ceil(toffset / clk_period);
+          toffset_idx = cld(toffset, clk_period);
           if isa(pulse_obj, 'jumpTo')
             times(1:2, end + 1) = [toffset_idx, toffset_idx + 1];
           else
             tend = toffset + step_len;
-            tend_idx = ceil(tend / clk_period);
+            tend_idx = cld(tend, clk_period);
             times(1:2, end + 1) = [toffset_idx, tend_idx + 1];
           end
         end
@@ -167,7 +167,7 @@ classdef NiDACBackend < PulseBackend
           toffset = pulses{pidx, 1};
 
           %% Find corresponding active_times
-          toffset_idx = ceil(toffset / clk_period);
+          toffset_idx = cld(toffset, clk_period);
           while toffset_idx > active_times(2, active_idx)
             active_idx = active_idx + 1;
           end
@@ -227,7 +227,7 @@ classdef NiDACBackend < PulseBackend
           %% 3. we've started a pulse and it continues pass the next time point
           %%     Calculate values for this pulse and run the next loop.
           idx_offset = active_times(3, active_idx);
-          last_vidx = ceil((pulse_t + pulse_len) / clk_period) - idx_offset;
+          last_vidx = cld(pulse_t + pulse_len, clk_period) - idx_offset;
           idxs = vidx:last_vidx;
           ts = (idxs + idx_offset) * clk_period - pulse_t;
           data(idxs, i) = calcValue(pulse_obj, ts, pulse_len, cur_value);

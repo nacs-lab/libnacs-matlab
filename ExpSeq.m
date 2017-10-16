@@ -228,7 +228,7 @@ classdef ExpSeq < ExpSeqBase
 
     function vals = getValues(self, dt, varargin)
       total_t = self.length();
-      nstep = floor(total_t / dt) + 1;
+      nstep = fld(total_t, dt) + 1;
       nchn = nargin - 2;
 
       vals = zeros(nchn, nstep);
@@ -256,7 +256,7 @@ classdef ExpSeq < ExpSeqBase
           %% First fill the values before the next pulse starts
           pulse = pulses(pidx, :);
           %% Index before next time
-          next_vidx = ceil(pulse{1} / dt);
+          next_vidx = cld(pulse{1}, dt);
           if next_vidx >= vidx
             vals(i, vidx:next_vidx) = cur_value * scale;
           end
@@ -328,7 +328,7 @@ classdef ExpSeq < ExpSeqBase
           end
           %% 3. we've started a pulse and it continues pass the next time point
           %%     Calculate values for this pulse and run the next loop.
-          last_vidx = ceil(pulse_end{1} / dt);
+          last_vidx = cld(pulse_end{1}, dt);
           idxs = vidx:last_vidx;
           pulse_obj = pulse{3};
           vals(i, idxs) = pulse_obj.calcValue((idxs - 1) * dt - pulse{4}, ...
