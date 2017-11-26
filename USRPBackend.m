@@ -93,7 +93,7 @@ classdef USRPBackend < PulseBackend
         end
       end
 
-      code = int32([0]);
+      code = int32([1, 0]);
 
       targ = IRNode.getArg(1);
       oldarg = IRNode.getArg(2);
@@ -145,7 +145,7 @@ classdef USRPBackend < PulseBackend
           end
         end
       end
-      code(1) = n_pulses;
+      code(2) = n_pulses;
       self.code = py.bytes(typecast(code, 'int8'));
       self.poster = USRPPoster(self.url);
     end
