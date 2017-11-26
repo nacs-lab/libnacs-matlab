@@ -32,5 +32,5 @@ class USRPPoster(object):
         self.__sock.send(sid.to_bytes(8, byteorder=sys.byteorder, signed=False))
         if self.__sock.poll(1000) == 0:
             return False
-        msg = self.__sock.recv()
+        self.__sock.recv()
         return True
