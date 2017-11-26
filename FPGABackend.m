@@ -20,17 +20,10 @@ classdef FPGABackend < PulseBackend
     type_cache = [];
     num_cache = [];
     cmd_str = '';
-    MIN_DELAY = 1e-6;
     clock_period_tik = [];
   end
 
   properties(Constant, Hidden, Access=private)
-    INIT_DELAY = 100e-6;
-    CLOCK_DELAY = 2e-6;
-    START_DELAY = 0.1e-6;
-    FIN_CLOCK_DELAY = 30e-3;
-    MIN_DELAY_REAL = 1e-6;
-
     TTL_CHN = 1;
     DDS_FREQ = 2;
     DDS_AMP = 3;
@@ -44,10 +37,6 @@ classdef FPGABackend < PulseBackend
       self = self@PulseBackend(seq);
       self.config = loadConfig();
       self.url = self.config.fpgaUrls('FPGA1');
-    end
-
-    function setTimeResolution(self, dt)
-      self.MIN_DELAY = max(self.MIN_DELAY_REAL, dt);
     end
 
     function initDev(self, did)
