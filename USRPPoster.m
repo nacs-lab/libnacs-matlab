@@ -28,7 +28,18 @@ classdef USRPPoster < handle
     end
 
     function res = post(self, data)
-      res = self.poster.post(data);
+      try
+        self.poster.post(data);
+        while 1
+          res = self.poster.post_reply();
+          if res ~= 0
+            return
+          end
+        end
+      catch ex
+        self.poster.recreate_sock();
+        rethrow(ex);
+      end
     end
 
     function wait(self, id)

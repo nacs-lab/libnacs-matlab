@@ -16,14 +16,14 @@ import struct
 import sys
 
 class USRPPoster(object):
-    def __create_sock(self):
+    def recreate_sock(self):
         self.__sock = self.__ctx.socket(zmq.REQ)
         self.__sock.connect(self.__url)
 
     def __init__(self, url):
         self.__url = url
         self.__ctx = zmq.Context()
-        self.__create_sock()
+        self.recreate_sock()
 
     def __del__(self):
         self.__ctx.destroy()
@@ -32,14 +32,11 @@ class USRPPoster(object):
         self.__sock.send_string("run_seq", zmq.SNDMORE)
         self.__sock.send(b'\0\0\0\0', zmq.SNDMORE) # version
         self.__sock.send(data)
-        # Wait 60s and assume the server got some issue if no reply was available
-        if self.__sock.poll(60000) == 0:
-            # Recreate the socket so that it can be used again
-            self.__sock.close()
-            self.__create_sock()
+
+    def post_reply(self):
+        if self.__sock.poll(1) == 0:
             return 0
-        msg = self.__sock.recv()
-        return struct.unpack('@Q', msg)[0]
+        return struct.unpack('@Q', self.__sock.recv())[0]
 
     def wait(self, sid):
         self.__sock.send_string("wait_seq", zmq.SNDMORE)
