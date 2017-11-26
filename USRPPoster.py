@@ -13,6 +13,7 @@
 
 import zmq
 import struct
+import sys
 
 class USRPPoster(object):
     def __create_sock(self):
@@ -42,7 +43,7 @@ class USRPPoster(object):
 
     def wait(self, sid):
         self.__sock.send_string("wait_seq", zmq.SNDMORE)
-        self.__sock.send(sid.to_bytes(8, byteorder=sys.byteorder, signed=False))
+        self.__sock.send(int(sid).to_bytes(8, byteorder=sys.byteorder, signed=False))
         if self.__sock.poll(1000) == 0:
             return False
         self.__sock.recv()
