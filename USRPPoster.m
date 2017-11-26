@@ -43,7 +43,13 @@ classdef USRPPoster < handle
     end
 
     function wait(self, id)
-      while ~self.poster.wait(id)
+      try
+        self.poster.wait_send(id)
+        while ~self.poster.wait_reply()
+        end
+      catch ex
+        self.poster.recreate_sock();
+        rethrow(ex);
       end
     end
   end

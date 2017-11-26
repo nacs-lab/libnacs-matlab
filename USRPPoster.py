@@ -38,9 +38,11 @@ class USRPPoster(object):
             return 0
         return struct.unpack('@Q', self.__sock.recv())[0]
 
-    def wait(self, sid):
+    def wait_send(self, sid):
         self.__sock.send_string("wait_seq", zmq.SNDMORE)
         self.__sock.send(int(sid).to_bytes(8, byteorder=sys.byteorder, signed=False))
+
+    def wait_reply(self):
         if self.__sock.poll(1000) == 0:
             return False
         self.__sock.recv()
