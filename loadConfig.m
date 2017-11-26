@@ -22,6 +22,7 @@ classdef loadConfig < handle
     consts;
 
     fpgaUrls;
+    usrpUrls;
 
     niClocks;
     niStart;
@@ -36,6 +37,7 @@ classdef loadConfig < handle
 
     function load(self)
       fpgaUrls = containers.Map();
+      usrpUrls = containers.Map();
       pulseDrivers = containers.Map();
       channelAlias = containers.Map();
       defaultVals = containers.Map();
@@ -47,6 +49,7 @@ classdef loadConfig < handle
       nacsConfig();
 
       self.fpgaUrls = fpgaUrls;
+      self.usrpUrls = usrpUrls;
       self.niClocks = niClocks;
       self.niStart = niStart;
       self.consts = consts;
