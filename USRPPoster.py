@@ -1,0 +1,36 @@
+# Copyright (c) 2017-2017, Yichao Yu <yyc1992@gmail.com>
+#
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 3.0 of the License, or (at your option) any later version.
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# Lesser General Public License for more details.
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library.
+
+import zmq
+import struct
+
+class USRPPoster(object):
+    def __init__(self, url):
+        self.__ctx = zmq.Context()
+        self.__sock = self.__ctx.socket(zmq.REQ)
+        self.__sock.connect(url)
+
+    def post(self, data):
+        self.__sock.send_string("run_seq", zmq.SNDMORE)
+        self.__sock.send(b'\0\0\0\0', zmq.SNDMORE) # version
+        self.__sock.send(data)
+        msg = sock.recv()
+        return struct.unpack('@Q', msg)[0]
+
+    def wait(self, sid):
+        self.__sock.send_string("wait_seq", zmq.SNDMORE)
+        self.__sock.send(sid.to_bytes(8, byteorder=sys.byteorder, signed=False))
+        if self.__sock.poll(1000) == 0:
+            return False
+        msg = self.__sock.recv()
+        return True
