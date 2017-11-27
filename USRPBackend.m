@@ -55,6 +55,10 @@ classdef USRPBackend < PulseBackend
       self.num_cache(cid) = chn_num;
     end
 
+    function val = getPriority(~)
+      val = 1;
+    end
+
     function prepare(self, ~)
       %% This should enable the FPGA backend and therefore the start trigger
       self.seq.findDriver('FPGABackend');
