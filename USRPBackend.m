@@ -55,6 +55,11 @@ classdef USRPBackend < PulseBackend
       self.num_cache(cid) = chn_num;
     end
 
+    function prepare(self, ~)
+      %% This should enable the FPGA backend and therefore the start trigger
+      self.seq.findDriver('FPGABackend');
+    end
+
     function generate(self, cids)
       %% [n_pulses: 4B]
       %% [[[chn_type: 4B][chn_id: 4B][t_start: 8B][t_len: 8B]
