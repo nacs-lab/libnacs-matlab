@@ -30,6 +30,8 @@ classdef FPGABackend < PulseBackend
     DAC_CHN = 4;
 
     START_TRIGGER_TTL = 0;
+
+    SEQ_DELAY = 10e-3;
   end
 
   methods
@@ -81,6 +83,7 @@ classdef FPGABackend < PulseBackend
       DDS_FREQ = self.DDS_FREQ;
       DDS_AMP = self.DDS_AMP;
       DAC_CHN = self.DAC_CHN;
+      SEQ_DELAY = self.SEQ_DELAY;
       ircache = IRCache.get();
 
       type_cache = self.type_cache;
@@ -137,7 +140,7 @@ classdef FPGABackend < PulseBackend
         for j = 1:size(pulses, 1)
           pulse = pulses(j, :);
           pulse_obj = pulse{3};
-          t_start = pulse{1};
+          t_start = pulse{1} + SEQ_DELAY;
           if isa(pulse_obj, 'jumpTo')
               val = pulse_obj.val;
               n_pulses = n_pulses + 1;
@@ -183,6 +186,7 @@ classdef FPGABackend < PulseBackend
           end
         end
       end
+      clock_offset_ns = int64(SEQ_DELAY / 1e-9);
       clock_period_tik = self.clock_period_tik;
       clock_ns = self.clock_div * 20;
       clock_div = int32(self.clock_div);
@@ -191,7 +195,7 @@ classdef FPGABackend < PulseBackend
       for clock_i = 1:nclocks
         tik_start = clock_period_tik(1, clock_i);
         tik_end = clock_period_tik(2, clock_i);
-        t_start_ns = int64(tik_start) * clock_ns;
+        t_start_ns = int64(tik_start) * clock_ns + clock_offset_ns;
         t_len_ns = int64((tik_end - tik_start)) * clock_ns;
         code = [code, typecast(t_start_ns, 'int32'), ...
                 typecast(t_len_ns, 'int32'), clock_div];
