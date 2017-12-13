@@ -18,7 +18,7 @@ classdef URLPoster < handle
     pyglob;
   end
 
-  methods(Access = private)
+  methods
     function self = URLPoster(url_str)
       self.url_str = url_str;
       [path, ~, ~] = fileparts(mfilename('fullpath'));
@@ -28,9 +28,7 @@ classdef URLPoster < handle
       pylocal = py.dict(pyargs('url', self.url_str));
       self.pyconn = py.eval('URLPoster(url)', self.pyglob, pylocal);
     end
-  end
 
-  methods
     function res = post(self, data, files)
       res = self.pyconn.post(py.dict(pyargs(data{:})), ...
                              py.dict(pyargs(files{:})));
@@ -41,22 +39,6 @@ classdef URLPoster < handle
       %% YOU HAVE ABSOLUTELY NO IDEA WHAT YOU ARE DOING IF YOU EVER THINK
       %% DOING THIS !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       output = char(self.pyconn.reply());
-    end
-  end
-
-  methods(Static)
-    function res = get(url)
-      global nacsURLPosterCache
-      if isempty(nacsURLPosterCache)
-        nacsURLPosterCache = containers.Map();
-      end
-      cache = nacsURLPosterCache;
-      if isKey(cache, url)
-        res = cache(url);
-        return;
-      end
-      res = URLPoster(url);
-      cache(url) = res;
     end
   end
 end
