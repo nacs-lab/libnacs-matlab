@@ -156,7 +156,7 @@ classdef USRPBackend < PulseBackend
       end
       code(2) = n_pulses;
       self.code = py.bytes(typecast(code, 'int8'));
-      self.poster = USRPPoster(self.url);
+      self.poster = USRPPoster.get(self.url);
     end
 
     function res = getCode(self)

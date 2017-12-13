@@ -17,7 +17,7 @@ classdef USRPPoster < handle
     poster;
   end
 
-  methods
+  methods(Access = private)
     function self = USRPPoster(url)
       [path, ~, ~] = fileparts(mfilename('fullpath'));
       self.pyglob = py.dict(pyargs('mat_srcpath', path, ...
@@ -26,7 +26,9 @@ classdef USRPPoster < handle
       py.exec('from USRPPoster import USRPPoster', self.pyglob);
       self.poster = py.eval('USRPPoster(usrp_url)', self.pyglob);
     end
+  end
 
+  methods
     function res = post(self, data)
       try
         self.poster.post(data);
@@ -51,6 +53,22 @@ classdef USRPPoster < handle
         self.poster.recreate_sock();
         rethrow(ex);
       end
+    end
+  end
+
+  methods(Static)
+    function res = get(url)
+      global nacsUSRPPosterCache
+      if isempty(nacsUSRPPosterCache)
+        nacsUSRPPosterCache = containers.Map();
+      end
+      cache = nacsUSRPPosterCache;
+      if isKey(cache, url)
+        res = cache(url);
+        return;
+      end
+      res = USRPPoster(url);
+      cache(url) = res;
     end
   end
 end
