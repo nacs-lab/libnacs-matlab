@@ -31,6 +31,7 @@ classdef FPGABackend < PulseBackend
 
     START_TRIGGER_TTL = 0;
 
+    % The delay is needed for the software radio.
     SEQ_DELAY = 10e-3;
   end
 
