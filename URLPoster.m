@@ -28,12 +28,10 @@ classdef URLPoster < handle
     end
 
     function res = post(self, data, files)
-      pylocal = py.dict(pyargs('url', self.url_str, ...
-                               'data', py.dict(pyargs(data{:})), ...
-                               'files', py.dict(pyargs(files{:}))));
-      self.pyconn = py.eval('URLPoster(url, data, files)', ...
-                            self.pyglob, pylocal);
-      res = self.pyconn.post();
+      pylocal = py.dict(pyargs('url', self.url_str));
+      self.pyconn = py.eval('URLPoster(url)', self.pyglob, pylocal);
+      res = self.pyconn.post(py.dict(pyargs(data{:})), ...
+                             py.dict(pyargs(files{:})));
     end
 
     function output = reply(self)

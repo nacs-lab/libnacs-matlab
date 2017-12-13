@@ -21,20 +21,18 @@ except ImportError:
 
 class URLPoster(object):
     def __init__(self, url, data=None, files=None):
-        self.__req = requests.Request('POST', url, data=data,
-                                      files=files).prepare()
+        self.__url = url
         o = urlparse.urlparse(url)
         if o.scheme == 'https':
             self.__conn = http_client.HTTPSConnection(o.netloc)
         else:
             self.__conn = http_client.HTTPConnection(o.netloc)
 
-    def _post(self):
-        return requests.post(self._url, data=self._data, files=self._files)
-
-    def post(self):
-        self.__conn.request('POST', self.__req.url, body=self.__req.body,
-                            headers=self.__req.headers)
+    def post(self, data, files):
+        req = requests.Request('POST', self.__url, data=data,
+                               files=files).prepare()
+        self.__conn.request('POST', self.__url, body=req.body,
+                            headers=req.headers)
 
     def reply(self):
         res = self.__conn.getresponse()
