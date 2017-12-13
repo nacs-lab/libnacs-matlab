@@ -20,7 +20,7 @@ except ImportError:
     import urllib.parse as urlparse
 
 class URLPoster(object):
-    def __init__(self, url, data=None, files=None):
+    def __init__(self, url):
         self.__url = url
         o = urlparse.urlparse(url)
         if o.scheme == 'https':
