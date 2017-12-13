@@ -25,11 +25,11 @@ classdef URLPoster < handle
       self.pyglob = py.dict(pyargs('mat_srcpath', path));
       py.exec('import sys; sys.path.append(mat_srcpath)', self.pyglob);
       py.exec('from URLPoster import URLPoster', self.pyglob);
+      pylocal = py.dict(pyargs('url', self.url_str));
+      self.pyconn = py.eval('URLPoster(url)', self.pyglob, pylocal);
     end
 
     function res = post(self, data, files)
-      pylocal = py.dict(pyargs('url', self.url_str));
-      self.pyconn = py.eval('URLPoster(url)', self.pyglob, pylocal);
       res = self.pyconn.post(py.dict(pyargs(data{:})), ...
                              py.dict(pyargs(files{:})));
     end
