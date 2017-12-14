@@ -23,12 +23,14 @@ class URLPoster(object):
     def __init__(self, url):
         self.__url = url
         o = urlparse.urlparse(url)
+        self.__netloc = o.netloc
         if o.scheme == 'https':
-            self.__conn = http_client.HTTPSConnection(o.netloc)
+            self.__conn_type = http_client.HTTPSConnection
         else:
-            self.__conn = http_client.HTTPConnection(o.netloc)
+            self.__conn_type = http_client.HTTPConnection
 
     def post(self, data, files):
+        self.__conn = self.__conn_type(self.__netloc)
         req = requests.Request('POST', self.__url, data=data,
                                files=files).prepare()
         self.__conn.request('POST', self.__url, body=req.body,
