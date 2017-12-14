@@ -17,6 +17,7 @@ classdef FPGABackend < PulseBackend
     clock_div = 0;
     config;
     poster = [];
+    req = [];
     type_cache = [];
     num_cache = [];
     cmd_str = '';
@@ -207,6 +208,10 @@ classdef FPGABackend < PulseBackend
       pylocal = py.dict(pyargs('code', code));
       str = char(py.eval('base64.b64encode(code).decode()', pyglob, pylocal));
       self.cmd_str = ['=', str];
+      self.poster = URLPoster.get(self.url);
+      self.req = get_req(self.poster, {'command', 'runseq', ...
+                                       'debugPulses', 'off', 'reps', '1'}, ...
+                         {'seqtext', self.cmd_str});
     end
 
     function res = getCmd(self)
@@ -214,13 +219,11 @@ classdef FPGABackend < PulseBackend
     end
 
     function run(self)
-      self.poster = URLPoster.get(self.url);
-      self.poster.post({'command', 'runseq', 'debugPulses', 'off', ...
-                        'reps', '1'}, {'seqtext', self.cmd_str});
+      post_req(self.poster, self.req);
     end
 
     function wait(self)
-      output = self.poster.reply();
+      output = reply(self.poster);
       % disp(output);
     end
   end

@@ -20,6 +20,10 @@ except ImportError:
     import urllib.parse as urlparse
 
 class URLPoster(object):
+    def get_req(self, data, files):
+        return requests.Request('POST', self.__url, data=data,
+                                files=files).prepare()
+
     def __init__(self, url):
         self.__url = url
         o = urlparse.urlparse(url)
@@ -29,12 +33,13 @@ class URLPoster(object):
         else:
             self.__conn_type = http_client.HTTPConnection
 
-    def post(self, data, files):
+    def post_req(self, req):
         self.__conn = self.__conn_type(self.__netloc)
-        req = requests.Request('POST', self.__url, data=data,
-                               files=files).prepare()
         self.__conn.request('POST', self.__url, body=req.body,
                             headers=req.headers)
+
+    def post(self, data, files):
+        self.post_req(self.get_req(data, files))
 
     def reply(self):
         res = self.__conn.getresponse()

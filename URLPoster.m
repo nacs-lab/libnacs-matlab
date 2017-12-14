@@ -31,9 +31,16 @@ classdef URLPoster < handle
   end
 
   methods
-    function res = post(self, data, files)
-      res = self.pyconn.post(py.dict(pyargs(data{:})), ...
-                             py.dict(pyargs(files{:})));
+    function res = get_req(self, data, files)
+      res = self.pyconn.get_req(py.dict(pyargs(data{:})), ...
+                                py.dict(pyargs(files{:})));
+    end
+    function post_req(self, req)
+      self.pyconn.post_req(req);
+    end
+    function post(self, data, files)
+      self.pyconn.post(py.dict(pyargs(data{:})), ...
+                       py.dict(pyargs(files{:})));
     end
 
     function output = reply(self)
