@@ -15,18 +15,17 @@ classdef URLPoster < handle
   properties
     url_str;
     pyconn;
-    pyglob;
   end
 
   methods(Access = private)
     function self = URLPoster(url_str)
       self.url_str = url_str;
       [path, ~, ~] = fileparts(mfilename('fullpath'));
-      self.pyglob = py.dict(pyargs('mat_srcpath', path));
-      py.exec('import sys; sys.path.append(mat_srcpath)', self.pyglob);
-      py.exec('from URLPoster import URLPoster', self.pyglob);
+      pyglob = py.dict(pyargs('mat_srcpath', path));
+      py.exec('import sys; sys.path.append(mat_srcpath)', pyglob);
+      py.exec('from URLPoster import URLPoster', pyglob);
       pylocal = py.dict(pyargs('url', self.url_str));
-      self.pyconn = py.eval('URLPoster(url)', self.pyglob, pylocal);
+      self.pyconn = py.eval('URLPoster(url)', pyglob, pylocal);
     end
   end
 
