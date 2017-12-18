@@ -9,4 +9,6 @@ function resetGlobal()
     nacsNiDACBackendSession = [];
   end
   IRCache.get().clear();
+  URLPoster.dropAll();
+  USRPPoster.dropAll();
 end

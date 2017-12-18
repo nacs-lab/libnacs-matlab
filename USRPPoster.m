@@ -57,6 +57,10 @@ classdef USRPPoster < handle
   end
 
   methods(Static)
+    function dropAll()
+      global nacsUSRPPosterCache
+      nacsUSRPPosterCache = [];
+    end
     function res = get(url)
       global nacsUSRPPosterCache
       if isempty(nacsUSRPPosterCache)

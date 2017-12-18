@@ -51,6 +51,10 @@ classdef URLPoster < handle
   end
 
   methods(Static)
+    function dropAll()
+      global nacsURLPosterCache
+      nacsURLPosterCache = [];
+    end
     function res = get(url)
       global nacsURLPosterCache
       if isempty(nacsURLPosterCache)
