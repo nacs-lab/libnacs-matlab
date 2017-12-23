@@ -13,9 +13,7 @@
 
 classdef FPGABackend < PulseBackend
   properties(Hidden)
-    url = '';
     clock_div = 0;
-    config;
     poster = [];
     req = [];
     type_cache = [];
@@ -38,8 +36,8 @@ classdef FPGABackend < PulseBackend
   methods
     function self = FPGABackend(seq)
       self = self@PulseBackend(seq);
-      self.config = loadConfig();
-      self.url = self.config.fpgaUrls('FPGA1');
+      config = loadConfig();
+      self.poster = URLPoster.get(config.fpgaUrls('FPGA1'));
     end
 
     function initDev(self, did)
@@ -202,15 +200,7 @@ classdef FPGABackend < PulseBackend
                 typecast(t_len_ns, 'int32'), clock_div];
       end
       code(n_pulses_idx) = n_pulses;
-      pyglob = py.dict();
-      py.exec('import base64', pyglob);
-      pylocal = py.dict(pyargs('code', code));
-      str = char(py.eval('base64.b64encode(code).decode()', pyglob, pylocal));
-      cmd_str = ['=', str];
-      self.poster = URLPoster.get(self.url);
-      self.req = get_req(self.poster, {'command', 'runseq', ...
-                                       'debugPulses', 'off', 'reps', '1'}, ...
-                         {'seqtext', cmd_str});
+      self.req = get_seq_req(self.poster, code);
     end
 
     function run(self)
