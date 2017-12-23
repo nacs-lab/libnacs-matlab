@@ -20,7 +20,6 @@ classdef FPGABackend < PulseBackend
     req = [];
     type_cache = [];
     num_cache = [];
-    cmd_str = '';
     clock_period_tik = [];
   end
 
@@ -207,15 +206,11 @@ classdef FPGABackend < PulseBackend
       py.exec('import base64', pyglob);
       pylocal = py.dict(pyargs('code', code));
       str = char(py.eval('base64.b64encode(code).decode()', pyglob, pylocal));
-      self.cmd_str = ['=', str];
+      cmd_str = ['=', str];
       self.poster = URLPoster.get(self.url);
       self.req = get_req(self.poster, {'command', 'runseq', ...
                                        'debugPulses', 'off', 'reps', '1'}, ...
-                         {'seqtext', self.cmd_str});
-    end
-
-    function res = getCmd(self)
-      res = self.cmd_str;
+                         {'seqtext', cmd_str});
     end
 
     function run(self)

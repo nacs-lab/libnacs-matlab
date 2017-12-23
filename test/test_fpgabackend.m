@@ -83,5 +83,5 @@ function test_fpgabackend()
                     seq.translateChannel('FPGA1/DDS17/AMP'), ...
                     seq.translateChannel('FPGA1/DDS18/AMP'), ...
                     seq.translateChannel('FPGA1/TTL1')]);
-  backend.getCmd();
+  % backend.getCmd();
 end
