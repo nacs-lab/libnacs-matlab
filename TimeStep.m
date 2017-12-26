@@ -33,9 +33,9 @@ classdef (Sealed) TimeStep < TimeSeq
         cid = translateChannel(self, name);
       end
       if isnumeric(pulse) || islogical(pulse)
-        % if ~isscalar(pulse)
-        %   error('Pulse cannot be a non-scalar value.');
-        % end
+        if ~isscalar(pulse)
+          error('Pulse cannot be a non-scalar value.');
+        end
         pulse = jumpTo(pulse);
       elseif ~isa(pulse, 'PulseBase')
         %% Treat as function
