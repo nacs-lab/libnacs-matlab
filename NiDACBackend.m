@@ -311,7 +311,14 @@ classdef NiDACBackend < PulseBackend
 
     function wait(self)
       global nacsNiDACBackendSessionUsing
-      wait(self.session);
+      old_state = pause('off');
+      try
+        wait(self.session);
+      catch ME
+        pause(old_state);
+        rethrow(ME);
+      end
+      pause(old_state);
       nacsNiDACBackendSessionUsing = 0;
     end
   end
