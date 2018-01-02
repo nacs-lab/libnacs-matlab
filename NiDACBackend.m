@@ -42,7 +42,7 @@ classdef NiDACBackend < PulseBackend
     end
 
     function val = getPriority(self)
-      val = 1;
+      val = 2;
     end
 
     function initDev(self, did)
@@ -311,6 +311,8 @@ classdef NiDACBackend < PulseBackend
 
     function wait(self)
       global nacsNiDACBackendSessionUsing
+      % This turns the pause(0.1) in the NI driver into a busy wait loop
+      % and reduce ~50ms of wait time per run on average.
       old_state = pause('off');
       try
         wait(self.session);

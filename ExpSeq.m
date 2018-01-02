@@ -133,7 +133,9 @@ classdef ExpSeq < ExpSeqBase
       end
       drivers = {};
       for driver = self.drivers.values()
-        drivers = [drivers; {driver{:}, -driver{:}.getPriority()}];
+        % Do waiting in reverse order, mainly so that we wait for NiDAC
+        % as the last one and avoid much of the busy wait.
+        drivers = [drivers; {driver{:}, driver{:}.getPriority()}];
       end
       if ~isempty(drivers)
         drivers = sortrows(drivers, [2]);
