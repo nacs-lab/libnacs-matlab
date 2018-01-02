@@ -12,11 +12,18 @@
 %% License along with this library.
 
 classdef (Sealed) jumpTo < PulseBase
+    %jumpTo is a subclass of PulseBase. PulseBase only has property id
+    %(number). jumpTo stores the value for the jump. The PulseBase
+    %objects are stored in the TimeStep.pulses{cid} property, where cid is
+    %the channel id for the jump.
+
   properties
-    val;
+    %PulseBase properties:  id = 0;
+    val;  %the value to jump to
   end
 
   methods
+      %%
     function s = toString(self)
       s = sprintf('jumpTo(val=%f)', self.val);
     end
@@ -26,7 +33,9 @@ classdef (Sealed) jumpTo < PulseBase
       self.val = v;
     end
 
+    %%
     function val = calcValue(self, t, ~, old_val)
+        %
       if isnumeric(old_val) || islogical(old_val)
         vals = [self.val, old_val];
         val = vals((t < 0) + 1);

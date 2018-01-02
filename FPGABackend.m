@@ -12,7 +12,9 @@
 %% License along with this library.
 
 classdef FPGABackend < PulseBackend
+    %Contains everything related to the FPGA.
   properties(Hidden)
+    %PulseBackend properties: seq
     clock_div = 0;
     poster = [];
     req = [];
@@ -34,6 +36,7 @@ classdef FPGABackend < PulseBackend
   end
 
   methods
+      %%
     function self = FPGABackend(seq)
       self = self@PulseBackend(seq);
       config = loadConfig();
@@ -46,7 +49,9 @@ classdef FPGABackend < PulseBackend
       end
     end
 
+    %%
     function initChannel(self, cid)
+        %
       if size(self.type_cache, 2) >= cid && self.type_cache(cid) > 0
         return;
       end
@@ -68,7 +73,13 @@ classdef FPGABackend < PulseBackend
       self.clock_period_tik = clock_period_tik;
     end
 
+    %%
     function generate(self, cids)
+       %generate(self[ExpSeq], cids[list])
+           %Called in ExpSeq generate() method. Makes data to be sent to FPGA. Afterwards, run() method is
+           %called and data is sent to board. Commands are stored in
+           %'code', which is then encoded to binary and stored in
+           %self.cmd_str, and is sent to the board in the run() method.
       %% [TTL default: 4B]
       %% [n_non_ttl: 4B]
       %% [[[chn_type: 4B][chn_id: 4B][defaults: 8B]] x n_non_ttl]
@@ -94,6 +105,7 @@ classdef FPGABackend < PulseBackend
       n_non_ttl = 0;
       n_pulses = 0;
 
+      %
       for i = 1:nchn
         cid = cids(i);
         pulses = self.seq.getPulses(cid);
@@ -109,9 +121,10 @@ classdef FPGABackend < PulseBackend
         default_values(i) = self.seq.getDefaults(cid);
       end
 
-      code = int32([]);
+      code = int32([]);  %code is where all command data is stored.
       code = [code, ttl_values, n_non_ttl];
 
+      %
       for i = 1:nchn
         cid = cids(i);
         chn_type = type_cache(cid);
@@ -131,11 +144,14 @@ classdef FPGABackend < PulseBackend
       n_pulses_idx = length(code);
       targ = IRNode.getArg(1);
       oldarg = IRNode.getArg(2);
+
+      %
       for i = 1:nchn
         cid = cids(i);
         chn_type = type_cache(cid);
         chn_num = num_cache(cid);
         pulses = all_pulses{i};
+
         for j = 1:size(pulses, 1)
           pulse = pulses(j, :);
           pulse_obj = pulse{3};
@@ -203,10 +219,14 @@ classdef FPGABackend < PulseBackend
       self.req = get_seq_req(self.poster, code);
     end
 
+    %%
     function run(self)
+        %sends the command string 'cmd_str' over the web server. Called in ExpSeq
+        %run() method, after the driver is prepared (nothing right now) and generated (creates cmd_str). Th
       post_req(self.poster, self.req);
     end
 
+    %%
     function wait(self)
       output = reply(self.poster);
       % disp(output);
@@ -214,6 +234,7 @@ classdef FPGABackend < PulseBackend
   end
 
   methods(Access=private)
+      %%
     function [chn_type, chn_num] = parseCId(self, cid)
       cpath = strsplit(cid, '/');
       if strncmp(cpath{1}, 'TTL', 3)
@@ -269,6 +290,7 @@ classdef FPGABackend < PulseBackend
       end
     end
 
+    %%
     function val = singleTTLDefault(self, chn)
       val = false;
       try
@@ -280,6 +302,7 @@ classdef FPGABackend < PulseBackend
       end
     end
 
+    %%
     function val = getTTLDefault(self)
       val = uint32(0);
       for i = 0:31

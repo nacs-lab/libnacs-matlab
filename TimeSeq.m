@@ -12,20 +12,42 @@
 %% License along with this library.
 
 classdef TimeSeq < dynamicprops
+    %TimeSeq is the parent class of TimeStep, ExpSeqBase > ExpSeq.
+        %
+
   properties
-    config;
+    config;     %LoadConfig class. Contains hardware info, channel aliases, etc.
   end
 
-  properties(Hidden, Access=protected)
+  properties(Hidden)
     len = 0;
     parent = 0;
     tOffset = 0;
   end
 
-  properties(Hidden, Access=private)
+  properties(Hidden)
     subSeqs;
     global_toffset = [];
   end
+
+  %All Methods:
+        % self = TimeSeq(parent_or_name, toffset, len)
+        % res = logFile(self)
+        % log(self, s)
+        % logf(self, varargin)
+        % res = length(self)
+        % vals = getDefaults(self, cids)
+        % res = getPulseTimes(self, cids)
+        % vals = getValues(self, dt, varargin)
+        % cid = translateChannel(self, name)
+        % subSeqForeach(self, func)
+        % id = nextPulseId(self)
+        % id = nextSeqId(self)
+        % val = getDefault(self, ~)
+        % addSubSeq(self, sub_seq, toffset)
+        % res = getPulses(self, cid)
+        % res = getPulsesRaw(self, cid)
+
 
   methods
     function self = TimeSeq(parent, toffset, len)
@@ -44,6 +66,7 @@ classdef TimeSeq < dynamicprops
     end
 
     function res = length(self)
+        %?
       if self.len > 0
         res = self.len;
         return;
@@ -86,7 +109,17 @@ classdef TimeSeq < dynamicprops
     end
 
     function addSubSeq(self, sub_seq, toffset)
+        %addSubSeq  puts the TimSeq object 'sub_seq' with 'toffset' (number) into a structure and puts it
+            %in the cell aray SubSeqs, which is a property of the parent TimeSeq object 'self'.
+            %toffset (number) is the offset time ?
+
+
       len = self.len;
+
+      %Makes sure length of the sub-sequence fits in the parent sequence
+      %'self'. If len !=0 for both parent and subseq, then makes sure
+      %1) toffset > parent length   2) toffset + sub-seq length < parent seq length
+      %len=0 means a variables length sequence, and if the parent is len=0, then the sub-seq must be as well.
       if len > 0
         sub_len = sub_seq.len;
         if sub_len <= 0
@@ -101,8 +134,10 @@ classdef TimeSeq < dynamicprops
       self.subSeqs{end + 1} = struct('offset', toffset, 'seq', sub_seq);
     end
 
+    %%
     function res = getPulsesRaw(self, cid)
-      %% TODOPULSE use struct
+        %Called in getPulse method.
+      % TODOPULSE use struct
       res = {};
       subSeqs = self.subSeqs;
       nsub = size(subSeqs, 2);

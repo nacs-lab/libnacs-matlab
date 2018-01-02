@@ -12,15 +12,31 @@
 %% License along with this library.
 
 classdef(Abstract) PulseBase < handle
+    %PulseBase is the parent class of classes jumpTo and FuncPulse.
+    %PulseBase does not have any used properties.  The PulseBase objects
+    %are store in the TimeStep.pulses{cid}, where cid is the channel id for
+    %the pulse.
+
+    %All Methods:
+        %calcValue(self, t, len, old_val);
+        %s = toString(self)
+        %self = PulseBase()
+        %res = hasDirtyTime(self, len)
+        %avail = available(self, t, dt, len)
+        %[tstart, tlen] = timeSpan(self, len)
+        %times = dirtyTime(self, ~)
   methods(Abstract=true)
+    % Old value is the value of the channel at tstart returned by timeSpan.
     val = calcValue(self, t, len, old_val);
   end
 
   methods
+    %%
     function s = toString(self)
       s = [class(self), '()'];
     end
 
+    %%
     function self = PulseBase()
     end
   end

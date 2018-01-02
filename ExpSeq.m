@@ -12,18 +12,46 @@
 %% License along with this library.
 
 classdef ExpSeq < ExpSeqBase
-  properties(Access=private)
-    drivers;
-    driver_cids;
-    generated = false;
-    default_override;
-    orig_channel_names;
-    cid_cache;
-    chn_manager;
-  end
+    %ExpSeq is an object representing the entire experimental sequence.
+        %ExpSeq is a subclass of ExpSeqBase, which is a subclass of TimeSeq.
+        %ExpSeq adds properties related to hardware, ie the drivers and channels.
+        %TimeStep is also a subclass of TimeSeq. It contains proprety 'pulses', which have values for outputs.
+            %Properties:  pulses (jumpTo or FuncPulse class, which are both subclasses of PulseBase)'.
+
+        %Methods:  %self = ExpSeq(name)
+                   %cid = translateChannel(self, name)
+                   %cid = findChannelId(self, name)
+                   %driver = findDriver(self, driver_name)
+                   %generate(self)
+                   %run_async(self)
+                   %waitFinish(self)
+                   %run(self)
+                   %res = setDefault(self, name, val)
+                   %plot(self, varargin)
+                   %id = nextPulseId(self)
+                   %id = nextSeqId(self)
+                   %val = getDefault(self, cid)
+                   %[driver, driver_name] = initDeviceDriver(self, did)
+                   %logDefault(self)
+                   %plotReal(self, cids, names)
+    properties%(Access=private)
+        %TimeSeq properties: config (class), logger (class), subSeqs (struct), len,  parnet, seq_id, tOffset
+        %ExpSeqBase properties:  curTime
+        drivers;            %map with key values 'FPGABackend' 'NiDACBackend'. This is updated when channel is used in a pulse, so it starts empty.
+        driver_cids;        %
+        generated = false;  %
+        default_override;   %
+        orig_channel_names; %
+        cid_cache;          %
+        chn_manager;        %
+    end
 
   methods
     function self = ExpSeq(name)
+      %Contstructor. Uses ExpSeqBase contructor to initializes, then
+      %populate new properties with empty cells and maps. After the
+      %contrutor, only the chn_manager, config, and logger properties
+      %are populated.
       if nargin < 1
         % Ignored
         name = 'seq';
@@ -146,6 +174,13 @@ classdef ExpSeq < ExpSeqBase
     end
 
     function run(self)
+      % run(self[ExpSeq])
+      % Used to run the experimental sequence. Calls the methods
+      % run_async() and waitFinish(), which are very similar codes.
+      % run_async() calls the prepare and generate methods on the
+      % drivers (using the generate() method),  and then applies the
+      % run method on the driver objects.  waitFinish() just applies the
+      % wait() method on the drivers.
       % Do **NOT** put anything related to runSeq in this file!!!!!!!!!!
       % It messes up EVERYTHING!!!!!!!!!!!!!!!!!!!!!!
       % Also, this function has to be only run_async() and then

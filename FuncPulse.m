@@ -12,7 +12,7 @@
 %% License along with this library.
 
 classdef FuncPulse < PulseBase
-  properties(Access=private)
+  properties
     func;
     narg;
   end

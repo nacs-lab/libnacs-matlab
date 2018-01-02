@@ -12,8 +12,10 @@
 %% License along with this library.
 
 classdef(Abstract) PulseBackend < handle
-  properties(Access=protected)
-    seq;
+    %PulseBackennd is the parent class of FPGABackend and NiDACBackend.
+
+  properties%(Access=protected)
+    seq; %?
   end
 
   methods(Abstract=true)
@@ -24,23 +26,29 @@ classdef(Abstract) PulseBackend < handle
   end
 
   methods
+      %%
     function self = PulseBackend(seq)
       self.seq = seq;
     end
 
+    %%
     function val = getPriority(self)
-      %% There's probably a better way to let the backend specify the necessary
-      %% dependencies for running each functions. A simple priority is good
-      %% enough for now.
+       %getPriority value is used to sort the drivers
+       % There's probably a better way to let the backend specify the necessary
+      % dependencies for running each functions. A simple priority is good
+      % enough for now.
       val = 0;
     end
 
+    %%
     function prepare(self, cids)
-      %% Prepare channels, connect clock etc.
+      % Prepare channels, connect clock etc.
+      %This is empty for NaCs. Not for KRb
     end
 
+    %%
     function wait(self)
-      %% Wait for the sequence to finish.
+      % Wait for the sequence to finish.
     end
   end
 end

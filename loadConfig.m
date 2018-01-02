@@ -12,8 +12,17 @@
 %% License along with this library.
 
 classdef loadConfig < handle
+    %The loadConfig object contains hardware info, channel names.
+    %The object is stored in the TimeSeq.config  property for all TimeSeq
+    %objects.
+
+    %All Methods
+        %self = loadConfig()
+        %load(self)
+        %res = translateChannel(self, name)
+
   properties(Access=private)
-    name_map;
+    name_map;  %
   end
   properties
     pulseDrivers;
@@ -29,13 +38,19 @@ classdef loadConfig < handle
     maxLength;
   end
 
+
   methods
+    %%
     function self = loadConfig()
       self.name_map = containers.Map();
       self.load();
     end
 
+    %%
     function load(self)
+        %
+
+      %Create empty maps
       fpgaUrls = containers.Map();
       usrpUrls = containers.Map();
       pulseDrivers = containers.Map();
@@ -46,6 +61,7 @@ classdef loadConfig < handle
       consts = containers.Map();
       maxLength = 0;
 
+      %Run script which loads the empty maps.
       nacsConfig();
 
       self.fpgaUrls = fpgaUrls;
@@ -77,6 +93,7 @@ classdef loadConfig < handle
       end
       self.pulseDrivers = pulseDrivers;
 
+      %
       self.defaultVals = containers.Map();
       for key = keys(defaultVals)
         key = key{:};
@@ -88,7 +105,10 @@ classdef loadConfig < handle
       end
     end
 
+    %%
     function res = translateChannel(self, name)
+      %
+
       try
         res = self.name_map(name);
       catch
@@ -103,6 +123,8 @@ classdef loadConfig < handle
         self.name_map(name) = res;
         return;
       end
+
+      %
       if isempty(res)
         error('Alias loop detected: %s.', name);
       end

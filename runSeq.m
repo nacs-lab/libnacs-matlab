@@ -12,20 +12,20 @@
 %% License along with this library.
 
 function params = runSeq(func, varargin)
-%% runSeq(func, [options], [{arguments}])
-%%    @func: the function or otherwise callable object (or the name of it)
-%%        to construct the sequence to run.
-%%    @options (optional): parameter to define how the sequences are run.
-%%        Currently supported options includes
-%%        <number> (default: 1): How many times each sequence will be run.
-%%            If the number is equal to 0, run the sequence continiously.
-%%        'random': run the sequences in random order
-%%        'email:xxx': send an email upon completion.  xxx can be a name
-%%            appearing in matlabmail, or an email address.
-%%    @arguments (optional, multiple): cell arrays of the arguments to
-%%        construct the sequence. Each argument will be used to construct
-%%        a sequence.
-%%
+% runSeq(func, [options], [{arguments}])
+%    @func: the function or otherwise callable object (or the name of it)
+%        to construct the sequence to run.
+%    @options (optional): parameter to define how the sequences are run.
+%        Currently supported options includes
+%        <number> (default: 1): How many times each sequence will be run.
+%            If the number is equal to 0, run the sequence continiously.
+%        'random': run the sequences in random order
+%        'email:xxx': send an email upon completion.  xxx can be a name
+%            appearing in matlabmail, or an email address.
+%    @arguments (optional, multiple): cell arrays of the arguments to
+%        construct the sequence. Each argument will be used to construct
+%        a sequence.
+%
 %%    Run the sequence constructed by func.
 params = {};
 rep = 1;
@@ -52,6 +52,7 @@ end
 argidx = 1;
 arglist_set = false;
 
+%%
 while argidx < nargin
     arg = varargin{argidx};
     if isnumeric(arg)
@@ -92,6 +93,9 @@ end
 nseq = size(arglist, 2);
 seqlist = cell(1, nseq);
 
+
+
+%%
     function prepare_seq(idx)
         if ~isempty(seqlist{idx})
             return;
@@ -117,6 +121,9 @@ seqlist = cell(1, nseq);
         seqlist{idx}.generate();
     end
 
+
+
+%%
     function log_run(idx)
         arglist_str = [];
         for j = 1:length(arglist{idx})

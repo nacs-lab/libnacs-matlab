@@ -12,13 +12,32 @@
 %% License along with this library.
 
 classdef (Sealed) TimeStep < TimeSeq
+    %TimeStep is a sub-class of TimeSeq. A TimeStep object only additional
+    %property is 'pulses', which contains values for the channel and channel ids.
+    %The 'pulses' property contains a TimeStep.pulses{cid} = pulse_list, which is
+    %a cell-array of PulseBase ojbects, where cid is the channel id.
+    %A TimeStep object is only created in the addTimeStep and addCustomStep
+    %methods of the ExpSeqBase class.
+
+    %All Methods:
+        % self = TimeStep(varargin)
+        % res = add(self, varargin)
+        % ret = addPulse(self, name, pulse)
+        % res = getPulsesRaw(self, cid)
+
   properties
-    pulses;
+    %TimeSeq properties: config (class), logger (class), subSeqs (struct), len,  parnet, seq_id, tOffset
+    pulses;  %contains a jumpTo or FuncPulse object (or a pulse of other classes), which are children of the PulseBase class.
   end
 
   methods
+      %%
     function self = TimeStep(varargin)
-      self = self@TimeSeq(varargin{:});
+        %Contructor. Makes TimeSeq object with empty 'pulses' property.
+        %TimeStep object is made only in the addTimeStep and addCustomStep
+        %methods of ExpSeqBase.
+
+      self = self@TimeSeq(varargin{:});  %this uses TimeSeq to constuctor to initialize self.
       self.pulses = {};
       if self.len <= 0
         error('Time steps should have a fixed and positive length');
@@ -38,7 +57,7 @@ classdef (Sealed) TimeStep < TimeSeq
         end
         pulse = jumpTo(pulse);
       elseif ~isa(pulse, 'PulseBase')
-        %% Treat as function
+        % Treat as function
         pulse = FuncPulse(pulse);
       end
       % if size(self.pulses, 2) >= cid && ~isempty(self.pulses{cid})
@@ -49,6 +68,7 @@ classdef (Sealed) TimeStep < TimeSeq
   end
 
   methods(Access=protected)
+      %%
     function res = getPulsesRaw(self, cid)
       % Caller checks that pulses exists
       step_len = self.len;

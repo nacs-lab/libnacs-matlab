@@ -13,14 +13,14 @@
 
 classdef IRFunc < handle
   properties
-    %% return_type: Float64
+    % return_type: Float64
     nargs;
-    %% Assume all variables are Float64
+    % Assume all variables are Float64
     nvals;
-    %% Assume there's only one BB
+    % Assume there's only one BB
     code;
     byte_code;
-    %% Assume all constants are also Float64
+    % Assume all constants are also Float64
     consts;
     const_map;
 
@@ -28,6 +28,7 @@ classdef IRFunc < handle
   end
 
   methods
+      %%
     function self=IRFunc(nargs)
       self.nargs = nargs;
       self.nvals = nargs;
@@ -37,6 +38,8 @@ classdef IRFunc < handle
                                       'ValueType', 'double');
       self.float_table = [];
     end
+
+    %%
     function setCode(self, node)
       res_id = addNode(self, node);
       ret_code = zeros(1, 2, 'int32');
@@ -44,6 +47,8 @@ classdef IRFunc < handle
       ret_code(2) = res_id;
       self.byte_code = [self.code{:}, ret_code];
     end
+
+    %%
     function data=serialize(self)
       sz = self.serializeSize();
       data = zeros(1, sz, 'int32');
@@ -77,13 +82,17 @@ classdef IRFunc < handle
                                                                         'int32');
     end
   end
+
   methods
+      %%
     function sz=serializeSize(self)
       sz = 1 + 1 + 1 + ceil(self.nvals / 4); % [ret][nargs][nvals][vals x nvals]
       sz = sz + 1 + length(self.consts) * 3; % [nconsts][consts x nconsts]
       sz = sz + 1 + 1 + length(self.byte_code); % [nbb][nword][code x nword]
       sz = sz + 1 + length(self.float_table) * 2; % [nfloat][float x nfloat]
     end
+
+    %%
     function id=addConst(self, v)
       v = double(v);
       if isKey(self.const_map, v)
@@ -94,10 +103,14 @@ classdef IRFunc < handle
         self.const_map(v) = id;
       end
     end
+
+    %%
     function id=addVal(self)
       id = self.nvals;
       self.nvals = id + 1;
     end
+
+    %%
     function id=addNode(self, node)
       if isnumeric(node) || islogical(node)
         if ~isscalar(node)

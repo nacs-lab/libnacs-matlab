@@ -83,13 +83,13 @@ classdef IRNode < handle
     FNpow = 43;
     FNremainder = 44;
 
-    %% f(f, f, f)
+    % f(f, f, f)
     FNfma = 45;
 
-    %% f(f, i)
+    % f(f, i)
     FNldexp = 46;
 
-    %% f(i, f)
+    % f(i, f)
     FNjn = 47;
     FNyn = 48;
   end
@@ -110,6 +110,7 @@ classdef IRNode < handle
   end
 
   methods
+      %%
     function self=IRNode(head, args)
       self.head = head;
       self.args = args;
@@ -232,7 +233,9 @@ classdef IRNode < handle
         res = IRNode(IRNode.HInterp, {x, x0, x1 - x0, vals});
     end
   end
+
   methods(Static)
+      %%
     function res=getArg(i)
       res = IRNode(IRNode.HArg, {i});
     end
