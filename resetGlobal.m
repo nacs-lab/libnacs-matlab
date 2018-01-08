@@ -11,4 +11,5 @@ function resetGlobal()
   IRCache.get().clear();
   URLPoster.dropAll();
   USRPPoster.dropAll();
+  KeySight.dropAll();
 end
