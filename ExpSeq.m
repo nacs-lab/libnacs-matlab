@@ -44,25 +44,26 @@ classdef ExpSeq < ExpSeqBase
         orig_channel_names; %
         cid_cache;          %
         chn_manager;        %
+        before_start_cbs;
     end
 
   methods
     function self = ExpSeq(name)
-      %Contstructor. Uses ExpSeqBase contructor to initializes, then
-      %populate new properties with empty cells and maps. After the
-      %contrutor, only the chn_manager, config, and logger properties
-      %are populated.
+      % Contstructor. Uses ExpSeqBase contructor to initializes, then
+      % populate new properties with empty cells and maps. After the
+      % contrutor, only the chn_manager, config, and logger properties
+      % are populated.
       if nargin < 1
         % Ignored
-        name = 'seq';
+        name = '';
       end
-      global nacsTimeSeqNameSuffixHack;
       self = self@ExpSeqBase();
       self.chn_manager = ChannelManager();
       self.drivers = containers.Map();
       self.driver_cids = containers.Map();
       self.default_override = {};
       self.orig_channel_names = {};
+      self.before_start_cbs = {};
       self.cid_cache = containers.Map('KeyType', 'char', 'ValueType', 'double');
     end
 
@@ -147,9 +148,22 @@ classdef ExpSeq < ExpSeqBase
         drivers = sortrows(drivers, [2]);
       end
       disp(['Running at ' datestr(now, 'HH:MM:SS, yyyy/mm/dd') ' ...']);
+      if ~isempty(self.before_start_cbs)
+          for cb = self.before_start_cbs
+              cb{:}();
+          end
+      end
       for i = 1:size(drivers, 1)
         drivers{i, 1}.run();
       end
+    end
+    function res=regBeforeStart(self, cb)
+        %% Register a callback function that will be executed before
+        % the sequence run.
+        % The callbacks will be called in the order they are registerred
+        % without any arguments.
+        self.before_start_cbs{end + 1} = cb;
+        res = self;
     end
 
     function waitFinish(self)
