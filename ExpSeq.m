@@ -109,8 +109,11 @@ classdef ExpSeq < ExpSeqBase
       end
     end
 
-    function generate(self)
+    function generate(self, preserve)
       if ~self.generated
+        if ~exist('preserve', 'var')
+          preserve = 0;
+        end
         if self.config.maxLength > 0 && self.length() > self.config.maxLength
           error('Sequence length %f exceeds max sequence length of maxLength=%f', ...
                 self.length(), self.config.maxLength);
@@ -137,6 +140,14 @@ classdef ExpSeq < ExpSeqBase
         end
         self.drivers_sorted = drivers{:, 1};
         self.generated = true;
+        if ~preserve
+          self.default_override = [];
+          self.orig_channel_names = [];
+          self.cid_cache = [];
+          self.chn_manager = [];
+          % NiDAC backend currently need config
+          self.subSeqs = [];
+        end
       end
     end
 
