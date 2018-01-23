@@ -144,7 +144,7 @@ seqlist = cell(1, nseq);
         abort = 0;
         prepare_seq(idx);
         log_run(idx);
-        run_async(seqlist{idx});
+        run_real(seqlist{idx});
         if next_idx > 0
             prepare_seq(next_idx);
         end

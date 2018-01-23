@@ -45,6 +45,7 @@ classdef ExpSeq < ExpSeqBase
         cid_cache;          %
         chn_manager;        %
         before_start_cbs;
+        drivers_sorted;
     end
 
   methods
@@ -128,6 +129,14 @@ classdef ExpSeq < ExpSeqBase
           cids = self.driver_cids(driver_name);
           driver.generate(cids);
         end
+        drivers = {};
+        for driver = self.drivers.values()
+          drivers = [drivers; {driver{:}, -driver{:}.getPriority()}];
+        end
+        if ~isempty(drivers)
+          drivers = sortrows(drivers, [2]);
+        end
+        self.drivers_sorted = drivers{:, 1};
         self.generated = true;
       end
     end
@@ -139,24 +148,23 @@ classdef ExpSeq < ExpSeqBase
       if ~isempty(nacsTimeSeqDisableRunHack) && nacsTimeSeqDisableRunHack
         return;
       end
-      self.generate();
-      drivers = {};
-      for driver = self.drivers.values()
-        drivers = [drivers; {driver{:}, -driver{:}.getPriority()}];
-      end
-      if ~isempty(drivers)
-        drivers = sortrows(drivers, [2]);
-      end
-      disp(['Running at ' datestr(now, 'HH:MM:SS, yyyy/mm/dd') ' ...']);
+      generate(self);
+      run_real(self);
+    end
+
+    function run_real(self)
+      drivers = self.drivers_sorted;
       if ~isempty(self.before_start_cbs)
           for cb = self.before_start_cbs
               cb{:}();
           end
       end
       for i = 1:size(drivers, 1)
-        drivers{i, 1}.run();
+        run(drivers{i});
       end
+      disp(['Started at ' datestr(now, 'HH:MM:SS, yyyy/mm/dd') ' ...']);
     end
+
     function res=regBeforeStart(self, cb)
         %% Register a callback function that will be executed before
         % the sequence run.
