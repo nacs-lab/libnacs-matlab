@@ -112,9 +112,8 @@ classdef ExpSeq < ExpSeqBase
     function generate(self)
       if ~self.generated
         if self.config.maxLength > 0 && self.length() > self.config.maxLength
-          msg = sprintf('Sequence length %f exceeds max sequence length of maxLength=%f', ...
-                        self.length(), self.config.maxLength);
-          error(msg);
+          error('Sequence length %f exceeds max sequence length of maxLength=%f', ...
+                self.length(), self.config.maxLength);
         end
         disp('Generating ...');
         for key = self.drivers.keys()
