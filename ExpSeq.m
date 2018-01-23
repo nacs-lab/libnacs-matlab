@@ -138,7 +138,7 @@ classdef ExpSeq < ExpSeqBase
         if ~isempty(drivers)
           drivers = sortrows(drivers, [2]);
         end
-        self.drivers_sorted = drivers{:, 1};
+        self.drivers_sorted = drivers(:, 1);
         self.generated = true;
         if ~preserve
           self.default_override = [];
