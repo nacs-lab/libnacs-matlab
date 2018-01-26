@@ -9,6 +9,7 @@ function resetGlobal()
     nacsNiDACBackendSession = [];
   end
   IRCache.get().clear();
+  FPGAPoster.dropAll();
   URLPoster.dropAll();
   USRPPoster.dropAll();
   KeySight.dropAll();

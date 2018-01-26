@@ -40,7 +40,7 @@ classdef FPGABackend < PulseBackend
     function self = FPGABackend(seq)
       self = self@PulseBackend(seq);
       config = loadConfig();
-      self.poster = URLPoster.get(config.fpgaUrls('FPGA1'));
+      self.poster = FPGAPoster.get(config.fpgaUrls('FPGA1'));
     end
 
     function initDev(self, did)
@@ -216,20 +216,19 @@ classdef FPGABackend < PulseBackend
                 typecast(t_len_ns, 'int32'), clock_div];
       end
       code(n_pulses_idx) = n_pulses;
-      self.req = get_seq_req(self.poster, code);
+      self.req = prepare_msg(self.poster, length(self.seq) * 1e9, code);
     end
 
     %%
     function run(self)
         %sends the command string 'cmd_str' over the web server. Called in ExpSeq
         %run() method, after the driver is prepared (nothing right now) and generated (creates cmd_str). Th
-      post_req(self.poster, self.req);
+      post(self.poster, self.req);
     end
 
     %%
     function wait(self)
-      output = reply(self.poster);
-      % disp(output);
+      wait(self.poster);
     end
   end
 
