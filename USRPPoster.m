@@ -13,18 +13,20 @@
 
 classdef USRPPoster < handle
   properties
-    pyglob;
     poster;
   end
 
   methods(Access = private)
     function self = USRPPoster(url)
       [path, ~, ~] = fileparts(mfilename('fullpath'));
-      self.pyglob = py.dict(pyargs('mat_srcpath', path, ...
-                                   'usrp_url', url));
-      py.exec('import sys; sys.path.append(mat_srcpath)', self.pyglob);
-      py.exec('from USRPPoster import USRPPoster', self.pyglob);
-      self.poster = py.eval('USRPPoster(usrp_url)', self.pyglob);
+      pyglob = py.dict(pyargs('mat_srcpath', path, 'usrp_url', url));
+      try
+        py.exec('from USRPPoster import USRPPoster', pyglob);
+      catch
+        py.exec('import sys; sys.path.append(mat_srcpath)', pyglob);
+        py.exec('from USRPPoster import USRPPoster', pyglob);
+      end
+      self.poster = py.eval('USRPPoster(usrp_url)', pyglob);
     end
   end
 

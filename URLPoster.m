@@ -22,8 +22,12 @@ classdef URLPoster < handle
       self.url_str = url_str;
       [path, ~, ~] = fileparts(mfilename('fullpath'));
       pyglob = py.dict(pyargs('mat_srcpath', path));
-      py.exec('import sys; sys.path.append(mat_srcpath)', pyglob);
-      py.exec('from URLPoster import URLPoster', pyglob);
+      try
+        py.exec('from URLPoster import URLPoster', pyglob);
+      catch
+        py.exec('import sys; sys.path.append(mat_srcpath)', pyglob);
+        py.exec('from URLPoster import URLPoster', pyglob);
+      end
       pylocal = py.dict(pyargs('url', self.url_str));
       self.pyconn = py.eval('URLPoster(url)', pyglob, pylocal);
     end
