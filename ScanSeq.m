@@ -86,3 +86,4 @@ classdef ScanSeq < handle
             
         end
     end
+end
