@@ -40,7 +40,7 @@ classdef FPGAPoster < handle
       end
     end
 
-    function wait(self, id)
+    function wait(self)
       try
         while ~self.poster.post_reply()
         end
