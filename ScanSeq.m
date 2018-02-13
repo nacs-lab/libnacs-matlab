@@ -43,15 +43,17 @@ classdef ScanSeq < handle
             self.flds = flds;
         end
         
-        function po = getSingle(self)
+        function po = getSingle(self, idx)
             %Output a single structure with all fields of length 1.  Use at
             %beg of NaCsSingleAtom.m
             p = self.p;
-            tmp = [];
+            %mList is a matrix with [1 1 1 2 2 2 3 3 3], so that mList(idx)
+            %gives the m value for the scan. 
+            mList = [];
             for m = 1:length(p)
-                tmp = [tmp m*ones(1, self.scanLength(m))];
+                mList = [mList m*ones(1, self.scanLength(m))];
             end
-            mscan = tmp(idx);
+            mscan = mList(idx);
             sb = 0;
             if mscan > 1
                 for m = 1:(mscan-1)
