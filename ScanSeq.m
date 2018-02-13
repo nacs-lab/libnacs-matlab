@@ -1,6 +1,7 @@
 classdef ScanSeq < handle
     %Class for running scans
     % Example
+    
     properties
         p; %structure for storing scans
         flds; %field names
@@ -48,6 +49,7 @@ classdef ScanSeq < handle
             %Output a single structure with all fields of length 1.  Use at
             %beg of NaCsSingleAtom.m
             p = self.p;
+            
             tmp = [];
             for m = 1:length(p)
                 tmp = [tmp m*ones(1, self.scanLength(m))];
@@ -68,7 +70,6 @@ classdef ScanSeq < handle
                 fldlist = po.(self.flds{i});
                 po.(self.flds{i}) = fldlist(iscan);
             end
-            
         end
         
         function self = defineEmpty(self)
@@ -83,7 +84,7 @@ classdef ScanSeq < handle
                 end
             end
             self.p = p;
-            
         end
     end
 end
+
