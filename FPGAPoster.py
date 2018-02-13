@@ -31,12 +31,14 @@ class FPGAPoster(object):
 
     def prepare_msg(self, tlen, code):
         bc = int(tlen).to_bytes(8, byteorder='little', signed=False)
-        bc += libnacs.bin_to_bytecode(code)
+        code, mask = libnacs.bin_to_bytecode(code)
+        bc += int(mask).to_bytes(4, byteorder='little', signed=False)
+        bc += code
         return bc
 
     def post(self, data):
         self.__sock.send_string("run_seq", zmq.SNDMORE)
-        self.__sock.send(b'\0\0\0\0', zmq.SNDMORE) # version
+        self.__sock.send(b'\1\0\0\0', zmq.SNDMORE) # version
         self.__sock.send(data)
 
     def post_reply(self):
