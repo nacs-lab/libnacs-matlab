@@ -11,7 +11,7 @@ p.TCsMergeBlast = 20e-6;
 p.TMergeWait = [0, 0.2, 0.5, 1, 2, 5, 10, 20, 50]*1e-3;
 p.ParamName = "TMergeWait";
 p.ParamUnits = "ms";
-p.PlotScale = (1e-3); %used for plotting
+p.PlotScale = 1e-3; %used for plotting
 scanseq = ScanSeq(p);
 
 % run simulation
