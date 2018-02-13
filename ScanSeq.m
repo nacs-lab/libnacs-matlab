@@ -28,19 +28,19 @@ classdef ScanSeq < handle
                     fldLengths(m,i) = length( p(m).(flds{i}) );
                 end
                 %check all varibles are 1 or same
-                scanIdx{m} = find( fldLengths(m,:) > 1); %find non-zero length lists
+                scanIdx{m} = find( fldLengths(m,:) > 1 ); %find non-zero length lists
                 scanLength(m) = max( fldLengths(m,:) ); %find the maximum one
                 %make sure all others are same length as max
                 if ~all( fldLengths(m,scanIdx{m})/scanLength(m) ) 
                     error('All lists need to be same length in scan structure.');
                 end
             end
-            p.scanLengthTot = sum(scanLength); %total number of scan points
+            self.scanLengthTot = sum(scanLength); %total number of scan points
             %This scanLengthTot will be used in StartScan with Params = 1:scanLengthTot
-            p.ScanIdx = scanIdx;
-            p.scanLength = scanLength;
-            p.fldLengths = fldLengths;
-            p.flds = flds;
+            self.scanIdx = scanIdx;
+            self.scanLength = scanLength;
+            self.fldLengths = fldLengths;
+            self.flds = flds;
         end
         
         function po = getSingle(self)
