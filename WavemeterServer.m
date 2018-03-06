@@ -37,9 +37,11 @@ classdef WavemeterServer < handle
 
     function ensureSetpoint(self)
         setpoint = self.setpoint;
+        fprintf('Setpoint: %f\n', setpoint);
         if rand() < 0.2
-            printf('Pretend we are doing something: %f\n', setpoint);
+            fprintf('Pretend we are doing something: %f\n', setpoint);
             pause(10);
+            fprintf('Done!\n');
         end
     end
 
@@ -58,7 +60,7 @@ classdef WavemeterServer < handle
             head = typecast(req(1:4), 'uint32');
             if head == 0
                 if length(req) ~= 12
-                    printf('Invalid setpoint length: %d\n', length(req));
+                    fprintf('Invalid setpoint length: %d\n', length(req));
                     self.sock.send(uint8([0, 0]));
                     continue;
                 end
@@ -70,7 +72,7 @@ classdef WavemeterServer < handle
                 self.sock.send(uint8([1, 0]));
             else
                 % Unknown request:
-                printf('Unknown request header: %x\n', head);
+                fprintf('Unknown request header: %x\n', head);
                 self.sock.send(uint8([0, 0]));
                 continue;
             end
