@@ -17,15 +17,15 @@ classdef WavemeterParser < handle
   end
 
   methods
-    function self = WavemeterParser(url)
+    function self = WavemeterParser()
       pyglob = py.dict();
       py.exec('from libnacs.wavemeter import WavemeterParser', pyglob);
       self.parser = py.eval('WavemeterParser()', pyglob);
     end
     function [t, d] = parse(self, name, use_cache)
-      res = self.parser.parse(name, use_cache)
-      t = double(res{1})
-      d = double(res{2})
+      res = self.parser.parse(name, use_cache ~= 0);
+      t = double(res{1});
+      d = double(res{2});
     end
   end
 end
