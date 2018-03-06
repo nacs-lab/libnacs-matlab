@@ -24,11 +24,6 @@ class URLPoster(object):
     def get_req(self, data, files):
         return requests.Request('POST', self.__url, data=data,
                                 files=files).prepare()
-    def get_seq_req(self, code):
-        return self.get_req({'command': 'runseq',
-                             'debugPulses': 'off',
-                             'reps': '1'},
-                            {'seqtext': '=' + base64.b64encode(code).decode()})
 
     def __init__(self, url):
         self.__url = url
