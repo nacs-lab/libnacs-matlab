@@ -51,6 +51,7 @@ classdef WavemeterServer < handle
         while 1
             cnt = cnt + 1;
             if cnt > last_set + self.POLL_INTERV && self.setpoint ~= 0
+                last_set = cnt;
                 ensureSetpoint(self);
             end
             if ~self.poll()
@@ -66,6 +67,7 @@ classdef WavemeterServer < handle
                 end
                 setpoint = typecast(req(5:12), 'double');
                 if setpoint ~= self.setpoint
+                    last_set = cnt;
                     self.setpoint = setpoint;
                     ensureSetpoint(self);
                 end
