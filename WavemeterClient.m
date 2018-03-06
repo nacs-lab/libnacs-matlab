@@ -37,6 +37,10 @@ classdef WavemeterClient < handle
     end
 
     function set(self, val)
+        set_async(self, val);
+        set_wait(self);
+    end
+    function set_async(self, val)
         val = double(val);
         if ~isscalar(val)
             error('Setpoint must be a number');
@@ -46,6 +50,13 @@ classdef WavemeterClient < handle
         req = [typecast(uint32(0), 'uint8'), typecast(val, 'uint8')];
         try
             self.sock.send(req);
+        catch ex
+            createSocket(self)
+            rethrow(ex)
+        end
+    end
+    function set_wait(self)
+        try
             while ~self.poll()
             end
             rep = uint8(self.sock.recv());
