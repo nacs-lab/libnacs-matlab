@@ -37,6 +37,8 @@ classdef WavemeterServer < handle
 
     function ensureSetpoint(self)
         setpoint = self.setpoint;
+        %% TODO: compare setpoint to actual wavelength from
+        % the wavemeter and adjust piezo/picomoter mirror.
         fprintf('Setpoint: %f\n', setpoint);
         if rand() < 0.2
             fprintf('Pretend we are doing something: %f\n', setpoint);
