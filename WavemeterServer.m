@@ -46,12 +46,11 @@ classdef WavemeterServer < handle
     end
 
     function run(self)
-        cnt = 0;
-        last_set = 0;
+        last_set = now() * 86400;
         while 1
-            cnt = cnt + 1;
-            if cnt > last_set + self.POLL_INTERV && self.setpoint ~= 0
-                last_set = cnt;
+            cur = now() * 86400;
+            if cur > last_set + self.POLL_INTERV && self.setpoint ~= 0
+                last_set = cur;
                 ensureSetpoint(self);
             end
             if ~self.poll()
@@ -67,7 +66,7 @@ classdef WavemeterServer < handle
                 end
                 setpoint = typecast(req(5:12), 'double');
                 if setpoint ~= self.setpoint
-                    last_set = cnt;
+                    last_set = cur;
                     self.setpoint = setpoint;
                     ensureSetpoint(self);
                 end
