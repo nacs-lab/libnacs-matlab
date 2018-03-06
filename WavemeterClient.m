@@ -19,11 +19,8 @@ classdef WavemeterClient < handle
     zmqREQ;
   end
 
-  methods
+  methods(Access = private)
     function self = WavemeterClient(url)
-      if ~exist('url', 'var')
-          url = 'tcp://127.0.0.1:1026';
-      end
       self.url = url;
       pyglob = py.dict();
       py.exec('import zmq', pyglob);
@@ -31,7 +28,9 @@ classdef WavemeterClient < handle
       self.zmqREQ = py.eval('zmq.REQ', pyglob);
       createSocket(self);
     end
+  end
 
+  methods
     function createSocket(self)
       self.sock = self.ctx.socket(self.zmqREQ);
       self.sock.connect(self.url);
@@ -62,6 +61,29 @@ classdef WavemeterClient < handle
     function res=poll(self)
         % Wait for requests for 1s.
         res = self.sock.poll(1000) ~= 0;
+    end
+  end
+
+  methods(Static)
+    function dropAll()
+      global nacsWavemeterClientCache
+      nacsWavemeterClientCache = [];
+    end
+    function res = get(url)
+      if ~exist('url', 'var')
+          url = 'tcp://127.0.0.1:1026';
+      end
+      global nacsWavemeterClientCache
+      if isempty(nacsWavemeterClientCache)
+        nacsWavemeterClientCache = containers.Map();
+      end
+      cache = nacsWavemeterClientCache;
+      if isKey(cache, url)
+        res = cache(url);
+        return;
+      end
+      res = WavemeterClient(url);
+      cache(url) = res;
     end
   end
 end
