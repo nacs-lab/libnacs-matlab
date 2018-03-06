@@ -67,7 +67,10 @@ classdef WavemeterServer < handle
                     continue;
                 end
                 setpoint = typecast(req(5:12), 'double');
-                if setpoint ~= self.setpoint
+                if setpoint ~= self.setpoint || ...
+                        cur > last_set + self.POLL_INTERV * 0.75
+                    % Check again if we're getting close to the next
+                    % timeout
                     last_set = cur;
                     self.setpoint = setpoint;
                     ensureSetpoint(self);
