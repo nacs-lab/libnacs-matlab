@@ -66,7 +66,7 @@ classdef WavemeterClient < handle
         end
         if length(rep) ~= 2 || rep(1) ~= 1
             error('Setpoint failed.');
-        end 
+        end
     end
 
     function res=poll(self)
