@@ -92,12 +92,7 @@ while argidx < nargin
         arglist_set = true;
         break;
     elseif isa(arg, 'ScanSeq')
-        if arglist_set
-            error('Argument list can only be specified once');
-        end
         scanseq = arg;
-        arglist = ary2cell(1:scanseq.scanLengthTot);
-        arglist_set = true;
         is_scanseq = true;
     else
         error('Invalid argument.');
@@ -131,7 +126,9 @@ seqlist = cell(1, nseq);
             nacsTimeSeqNameSuffixHack = sprintf('-runSeq_%d-%d', idx, nseq);
         end
         if is_scanseq
-          seqlist{idx} = func(ExpSeq(getSingle(scanseq, arglist{idx}{:})));
+          s = ExpSeq(getSingle(scanseq, arglist{idx}{:}));
+          func(s);
+          seqlist{idx} = s;
         else
           seqlist{idx} = func(arglist{idx}{:});
         end
