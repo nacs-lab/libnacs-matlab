@@ -11,7 +11,7 @@
 %% You should have received a copy of the GNU Lesser General Public
 %% License along with this library.
 
-s = ExpSeq('test_analog');
+s = ExpSeq();
 
 s.add('FPGA1/TTL27', 0);
 s.add('Dev2/4', 0.5);

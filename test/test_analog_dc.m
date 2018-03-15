@@ -11,7 +11,7 @@
 %% You should have received a copy of the GNU Lesser General Public
 %% License along with this library.
 
-s = ExpSeq('test_analog_dc');
+s = ExpSeq();
 
 s.addStep(1) ...
  .add('Dev2/6', 0.14);
