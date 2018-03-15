@@ -51,6 +51,15 @@ end
 
 argidx = 1;
 arglist_set = false;
+is_scanseq = false;
+scanseq = [];
+
+function res = ary2cell(ary)
+  res = {};
+  for i = 1:size(ary, 2)
+    res{end + 1} = num2cell(ary(:, i)');
+  end
+end
 
 %%
 while argidx < nargin
@@ -62,10 +71,7 @@ while argidx < nargin
             end
             arglist_set = true;
             return_array = true;
-            arglist = {};
-            for i = 1:size(arg, 2)
-                arglist{end + 1} = num2cell(arg(:, i)');
-            end
+            arglist = ary2cell(arg);
         else
             has_rep = true;
             rep = arg;
@@ -83,7 +89,16 @@ while argidx < nargin
             error('Argument list can only be specified once');
         end
         arglist = {varargin{argidx:end}};
+        arglist_set = true;
         break;
+    elseif isa(arg, 'ScanSeq')
+        if arglist_set
+            error('Argument list can only be specified once');
+        end
+        scanseq = arg;
+        arglist = ary2cell(1:scanseq.scanLengthTot);
+        arglist_set = true;
+        is_scanseq = true;
     else
         error('Invalid argument.');
     end
@@ -115,7 +130,11 @@ seqlist = cell(1, nseq);
         else
             nacsTimeSeqNameSuffixHack = sprintf('-runSeq_%d-%d', idx, nseq);
         end
-        seqlist{idx} = func(arglist{idx}{:});
+        if is_scanseq
+          seqlist{idx} = func(ExpSeq(getSingle(scanseq, arglist{idx}{:})));
+        else
+          seqlist{idx} = func(arglist{idx}{:});
+        end
         nacsTimeSeqDisableRunHack = 0;
         nacsTimeSeqNameSuffixHack = [];
         seqlist{idx}.generate();
