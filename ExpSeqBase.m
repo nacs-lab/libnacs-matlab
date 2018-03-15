@@ -49,8 +49,10 @@ classdef ExpSeqBase < TimeSeq
       C = struct();
 
       consts = self.config.consts;
-      for key = consts.keys()
-        C.(key{:}) = consts(key{:});
+      fields = fieldnames(consts);
+      for i = 1:length(fields)
+        fn = fields{i};
+        C.(fn) = consts.(fn);
       end
       if ~isnumeric(self.parent)
         self.C = self.parent.C;

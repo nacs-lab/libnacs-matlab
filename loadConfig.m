@@ -58,7 +58,7 @@ classdef loadConfig < handle
       defaultVals = containers.Map();
       niClocks = containers.Map();
       niStart = containers.Map();
-      consts = containers.Map();
+      consts = struct();
       maxLength = 0;
 
       %Run script which loads the empty maps.
