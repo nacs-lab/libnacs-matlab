@@ -11,7 +11,7 @@
 %% You should have received a copy of the GNU Lesser General Public
 %% License along with this library.
 
-classdef TimeSeq < dynamicprops
+classdef TimeSeq < handle
     %TimeSeq is the parent class of TimeStep, ExpSeqBase > ExpSeq.
         %
 

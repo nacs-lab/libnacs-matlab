@@ -49,20 +49,8 @@ classdef ExpSeqBase < TimeSeq
       C = struct();
 
       consts = self.config.consts;
-      function res = get_getter(key)
-        res = @(obj) consts(key);
-      end
-      function res = get_setter(key)
-        function setter(obj, val)
-          consts(key) = val;
-        end
-        res = @setter;
-      end
       for key = consts.keys()
         C.(key{:}) = consts(key{:});
-        prop = self.addprop(key{:});
-        prop.GetMethod = get_getter(key{:});
-        prop.SetMethod = get_setter(key{:});
       end
       if ~isnumeric(self.parent)
         self.C = self.parent.C;
