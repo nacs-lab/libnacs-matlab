@@ -49,16 +49,17 @@ classdef ExpSeq < ExpSeqBase
     end
 
   methods
-    function self = ExpSeq(name)
+    function self = ExpSeq(varargin)
       % Contstructor. Uses ExpSeqBase contructor to initializes, then
       % populate new properties with empty cells and maps. After the
       % contrutor, only the chn_manager, config, and logger properties
       % are populated.
-      if nargin < 1
-        % Ignored
-        name = '';
+      if nargin > 1
+        error('Too many arguments for ExpSeq.');
+      elseif nargin == 1 && ~isstruct(varargin{1})
+        error('Constant input must be a struct.');
       end
-      self = self@ExpSeqBase();
+      self = self@ExpSeqBase(varargin{:});
       self.chn_manager = ChannelManager();
       self.drivers = containers.Map();
       self.driver_cids = containers.Map();

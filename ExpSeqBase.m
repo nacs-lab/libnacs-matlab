@@ -40,25 +40,36 @@ classdef ExpSeqBase < TimeSeq
   end
 
   methods
-    function self = ExpSeqBase(varargin)
-       % Constructor. Just initializes a TimeSeq object.
-      if nargin > 2
-        error('Too many arguments for ExpSeqBase.');
+    function self = ExpSeqBase(parent_or_C, toffset)
+      %% Constructor. Just initializes a TimeSeq object.
+      if exist('toffset', 'var')
+        toplevel = 0;
+        ts_args = {parent_or_C, toffset};
+      else
+        toplevel = 1;
+        ts_args = {};
       end
-      self = self@TimeSeq(varargin{:});
+      self = self@TimeSeq(ts_args{:});
+      if ~toplevel
+        self.C = self.parent.C;
+        return
+      end
       C = struct();
-
       consts = self.config.consts;
       fields = fieldnames(consts);
       for i = 1:length(fields)
         fn = fields{i};
         C.(fn) = consts.(fn);
       end
-      if ~isnumeric(self.parent)
-        self.C = self.parent.C;
-      else
-        self.C = DynProps(C);
+      if exist('parent_or_C', 'var')
+        %% Allow parameters to overwrite consts in config
+        fields = fieldnames(parent_or_C);
+        for i = 1:length(fields)
+          fn = fields{i};
+          C.(fn) = parent_or_C.(fn);
+        end
       end
+      self.C = DynProps(C);
     end
 
     %%
