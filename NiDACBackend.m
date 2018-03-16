@@ -295,8 +295,8 @@ classdef NiDACBackend < PulseBackend
         cid = self.cids(i);
         dev_name = self.cid_map{cid}{1};
         output_id = sprintf('ao%d', self.cid_map{cid}{2});
-        if strcmp(dev_name, Channels(i).Device.ID) == 0 || ...
-                strcmp(output_id, Channels(i).ID) == 0
+        if ~strcmp(dev_name, Channels(i).Device.ID) || ...
+                ~strcmp(output_id, Channels(i).ID)
             res = 0;
             return;
         end
