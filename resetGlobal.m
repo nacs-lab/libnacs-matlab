@@ -14,4 +14,5 @@ function resetGlobal()
   USRPPoster.dropAll();
   KeySight.dropAll();
   WavemeterClient.dropAll();
+  Wavemeter.dropAll();
 end
