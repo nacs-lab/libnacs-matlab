@@ -143,7 +143,8 @@ classdef TimeSeq < handle
     function p=globalPath(self)
       p = self.global_path;
       if isempty(p)
-        self.global_path = [globalPath(self.parent), self];
+        self.global_path = globalPath(self.parent);
+        self.global_path{end + 1} = self;
         p = self.global_path;
       end
     end
@@ -154,8 +155,8 @@ classdef TimeSeq < handle
       % in the common ancestor.
       self_path = globalPath(self);
       other_path = globalPath(step);
-      nself = length(self_path);
-      nother = length(other_path);
+      nself = size(self_path, 2);
+      nother = size(other_path, 2);
       res = 0;
       for i = 1:max(nself, nother)
         if i <= nself
