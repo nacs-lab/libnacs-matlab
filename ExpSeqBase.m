@@ -103,13 +103,13 @@ classdef ExpSeqBase < TimeSeq
             if self_ele == other_ele
               continue;
             end
-            res += other_ele.tOffset - self_ele.tOffset;
+            res = res + other_ele.tOffset - self_ele.tOffset;
           else
-            res -= self_ele.tOffset;
+            res = res - self_ele.tOffset;
           end
         else
           other_ele = other_path{i};
-          res += other_ele.tOffset;
+          res = res + other_ele.tOffset;
         end
       end
       if isnan(res)
