@@ -28,9 +28,9 @@ classdef ExpSeqBase < TimeSeq
         % step = addBackground(self, varargin)
         % step = addStep(self, varargin)
         % Private:
-        % step = addStepReal(self, is_background, first_arg, varargin)
+        % step = addStepReal(self, curtime, is_background, first_arg, varargin)
         % step = addTimeStep(self, len, offset)
-        % step = addCustomStep(self, offset, cls, varargin)
+        % step = addCustomStep(self, start_time, cls, varargin)
   properties(Hidden)
     %TimeSeq properties: config (class), logger (class), subSeqs (struct), len,  parnet, seq_id, tOffset
     curTime = 0;
@@ -172,17 +172,17 @@ classdef ExpSeqBase < TimeSeq
     end
 
     %%
-    function step = addBackground(self, varargin)
-        % Shortcut for addStepReal with 'is_background' = true ,
-        %and does not advanceself.curTime.  addStepReal usually advances curTime.
+    function step = addBackground(self, first_arg, varargin)
+      %% Shortcut for addStepReal with 'is_background' = true ,
+      % and does not advanceself.curTime.  addStepReal usually advances curTime.
 
       old_time = self.curTime;
-      step = self.addStepReal(true, varargin{:});
+      step = addStepReal(self, old_time, true, first_arg, varargin{:});
       self.curTime = old_time;
     end
 
-    function step = addStep(self, varargin)
-      step = self.addStepReal(false, varargin{:});
+    function step = addStep(self, first_arg, varargin)
+      step = addStepReal(self, self.curTime, false, first_arg, varargin{:});
     end
 
     function res = endof(self)
@@ -196,18 +196,18 @@ classdef ExpSeqBase < TimeSeq
   end
 
   methods(Access=private)
-      %%
-    function step = addStepReal(self, is_background, first_arg, varargin)
-      % step [TimeStep] = addStepReal(self [ExpSeq], is_background [logic], first_arg, varargin)
+    %%
+    function step = addStepReal(self, curtime, is_background, first_arg, varargin)
+      % step = addStepReal(self, curtime, is_background [logic], first_arg, varargin)
       %     addStepReal is called by shortcut methods addStep  (is_background=false) and addBackground (is_background=true).
       %     It is private and not called outside this class.
-      %     Case 1:  self.addStepReal( true/false, len>0)
+      %     Case 1:  self.addStepReal(curtime, true/false, len>0)
       %          first_arg = len,  varargin is empty.  Only runs line with  %Case 1(labeled below).
       %          Case 1 calls step = self.addTimeStep( len , 0), which adds
       %          an empty TimeStep and advances self.curTime by len.
-      %     Case 2: s.addStepReal(true, function handle)
+      %     Case 2: s.addStepReal(curtime, true, function handle)
       %          first_arg = function handle, varargin empty.
-      %          Only runs line %Case 2, which calls  s.addCustomStep(0, function_handle)
+      %          Only runs line %Case 2, which calls  s.addCustomStep(curtime, function_handle)
       %          This case is used by s.add('Channel',value).
 
 
@@ -218,65 +218,66 @@ classdef ExpSeqBase < TimeSeq
 
       %     If offset is not an absolute time (TODO: abstime not supported yet),
       %     forward @self.curTime by the length of the step.
-      if nargin <= 2
-        error('addStep called with too few arguments.');
-      elseif ~isnumeric(first_arg)
+      if ~isnumeric(first_arg)
         % If first arg is not a number, assume to be a custom step.
         % What fall through should be (number, *arg)
-
-        % TODO: for absolute time, also check if the first arg is an absolute
-        % time object.
-        step = self.addCustomStep(0, first_arg, varargin{:});   %Case 2
-      elseif nargin == 3
+        step = self.addCustomStep(curtime, first_arg, varargin{:});   %Case 2
+      elseif isempty(varargin)
         % If we only have one numerical argument it must be a simple time step.
         % What fall through should be (number, at_least_another_arg, *arg)
         if first_arg < 0
-          step = self.addTimeStep(-first_arg, first_arg);
+          if isnan(curtime)
+            error('Floating time step with time offset not allowed.');
+          end
+          step = self.addTimeStep(-first_arg, first_arg + curtime);
         else
-          step = self.addTimeStep(first_arg, 0);  %Case 1
+          step = self.addTimeStep(first_arg, curtime);  %Case 1
         end
       elseif isnumeric(varargin{1})
         % If we only have two numerical argument it must be a simple time step
         % with custom offset.
         % What fall through should be (number, not_number, *arg)
-
-        % TODO: for absolute time, also check if the first arg is an absolute
-        % time object.
-        if nargin > 4
+        if length(varargin) > 1
           error('addStep called with too many arguments.');
+        elseif isnan(curtime)
+          error('Floating time step with time offset not allowed.');
         end
         offset = varargin{1};
         if ~is_background && offset + first_arg < 0
           error('Implicitly going back in time is not allowed.');
         end
-        step = self.addTimeStep(first_arg, offset);
+        step = self.addTimeStep(first_arg, offset + curtime);
       else
         % The not_number must be a custom step. Do it.
-        step = self.addCustomStep(first_arg, varargin{:});
+        if isnan(curtime)
+          error('Floating time step with time offset not allowed.');
+        end
+        step = self.addCustomStep(curtime + first_arg, varargin{:});
       end
     end
 
     %%
-    function step = addTimeStep(self, len, offset)
-        %step [TimeStep] = addTimeStep(self [ExpSeqBase], len, offset)
-            %addTimeStep makes an empty TimeStep object 'step' and adds it to subSeqs
-            %of self.  A pulse is added to the TimeStep by applying add
-            %(equiv to addPulse) to the TimeStep.
-            %addTimeStep and addCustomStep are the only functions that add
-            %TimeStep objects (which contain pulses).  All above methods eventually call one of these
-            %mtehods.
+    function step = addTimeStep(self, len, start_time)
+      %% step [TimeStep] = addTimeStep(self [ExpSeqBase], len, start_time)
+      %     addTimeStep makes an empty TimeStep object 'step' and adds it to subSeqs
+      %     of self.  A pulse is added to the TimeStep by applying add
+      %     (equiv to addPulse) to the TimeStep.
+      %     addTimeStep and addCustomStep are the only functions that add
+      %     TimeStep objects (which contain pulses).
+      %     All above methods eventually call one of these methods.
 
       if len <= 0
         error('Length of time step must be positive.');
       end
 
-      self.curTime = self.curTime + offset;
-      step = TimeStep(self, self.curTime, len); %makes a TimeStep object 'step', and adds it to the subSeq of self.
+      self.curTime = start_time;
+      % makes a TimeStep object 'step', and adds it to the subSeq of self.
+      step = TimeStep(self, start_time, len);
       self.curTime = self.curTime + len;
     end
 
     %%
-    function step = addCustomStep(self, offset, cls, varargin)
+    function step = addCustomStep(self, start_time, cls, varargin)
         % step [TimeStep] = addCustomStep(self [ExpSeq], offset, cls [function handle], varargin [optional])
             %Inserts a new ExpSeqBase in self.subSeqs, then applies the
             %function handle cls to it. Advances self.curTime.
@@ -289,8 +290,8 @@ classdef ExpSeqBase < TimeSeq
         cls = str2func(cls);
       end
 
-      self.curTime = self.curTime + offset; %advance current time
-      step = ExpSeqBase(self, self.curTime); %creates ExpSeqBase in self.subSeqs.
+      self.curTime = start_time; %advance current time
+      step = ExpSeqBase(self, start_time); %creates ExpSeqBase in self.subSeqs.
       % return proxy since I'm not sure there's a good way to forward
       % return values in matlab, especially since the return value can
       % depend on the number of return values.
