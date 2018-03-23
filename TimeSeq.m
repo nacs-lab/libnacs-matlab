@@ -85,11 +85,9 @@ classdef TimeSeq < handle
 
     function res = endof(self)
       toffset = self.tOffset;
-      % This should not happen in this function right now since only ExpSeqBase is allowed
-      % to be floating and it overwrites `endoff`.
-      % if isnan(toffset)
-      %   error('Cannot get end time of floating sequence.');
-      % end
+      if isnan(toffset)
+        error('Cannot get end time of floating sequence.');
+      end
       res = toffset + length(self);
     end
 
