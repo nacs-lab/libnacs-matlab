@@ -142,14 +142,17 @@ classdef ExpSeqBase < TimeSeq
 
     function res = waitBackground(self)
       %% Wait for background steps that are added directly to this sequence
-      %% to finish
+      % to finish
       function checkBackgroundTime(sub_seq)
-        if ~isa(sub_seq.seq, 'ExpSeqBase')
-          len = sub_seq.seq.len;
+        if ~isa(sub_seq, 'ExpSeqBase')
+          len = sub_seq.len;
         else
-          len = sub_seq.seq.curTime;
+          len = sub_seq.curTime;
         end
-        sub_cur = sub_seq.offset + len;
+        sub_cur = sub_seq.tOffset + len;
+        if isnan(sub_cur)
+          error('Cannot wait for background with floating sub sequences.');
+        end
         if sub_cur > self.curTime
           self.curTime = sub_cur;
         end
@@ -183,6 +186,12 @@ classdef ExpSeqBase < TimeSeq
 
     function step = addStep(self, first_arg, varargin)
       step = addStepReal(self, self.curTime, false, first_arg, varargin{:});
+    end
+
+    function step = addFloating(self, first_arg, varargin)
+      old_time = self.curTime;
+      step = addStepReal(self, nan, true, first_arg, varargin{:});
+      self.curTime = old_time;
     end
 
     function res = endof(self)

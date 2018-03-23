@@ -44,8 +44,7 @@ classdef TimeSeq < handle
         % id = nextPulseId(self)
         % id = nextSeqId(self)
         % val = getDefault(self, ~)
-        % addSubSeq(self, sub_seq, toffset)
-        % res = getPulses(self, cid)
+        % addSubSeq(self, sub_seq)
         % res = getPulsesRaw(self, cid)
 
 
@@ -56,7 +55,7 @@ classdef TimeSeq < handle
         self.parent = parent;
         self.tOffset = toffset;
         self.config = parent.config;
-        parent.addSubSeq(self, toffset);
+        addSubSeq(parent, self);
         if exist('len', 'var')
           self.len = len;
         end
@@ -66,7 +65,6 @@ classdef TimeSeq < handle
     end
 
     function res = length(self)
-        %?
       if self.len > 0
         res = self.len;
         return;
@@ -74,12 +72,15 @@ classdef TimeSeq < handle
         res = 0;
         nsub = size(self.subSeqs, 2);
         for i = 1:nsub
-          seq_t = self.subSeqs{i};
-          sub_end = seq_t.seq.length() + seq_t.offset;
+          sub_seq = self.subSeqs{i};
+          sub_end = sub_seq.length() + sub_seq.tOffset;
           if sub_end > res
             res = sub_end;
           end
         end
+      end
+      if isnan(res)
+        error('Cannot get length with floating sub sequence.');
       end
     end
 
@@ -112,46 +113,32 @@ classdef TimeSeq < handle
       end
     end
 
-    function addSubSeq(self, sub_seq, toffset)
-        %addSubSeq  puts the TimSeq object 'sub_seq' with 'toffset' (number) into a structure and puts it
-            %in the cell aray SubSeqs, which is a property of the parent TimeSeq object 'self'.
-            %toffset (number) is the offset time ?
-
-
-      len = self.len;
-
-      %Makes sure length of the sub-sequence fits in the parent sequence
-      %'self'. If len !=0 for both parent and subseq, then makes sure
-      %1) toffset > parent length   2) toffset + sub-seq length < parent seq length
-      %len=0 means a variables length sequence, and if the parent is len=0, then the sub-seq must be as well.
-      if len > 0
-        sub_len = sub_seq.len;
-        if sub_len <= 0
-          error(['Cannot add a variable length sequence to' ...
-                   'a fixed length sequence']);
-        elseif toffset > len
-          error('Too big sub-sequence time offset.');
-        elseif toffset + sub_len > len
-          error('Too long sub-sequence.');
-        end
+    function addSubSeq(self, sub_seq)
+      %% addSubSeq  puts the TimSeq object 'sub_seq' in the cell array SubSeqs,
+      % which is a property of the parent TimeSeq object 'self'.
+      if self.len > 0
+        error(['Cannot add sub sequence to a fixed length sequence']);
       end
-      self.subSeqs{end + 1} = struct('offset', toffset, 'seq', sub_seq);
+      self.subSeqs{end + 1} = sub_seq;
     end
 
     %%
     function res = getPulsesRaw(self, cid)
-        %Called in getPulse method.
+      %% Called in getPulse method.
       % TODOPULSE use struct
       res = {};
       subSeqs = self.subSeqs;
       nsub = size(subSeqs, 2);
       for i = 1:nsub
-        seq_t = subSeqs{i};
-        subseq = seq_t.seq;
+        sub_seq = subSeqs{i};
+        seq_toffset = sub_seq.tOffset;
+        if isnan(seq_toffset)
+          error('Cannot get length with floating sub sequence.');
+        end
         % The following code is manually inlined from TimeStep::getPulsesRaw
         % since function call is super slow...
-        if isa(subseq, 'TimeStep')
-            subseq_pulses = subseq.pulses;
+        if isa(sub_seq, 'TimeStep')
+            subseq_pulses = sub_seq.pulses;
             if size(subseq_pulses, 2) < cid
                 continue;
             end
@@ -159,11 +146,10 @@ classdef TimeSeq < handle
             if isempty(subseq_pulse)
                 continue;
             end
-            seq_toffset = seq_t.offset;
-            res(1:3, end + 1) = {seq_toffset, subseq.len, subseq_pulse};
+            res(1:3, end + 1) = {seq_toffset, sub_seq.len, subseq_pulse};
             continue;
         else
-            sub_pulses = getPulsesRaw(subseq, cid);
+            sub_pulses = getPulsesRaw(sub_seq, cid);
         end
 
         nsub_pulses = size(sub_pulses, 2);
@@ -171,7 +157,6 @@ classdef TimeSeq < handle
         if nsub_pulses <= 0
             continue;
         end
-        seq_toffset = seq_t.offset;
         res(3, res_offset + nsub_pulses) = {0};
         for j = 1:nsub_pulses
           sub_tuple = sub_pulses(:, j);
