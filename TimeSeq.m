@@ -27,7 +27,7 @@ classdef TimeSeq < handle
 
   properties(Hidden)
     subSeqs;
-    global_toffset = [];
+    global_path = {};
   end
 
   %All Methods:
@@ -97,15 +97,11 @@ classdef TimeSeq < handle
   end
 
   methods(Access=protected)
-    function t=globalOffset(self)
-      t = self.global_toffset;
-      if isempty(t)
-        toffset = self.tOffset;
-        if isnan(toffset)
-          error('Cannot get time offset of floating sequence.');
-        end
-        self.global_toffset = [globalOffset(self.parent), toffset];
-        t = self.global_toffset;
+    function p=globalPath(self)
+      p = self.global_path;
+      if isempty(p)
+        self.global_path = [globalPath(self.parent), self];
+        p = self.global_path;
       end
     end
 

@@ -87,18 +87,33 @@ classdef ExpSeqBase < TimeSeq
     end
 
     function res = offsetDiff(self, step)
-      %% Use an array of offset to reduce the rounding error when taking the difference
-      % especially when the step we are querying shares a common parent.
-      self_offset = globalOffset(self);
-      other_offset = globalOffset(step);
-      len_self = length(self_offset);
-      len_other = length(other_offset);
-      if len_self > len_other
-        self_offset(1:len_other) = self_offset(1:len_other) - other_offset;
-        res = -sum(self_offset);
-      else
-        other_offset(1:len_self) = other_offset(1:len_self) - self_offset;
-        res = sum(other_offset);
+      %% compute the offset different starting from the lowest common ancestor
+      % This reduce rounding error and make it possible to support floating sequence
+      % in the common ancestor.
+      self_path = globalPath(self);
+      other_path = globalPath(step);
+      nself = length(self_path);
+      nother = length(other_path);
+      res = 0;
+      for i = 1:max(nself, nother)
+        if i <= nself
+          self_ele = self_path{i};
+          if i <= nother
+            other_ele = other_path{i};
+            if self_ele == other_ele
+              continue;
+            end
+            res += other_ele.tOffset - self_ele.tOffset;
+          else
+            res -= self_ele.tOffset;
+          end
+        else
+          other_ele = other_path{i};
+          res += other_ele.tOffset;
+        end
+      end
+      if isnan(res)
+        error('Cannot compute offset different for floating sequence');
       end
     end
 
