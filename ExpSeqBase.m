@@ -171,6 +171,32 @@ classdef ExpSeqBase < TimeSeq
       end
       res = toffset + self.curTime;
     end
+
+    function alignEnd(self, seq1, seq2, offset)
+      if ~exist('offset', 'var')
+        offset = 0;
+      end
+      if ~isnan(seq1.tOffset) || ~isnan(seq2.tOffset)
+        error('alignEnd requires two floating sequences as inputs.');
+      end
+      if ~isa(seq1, 'ExpSeqBase')
+        len1 = seq1.len;
+      else
+        len1 = seq1.curTime;
+      end
+      if ~isa(seq2, 'ExpSeqBase')
+        len2 = seq2.len;
+      else
+        len2 = seq2.curTime;
+      end
+      if len1 > len2
+        seq1.setTime(endTime(self), 0, offset);
+        seq2.setEndTime(endTime(seq1));
+      else
+        seq2.setTime(endTime(self), 0, offset);
+        seq1.setEndTime(endTime(seq2));
+      end
+    end
   end
 
   methods(Access=private)
