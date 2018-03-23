@@ -60,9 +60,6 @@ classdef (Sealed) TimeStep < TimeSeq
         % Treat as function
         pulse = FuncPulse(pulse);
       end
-      % if size(self.pulses, 2) >= cid && ~isempty(self.pulses{cid})
-      %     error('Overlapping pulses');
-      % end
       self.pulses{cid} = pulse;
     end
   end

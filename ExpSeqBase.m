@@ -184,19 +184,19 @@ classdef ExpSeqBase < TimeSeq
       %%
     function step = addStepReal(self, is_background, first_arg, varargin)
       % step [TimeStep] = addStepReal(self [ExpSeq], is_background [logic], first_arg, varargin)
-          % addStepReal is called by shortcut methods addStep  (is_background=false) and addBackground (is_background=true).
-          % It is private and not called outside this class.
-          %Case 1:  self.addStepReal( true/false, len>0)
-                %first_arg = len,  varargin is empty.  Only runs line with  %Case 1(labeled below).
-                %Case 1 calls step = self.addTimeStep( len , 0), which adds
-                %an empty TimeStep and advances self.curTime by len.
-          %Case 2: s.addStepReal(true, function handle)
-                %first_arg = function handle, varargin empty.
-                %Only runs line %Case 2, which calls  s.addCustomStep(0, function_handle)
-                %This case is used by s.add('Channel',value).
+      %     addStepReal is called by shortcut methods addStep  (is_background=false) and addBackground (is_background=true).
+      %     It is private and not called outside this class.
+      %     Case 1:  self.addStepReal( true/false, len>0)
+      %          first_arg = len,  varargin is empty.  Only runs line with  %Case 1(labeled below).
+      %          Case 1 calls step = self.addTimeStep( len , 0), which adds
+      %          an empty TimeStep and advances self.curTime by len.
+      %     Case 2: s.addStepReal(true, function handle)
+      %          first_arg = function handle, varargin empty.
+      %          Only runs line %Case 2, which calls  s.addCustomStep(0, function_handle)
+      %          This case is used by s.add('Channel',value).
 
 
-        % addStep(len[, offset=0])
+      % addStep(len[, offset=0])
       %     Add a #TimeStep with len and offset from the last step
       % addStep([offset=0, ]class_or_func, *extra_args)
       %     Construct a step or sub sequence with @class_or_func(*extra_args)
