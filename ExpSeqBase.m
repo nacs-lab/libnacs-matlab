@@ -172,7 +172,11 @@ classdef ExpSeqBase < TimeSeq
 
     function res = endof(self)
       %% Do not include background pulse as current time.
-      res = self.tOffset + self.curTime;
+      toffset = self.tOffset;
+      if isnan(toffset)
+        error('Cannot get end time of floating sequence.');
+      end
+      res = toffset + self.curTime;
     end
   end
 

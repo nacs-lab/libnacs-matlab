@@ -84,7 +84,13 @@ classdef TimeSeq < handle
     end
 
     function res = endof(self)
-        res = self.tOffset + length(self);
+      toffset = self.tOffset;
+      % This should not happen in this function right now since only ExpSeqBase is allowed
+      % to be floating and it overwrites `endoff`.
+      % if isnan(toffset)
+      %   error('Cannot get end time of floating sequence.');
+      % end
+      res = toffset + length(self);
     end
 
     function cid = translateChannel(self, name)
@@ -96,7 +102,11 @@ classdef TimeSeq < handle
     function t=globalOffset(self)
       t = self.global_toffset;
       if isempty(t)
-        self.global_toffset = [globalOffset(self.parent), self.tOffset];
+        toffset = self.tOffset;
+        if isnan(toffset)
+          error('Cannot get time offset of floating sequence.');
+        end
+        self.global_toffset = [globalOffset(self.parent), toffset];
         t = self.global_toffset;
       end
     end
