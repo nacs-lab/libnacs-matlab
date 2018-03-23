@@ -172,7 +172,7 @@ classdef ExpSeqBase < TimeSeq
       res = toffset + self.curTime;
     end
 
-    function alignEnd(self, seq1, seq2, offset)
+    function res=alignEnd(self, seq1, seq2, offset)
       if ~exist('offset', 'var')
         offset = 0;
       end
@@ -196,6 +196,7 @@ classdef ExpSeqBase < TimeSeq
         seq2.setTime(endTime(self), 0, offset);
         seq1.setEndTime(endTime(seq2));
       end
+      res = {seq1, seq2};
     end
   end
 
