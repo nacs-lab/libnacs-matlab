@@ -95,6 +95,48 @@ classdef TimeSeq < handle
     function cid = translateChannel(self, name)
       cid = self.parent.translateChannel(name);
     end
+
+    function setTime(self, time, anchor, offset)
+      if ~exist('anchor', 'var')
+        anchor = 0;
+      end
+      if ~exist('offset', 'var')
+        offset = 0;
+      end
+      if ~isa(time, 'TimePoint')
+        error('Time must be a `TimePoint`.');
+      end
+      if ~isnan(self.tOffset)
+        error('Not a floating sequence.');
+      end
+      other = time.seq;
+      tdiff = offsetDiff(self.parent, other);
+      if time.anchor ~= 0
+        if ~isa(other, 'ExpSeqBase')
+          len = other.len;
+        else
+          len = other.curTime;
+        end
+        tdiff = tdiff + len * time.anchor;
+      end
+      tdiff = tdiff + time.offset + offset;
+      if anchor ~= 0
+        if ~isa(self, 'ExpSeqBase')
+          len = self.len;
+        else
+          len = self.curTime;
+        end
+        tdiff = tdiff - len * anchor;
+      end
+      self.tOffset = tdiff;
+    end
+
+    function setEndTime(self, time, offset)
+      if ~exist('offset', 'var')
+        offset = 0;
+      end
+      setTime(self, time, 1, offset);
+    end
   end
 
   methods(Access=protected)
@@ -103,6 +145,37 @@ classdef TimeSeq < handle
       if isempty(p)
         self.global_path = [globalPath(self.parent), self];
         p = self.global_path;
+      end
+    end
+
+    function res = offsetDiff(self, step)
+      %% compute the offset different starting from the lowest common ancestor
+      % This reduce rounding error and make it possible to support floating sequence
+      % in the common ancestor.
+      self_path = globalPath(self);
+      other_path = globalPath(step);
+      nself = length(self_path);
+      nother = length(other_path);
+      res = 0;
+      for i = 1:max(nself, nother)
+        if i <= nself
+          self_ele = self_path{i};
+          if i <= nother
+            other_ele = other_path{i};
+            if self_ele == other_ele
+              continue;
+            end
+            res = res + other_ele.tOffset - self_ele.tOffset;
+          else
+            res = res - self_ele.tOffset;
+          end
+        else
+          other_ele = other_path{i};
+          res = res + other_ele.tOffset;
+        end
+      end
+      if isnan(res)
+        error('Cannot compute offset different for floating sequence');
       end
     end
 
