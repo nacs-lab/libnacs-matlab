@@ -32,29 +32,29 @@ classdef USRPPoster < handle
 
   methods
     function res = post(self, data)
-      try
-        self.poster.post(data);
-        while 1
-          res = self.poster.post_reply();
-          if res ~= 0
-            return
-          end
+      cleanup = register_cleanup(self);
+      self.poster.post(data);
+      while 1
+        res = self.poster.post_reply();
+        if res ~= 0
+          cleanup.disable();
+          return
         end
-      catch ex
-        self.poster.recreate_sock();
-        rethrow(ex);
       end
     end
 
     function wait(self, id)
-      try
-        self.poster.wait_send(id)
-        while ~self.poster.wait_reply()
-        end
-      catch ex
-        self.poster.recreate_sock();
-        rethrow(ex);
+      cleanup = register_cleanup(self);
+      self.poster.wait_send(id)
+      while ~self.poster.wait_reply()
       end
+      cleanup.disable();
+    end
+    function recreate_socket(self)
+        self.poster.recreate_sock();
+    end
+    function cleanup=register_cleanup(self)
+       cleanup = FacyOnCleanup(@recreate_socket, self);
     end
   end
 

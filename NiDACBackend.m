@@ -335,13 +335,9 @@ classdef NiDACBackend < PulseBackend
       % This turns the pause(0.1) in the NI driver into a busy wait loop
       % and reduce ~50ms of wait time per run on average.
       old_state = pause('off');
-      try
-        wait(self.session);
-      catch ME
-        pause(old_state);
-        rethrow(ME);
-      end
-      pause(old_state);
+      % The cleanup object tracks the lifetime of the current scope.
+      cleanup = FacyOnCleanup(@(old_state) pause(old_state), old_state);
+      wait(self.session);
       nacsNiDACBackendSessionUsing = 0;
     end
   end

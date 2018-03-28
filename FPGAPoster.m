@@ -32,26 +32,26 @@ classdef FPGAPoster < handle
 
   methods
     function post(self, data)
-      try
-        self.poster.post(data);
-      catch ex
-        self.poster.recreate_sock();
-        rethrow(ex);
-      end
+      cleanup = register_cleanup(self);
+      self.poster.post(data);
+      cleanup.disable();
     end
 
     function wait(self)
-      try
-        while ~self.poster.post_reply()
-        end
-      catch ex
-        self.poster.recreate_sock();
-        rethrow(ex);
+      cleanup = register_cleanup(self);
+      while ~self.poster.post_reply()
       end
+      cleanup.disable();
     end
 
     function msg=prepare_msg(self, tlen, code)
       msg = self.poster.prepare_msg(tlen, code);
+    end
+    function recreate_socket(self)
+        self.poster.recreate_sock();
+    end
+    function cleanup=register_cleanup(self)
+       cleanup = FacyOnCleanup(@recreate_socket, self);
     end
   end
 
