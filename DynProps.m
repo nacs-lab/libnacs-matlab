@@ -22,13 +22,22 @@ classdef DynProps < handle
       end
       self.V = V;
     end
+    function B = subsref2(self, S)
+      name = S(1).subs;
+      if ~isfield(self.V, name)
+        error('Undefined constant');
+      end
+      B = self.V.(name);
+      B = subsref(B, S(2:end));
+    end
     function B = subsref(self, S)
       def = 0;
       has_def = 0;
       switch S(1).type
         case '.'
           if length(S) > 2
-            error('Too many levels of indexing');
+            B = subsref2(self, S);
+            return;
           elseif length(S) == 2
             switch S(2).type
               case '()'
@@ -38,7 +47,8 @@ classdef DynProps < handle
                 has_def = 1;
                 def = S(2).subs{1};
               otherwise
-                error('Second level indexing must be `()`');
+                B = subsref2(self, S);
+                return;
             end
           end
           name = S(1).subs;
