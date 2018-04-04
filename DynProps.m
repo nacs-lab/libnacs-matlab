@@ -13,7 +13,9 @@
 
 classdef DynProps < handle
   properties(Hidden)
-    V
+    V;
+  end
+  methods(Access=private)
   end
   methods
     function self = DynProps(V)
@@ -22,62 +24,74 @@ classdef DynProps < handle
       end
       self.V = V;
     end
-    function B = subsref2(self, S)
-      name = S(1).subs;
-      if ~isfield(self.V, name)
-        error('Undefined constant');
-      end
-      B = self.V.(name);
-      B = subsref(B, S(2:end));
-    end
     function B = subsref(self, S)
-      def = 0;
-      has_def = 0;
-      switch S(1).type
-        case '.'
-          if length(S) > 2
-            B = subsref2(self, S);
-            return;
-          elseif length(S) == 2
-            switch S(2).type
-              case '()'
-                if length(S(2).subs) ~= 1
-                  error('More than one default value');
-                end
-                has_def = 1;
-                def = S(2).subs{1};
-              otherwise
-                B = subsref2(self, S);
-                return;
+      nS = length(S);
+      %% Scan through all the '.' in the leading access items
+      v = self.V;
+      for i = 1:nS
+        switch S(i).type
+          case '.'
+            name = S(i).subs;
+            if isfield(v, name)
+              v = v.(name);
+              continue;
             end
-          end
-          name = S(1).subs;
-          if isfield(self.V, name)
-            B = self.V.(name);
+            j = i;
+            found = 0;
+            % Check if this is an access with default
+            while j <= nS
+              switch S(j).type
+                case '.'
+                  j = j + 1;
+                  continue;
+                case '()'
+                  found = 1;
+              end
+              break;
+            end
+            if ~found
+              % This throws the error similar to when access a undefined field in matlab
+              B = v.(name);
+              % The return here is just to make the control flow more clear and should never be
+              % reached.
+              return;
+            end
+            if length(S(j).subs) ~= 1
+              error('More than one default value');
+            end
+            def = S(j).subs{1};
+            % Assign default value
+            self.V = subsasgn(self.V, S(1:j - 1), def);
+            if j == nS
+              B = def;
+            else
+              B = subsref(def, S(j + 1:end));
+            end
             return;
-          end
-          if ~has_def
-            error('Undefined constant');
-          end
-          self.V.(name) = def;
-          B = def;
-          return;
-        otherwise
-          error('First level indexing must be `.`');
+          case '()'
+            if length(S(i).subs) ~= 1
+              error('More than one default value');
+            end
+            if i == nS
+              B = v;
+            else
+              B = subsref(v, S(i + 1:end));
+            end
+            return;
+          otherwise
+            B = subsref(v, S(i:end));
+            return;
+        end
+      end
+      if isstruct(v)
+        B = SubProps(self, S);
+      else
+        B = v;
       end
     end
     function A = subsasgn(self, S, B)
       A = self;
-      if length(S) > 1
-        error('Too many levels of indexing in assignment');
-      end
-      switch S(1).type
-        case '.'
-          name = S(1).subs;
-          self.V.(name) = B;
-        otherwise
-          error('Assignment indexing must be `.`');
-      end
+      self.V = subsasgn(self.V, S, B);
     end
   end
 end
