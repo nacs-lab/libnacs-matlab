@@ -1,5 +1,5 @@
 % define simulation structure
-clear p scanseq
+clear p
 p.PAswitch = 1;
 p.AmpPAAOM = 0.1;
 p.bRotateBField = 1;
@@ -12,15 +12,6 @@ p.TMergeWait = [0, 0.2, 0.5, 1, 2, 5, 10, 20, 50]*1e-3;
 p.ParamName = "TMergeWait";
 p.ParamUnits = "ms";
 p.PlotScale = 1e-3; %used for plotting
-scanseq = ScanSeq(p);
 
 % run simulation
-StartScan(scanseq);
-
-
-
-
-%%
-% Params = [0 : 10 : 80];
-% Params = linspace(-4, 4, 11);
-
+StartScan(ScanSeq(p, struct()));

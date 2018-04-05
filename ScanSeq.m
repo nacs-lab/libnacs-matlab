@@ -16,9 +16,6 @@ classdef ScanSeq < handle
 
     methods
         function self = ScanSeq(p, scanp, idx)
-            if ~exist('scanp', 'var')
-                scanp = struct();
-            end
             if ~exist('idx', 'var')
                 idx = 1;
             end
