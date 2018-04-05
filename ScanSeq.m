@@ -13,7 +13,7 @@ classdef ScanSeq < handle
 
     methods
         function self = ScanSeq(p, idx)
-            if nargin < 2
+            if ~exist('idx', 'var')
                 idx = 1;
             end
 
@@ -90,7 +90,7 @@ classdef ScanSeq < handle
 
         function self = defineEmpty(self, idx)
             % If any fields are empty, set to p(idx)
-            if nargin < 2
+            if ~exist('idx', 'var')
                 idx = 1;
             end
             p = self.p;
