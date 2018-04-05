@@ -9,18 +9,32 @@ classdef ScanSeq < handle
         scanIdx; % index of which fields are being scanned
         scanLength; % array of scan lengths
         scanLengthTot; % total number of runs
+        %% Fields after this one were not defined in the original version
+        % They may be absent in objects loaded from mat file.
+        scan; % parameter for the scan (instead of the sequences)
     end
 
     methods
-        function self = ScanSeq(p, idx)
+        function self = ScanSeq(p, scanp, idx)
+            if ~exist('scanp', 'var')
+                scanp = struct();
+            end
             if ~exist('idx', 'var')
                 idx = 1;
             end
 
             % initiate a scan sequence with a structure array
             self.p = p;
+            self.scan = DynProps(scanp);
             defineEmpty(self, idx); % defines all empty cells.
             computeDim(self); % get all dimensions
+        end
+
+        function scanp = scanp(self)
+            if isempty(self.scan)
+                self.scan = DynProps();
+            end
+            scanp = self.scan;
         end
 
         function self = computeDim(self)
