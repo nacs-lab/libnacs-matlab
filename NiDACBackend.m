@@ -341,4 +341,13 @@ classdef NiDACBackend < PulseBackend
       nacsNiDACBackendSessionUsing = 0;
     end
   end
+  methods(Static)
+      function clearSession()
+          global nacsNiDACBackendSession;
+          if ~isempty(nacsNiDACBackendSession)
+              delete(nacsNiDACBackendSession);
+              nacsNiDACBackendSession = [];
+          end
+      end
+  end
 end
