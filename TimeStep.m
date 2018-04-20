@@ -49,7 +49,7 @@ classdef (Sealed) TimeStep < TimeSeq
       if isnumeric(name)
         cid = name;
       else
-        cid = translateChannel(self, name);
+        cid = translateChannel(self.topLevel, name);
       end
       if isnumeric(pulse) || islogical(pulse)
         if ~isscalar(pulse)

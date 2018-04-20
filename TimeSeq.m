@@ -23,6 +23,7 @@ classdef TimeSeq < handle
     len = 0;
     parent = 0;
     tOffset = 0;
+    topLevel = 0;
   end
 
   properties(Hidden)
@@ -50,18 +51,20 @@ classdef TimeSeq < handle
 
   methods
     function self = TimeSeq(parent, toffset, len)
-      self.subSeqs = {};
-      if exist('parent', 'var')
-        self.parent = parent;
-        self.tOffset = toffset;
-        self.config = parent.config;
-        addSubSeq(parent, self);
-        if exist('len', 'var')
-          self.len = len;
+        self.subSeqs = {};
+        if exist('parent', 'var')
+            self.parent = parent;
+            self.tOffset = toffset;
+            self.config = parent.config;
+            self.topLevel = parent.topLevel;
+            addSubSeq(parent, self);
+            if exist('len', 'var')
+                self.len = len;
+            end
+        else
+            self.config = loadConfig();
+            self.topLevel = self;
         end
-      else
-        self.config = loadConfig();
-      end
     end
 
     function res = length(self)
@@ -93,7 +96,7 @@ classdef TimeSeq < handle
     end
 
     function cid = translateChannel(self, name)
-      cid = self.parent.translateChannel(name);
+      cid = translateChannel(self.topLevel, name);
     end
 
     function setTime(self, time, anchor, offset)
