@@ -39,8 +39,7 @@ classdef FPGABackend < PulseBackend
       %%
     function self = FPGABackend(seq)
       self = self@PulseBackend(seq);
-      config = loadConfig();
-      self.poster = FPGAPoster.get(config.fpgaUrls('FPGA1'));
+      self.poster = FPGAPoster.get(seq.config.fpgaUrls('FPGA1'));
     end
 
     function initDev(self, did)

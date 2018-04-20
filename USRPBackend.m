@@ -29,9 +29,8 @@ classdef USRPBackend < PulseBackend
   methods
     function self = USRPBackend(seq)
       self = self@PulseBackend(seq);
-      config = loadConfig();
       %% Hard coded for now
-      self.url = config.usrpUrls('USRP1');
+      self.url = seq.config.usrpUrls('USRP1');
     end
 
     function initDev(self, did)
