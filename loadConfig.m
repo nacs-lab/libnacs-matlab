@@ -12,122 +12,109 @@
 %% License along with this library.
 
 classdef loadConfig < handle
-    %The loadConfig object contains hardware info, channel names.
-    %The object is stored in the TimeSeq.config  property for all TimeSeq
-    %objects.
+    % The loadConfig object contains hardware info, channel names.
+    % The object is stored in the TimeSeq.config  property for all TimeSeq
+    % objects.
 
-    %All Methods
-        %self = loadConfig()
-        %load(self)
-        %res = translateChannel(self, name)
+    % All Methods
+    % self = loadConfig()
+    % res = translateChannel(self, name)
 
-  properties(Access=private)
-    name_map;  %
-  end
-  properties
-    pulseDrivers;
-    channelAlias;
-    defaultVals;
-    consts;
+    properties(Access=private)
+        name_map;
+    end
+    properties
+        pulseDrivers;
+        channelAlias;
+        defaultVals;
+        consts;
 
-    fpgaUrls;
-    usrpUrls;
+        fpgaUrls;
+        usrpUrls;
 
-    niClocks;
-    niStart;
-    maxLength;
-  end
-
-
-  methods
-    %%
-    function self = loadConfig()
-      self.name_map = containers.Map();
-      self.load();
+        niClocks;
+        niStart;
+        maxLength;
     end
 
-    %%
-    function load(self)
-        %
+    methods
+        %%
+        function self = loadConfig()
+            self.name_map = containers.Map();
+            % Create empty maps
+            fpgaUrls = containers.Map();
+            usrpUrls = containers.Map();
+            pulseDrivers = containers.Map();
+            channelAlias = containers.Map();
+            defaultVals = containers.Map();
+            niClocks = containers.Map();
+            niStart = containers.Map();
+            consts = struct();
+            maxLength = 0;
 
-      %Create empty maps
-      fpgaUrls = containers.Map();
-      usrpUrls = containers.Map();
-      pulseDrivers = containers.Map();
-      channelAlias = containers.Map();
-      defaultVals = containers.Map();
-      niClocks = containers.Map();
-      niStart = containers.Map();
-      consts = struct();
-      maxLength = 0;
+            % Run script which loads the empty maps.
+            nacsConfig();
 
-      %Run script which loads the empty maps.
-      nacsConfig();
+            self.fpgaUrls = fpgaUrls;
+            self.usrpUrls = usrpUrls;
+            self.niClocks = niClocks;
+            self.niStart = niStart;
+            self.consts = consts;
+            self.maxLength = maxLength;
 
-      self.fpgaUrls = fpgaUrls;
-      self.usrpUrls = usrpUrls;
-      self.niClocks = niClocks;
-      self.niStart = niStart;
-      self.consts = consts;
-      self.maxLength = maxLength;
+            for key = keys(channelAlias)
+                key = key{:};
 
-      for key = keys(channelAlias)
-        key = key{:};
+                if ~isempty(strfind(key, '/'))
+                    error('Channel name should not have "/"');
+                end
 
-        if ~isempty(strfind(key, '/'))
-          error('Channel name should not have "/"');
+                matches = regexp(channelAlias(key), '^(.*[^/])/*$', 'tokens');
+                if ~isempty(matches)
+                    channelAlias(key) = matches{1}{1};
+                end
+            end
+            self.channelAlias = channelAlias;
+
+            for key = keys(pulseDrivers)
+                key = key{:};
+                if ~ischar(pulseDrivers(key))
+                    error('pulseDrivers should be a string');
+                end
+            end
+            self.pulseDrivers = pulseDrivers;
+
+            self.defaultVals = containers.Map();
+            for key = keys(defaultVals)
+                key = key{:};
+                name = translateChannel(self, key);
+                if isKey(self.defaultVals, name)
+                    error('Conflict default values for channel "%s" (%s).', key, name);
+                end
+                self.defaultVals(name) = defaultVals(key);
+            end
         end
 
-        matches = regexp(channelAlias(key), '^(.*[^/])/*$', 'tokens');
-        if ~isempty(matches)
-          channelAlias(key) = matches{1}{1};
-        end
-      end
-      self.channelAlias = channelAlias;
+        %%
+        function res = translateChannel(self, name)
+            try
+                res = self.name_map(name);
+            catch
+                cpath = strsplit(name, '/');
+                self.name_map(name) = [];
+                if isKey(self.channelAlias, cpath{1})
+                    cpath{1} = self.channelAlias(cpath{1});
+                    res = translateChannel(self, strjoin(cpath, '/'));
+                else
+                    res = name;
+                end
+                self.name_map(name) = res;
+                return;
+            end
 
-      for key = keys(pulseDrivers)
-        key = key{:};
-        if ~ischar(pulseDrivers(key))
-          error('pulseDrivers should be a string');
+            if isempty(res)
+                error('Alias loop detected: %s.', name);
+            end
         end
-      end
-      self.pulseDrivers = pulseDrivers;
-
-      %
-      self.defaultVals = containers.Map();
-      for key = keys(defaultVals)
-        key = key{:};
-        name = translateChannel(self, key);
-        if isKey(self.defaultVals, name)
-          error('Conflict default values for channel "%s" (%s).', key, name);
-        end
-        self.defaultVals(name) = defaultVals(key);
-      end
     end
-
-    %%
-    function res = translateChannel(self, name)
-      %
-
-      try
-        res = self.name_map(name);
-      catch
-        cpath = strsplit(name, '/');
-        self.name_map(name) = [];
-        if isKey(self.channelAlias, cpath{1})
-          cpath{1} = self.channelAlias(cpath{1});
-          res = translateChannel(self, strjoin(cpath, '/'));
-        else
-          res = name;
-        end
-        self.name_map(name) = res;
-        return;
-      end
-
-      %
-      if isempty(res)
-        error('Alias loop detected: %s.', name);
-      end
-    end
-  end
 end
