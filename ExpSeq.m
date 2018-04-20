@@ -342,7 +342,12 @@ classdef ExpSeq < ExpSeqBase
                         switch pulse{2}
                             case TimeType.Dirty
                                 pulse_obj = pulse{3};
-                                cur_value = calcValue(pulse_obj, pulse{7}, pulse{5}, cur_value);
+                                if isnumeric(pulse_obj)
+                                    cur_value = pulse_obj;
+                                else
+                                    cur_value = calcValue(pulse_obj, pulse{7}, ...
+                                                          pulse{5}, cur_value);
+                                end
                                 pidx = pidx + 1;
                                 if pidx > npulses
                                     %% End of pulses
@@ -433,7 +438,7 @@ classdef ExpSeq < ExpSeqBase
                 pulse_obj = pulse{3};
                 toffset = pulse{1};
                 step_len = pulse{2};
-                if isa(pulse_obj, 'jumpTo')
+                if isnumeric(pulse_obj)
                     res(end + 1, 1:7) = {toffset, int32(TimeType.Dirty), pulse_obj, ...
                                          toffset, step_len, cid, 0};
                 else

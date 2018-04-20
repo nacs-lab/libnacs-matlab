@@ -116,7 +116,7 @@ classdef NiDACBackend < PulseBackend
                     toffset = pulse{1};
                     step_len = pulse{2};
                     toffset_idx = cld(toffset, clk_period);
-                    if isa(pulse_obj, 'jumpTo')
+                    if isnumeric(pulse_obj)
                         times(1:2, end + 1) = [toffset_idx, toffset_idx + 1];
                     else
                         tend = toffset + step_len;
@@ -212,8 +212,8 @@ classdef NiDACBackend < PulseBackend
                             break;
                         end
                         pulse_obj = pulse{3};
-                        if isa(pulse_obj, 'jumpTo')
-                            cur_value = pulse_obj.val;
+                        if isnumeric(pulse_obj)
+                            cur_value = pulse_obj;
                             pidx = pidx + 1;
                             continue;
                         end

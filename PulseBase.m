@@ -12,7 +12,7 @@
 %% License along with this library.
 
 classdef(Abstract) PulseBase < handle
-    %PulseBase is the parent class of classes jumpTo and FuncPulse.
+    %PulseBase is the parent class of FuncPulse etc.
     %PulseBase does not have any used properties.  The PulseBase objects
     %are store in the TimeStep.pulses{cid}, where cid is the channel id for
     %the pulse.

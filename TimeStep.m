@@ -56,7 +56,7 @@ classdef (Sealed) TimeStep < TimeSeq
         if ~isscalar(pulse)
           error('Pulse cannot be a non-scalar value.');
         end
-        pulse = jumpTo(pulse);
+        pulse = double(pulse);
       elseif ~isa(pulse, 'PulseBase')
         % Treat as function
         pulse = FuncPulse(pulse);

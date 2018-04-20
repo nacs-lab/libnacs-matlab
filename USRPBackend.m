@@ -114,8 +114,8 @@ classdef USRPBackend < PulseBackend
                     pulse = pulses(j, :);
                     pulse_obj = pulse{3};
                     t_start = pulse{1};
-                    if isa(pulse_obj, 'jumpTo')
-                        val = pulse_obj.val;
+                    if isnumeric(pulse_obj)
+                        val = pulse_obj;
                         n_pulses = n_pulses + 1;
                         code = [code, chn_type, chn_num, ...
                                 typecast(double(t_start), 'int32'), ...
