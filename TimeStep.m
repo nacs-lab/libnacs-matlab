@@ -26,8 +26,9 @@ classdef (Sealed) TimeStep < TimeSeq
         % res = getPulsesRaw(self, cid)
 
   properties
-    %TimeSeq properties: config (class), logger (class), subSeqs (struct), len,  parnet, seq_id, tOffset
-    pulses;  %contains a jumpTo or FuncPulse object (or a pulse of other classes), which are children of the PulseBase class.
+      % TimeSeq properties:
+      % config (class), logger (class), subSeqs (struct), len,  parnet, seq_id, tOffset
+      pulses;  % contains numbers or PulseBase objects, which are children of the PulseBase class.
   end
 
   methods

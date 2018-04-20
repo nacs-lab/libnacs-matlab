@@ -38,7 +38,6 @@ classdef TimeSeq < handle
         % logf(self, varargin)
         % res = length(self)
         % vals = getDefaults(self, cids)
-        % res = getPulseTimes(self, cids)
         % vals = getValues(self, dt, varargin)
         % cid = translateChannel(self, name)
         % subSeqForeach(self, func)

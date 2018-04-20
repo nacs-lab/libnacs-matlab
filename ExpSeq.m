@@ -343,7 +343,7 @@ classdef ExpSeq < ExpSeqBase
             switch pulse{2}
               case TimeType.Dirty
                 pulse_obj = pulse{3};
-                cur_value = pulse_obj.calcValue(pulse{7}, pulse{5}, cur_value);
+                cur_value = calcValue(pulse_obj, pulse{7}, pulse{5}, cur_value);
                 pidx = pidx + 1;
                 if pidx > npulses
                   %% End of pulses
@@ -367,8 +367,8 @@ classdef ExpSeq < ExpSeqBase
                 pulse_obj = pulse{3};
                 %% Forward to the end of the pulse since it is shorter than
                 %% our time interval.
-                cur_value = pulse_obj.calcValue(pulse_end{1} - pulse{4}, ...
-                                                pulse{5}, cur_value);
+                cur_value = calcValue(pulse_obj, pulse_end{1} - pulse{4}, ...
+                                      pulse{5}, cur_value);
                 pidx = pidx + 1;
                 if pidx > npulses
                   %% End of pulses
@@ -401,10 +401,10 @@ classdef ExpSeq < ExpSeqBase
           last_vidx = cld(pulse_end{1}, dt);
           idxs = vidx:last_vidx;
           pulse_obj = pulse{3};
-          vals(i, idxs) = pulse_obj.calcValue((idxs - 1) * dt - pulse{4}, ...
-                                              pulse{5}, cur_value) * scale;
-          cur_value = pulse_obj.calcValue(pulse_end{1} - pulse{4}, ...
-                                          pulse{5}, cur_value);
+          vals(i, idxs) = calcValue(pulse_obj, (idxs - 1) * dt - pulse{4}, ...
+                                    pulse{5}, cur_value) * scale;
+          cur_value = calcValue(pulse_obj, pulse_end{1} - pulse{4}, ...
+                                pulse{5}, cur_value);
           pidx = pidx + 1;
           vidx = last_vidx + 1;
         end
@@ -452,16 +452,16 @@ classdef ExpSeq < ExpSeqBase
     end
 
     function res = getPulses(self, cid)
-      %% Return a array of tuples (toffset, length, pulse_obj,
-      %%                           step_start, step_len, cid)
-      %% the pulse_obj should have a method calcValue that take 3 parameters:
-      %%     time_in_pulse, length, old_val_before_pulse
-      %% and should return the new value @time_in_pulse after the step_start.
-      %% The returned value should be sorted with toffset.
-      res = self.getPulsesRaw(cid);
-      if ~isempty(res)
-        res = sortrows(res', 1);
-      end
+        %% Return a array of tuples (toffset, length, pulse_obj,
+        %%                           step_start, step_len, cid)
+        %% the pulse_obj should be a number or have a method calcValue that take 3 parameters:
+        %%     time_in_pulse, length, old_val_before_pulse
+        %% and should return the new value @time_in_pulse after the step_start.
+        %% The returned value should be sorted with toffset.
+        res = self.getPulsesRaw(cid);
+        if ~isempty(res)
+            res = sortrows(res', 1);
+        end
     end
     function val = getDefault(self, cid)
       try
