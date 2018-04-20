@@ -70,28 +70,28 @@ classdef ExpSeq < ExpSeqBase
     end
 
     function cid = translateChannel(self, name)
-      if isKey(self.cid_cache, name)
-        cid = self.cid_cache(name);
-        return;
-      end
-      orig_name = name;
-      name = translateChannel(self.config, name);
-      cid = getId(self.chn_manager, name);
-      self.cid_cache(orig_name) = cid;
+        if isKey(self.cid_cache, name)
+            cid = self.cid_cache(name);
+            return;
+        end
+        orig_name = name;
+        name = translateChannel(self.config, name);
+        cid = getId(self.chn_manager, name);
+        self.cid_cache(orig_name) = cid;
 
-      if (cid > size(self.orig_channel_names, 2) || ...
-          isempty(self.orig_channel_names{cid}))
-        self.orig_channel_names{cid} = orig_name;
-      else
-        return;
-      end
-      cpath = strsplit(name, '/');
-      did = cpath{1};
-      [driver, driver_name] = self.initDeviceDriver(did);
+        if (cid > size(self.orig_channel_names, 2) || ...
+            isempty(self.orig_channel_names{cid}))
+            self.orig_channel_names{cid} = orig_name;
+        else
+            return;
+        end
+        cpath = strsplit(name, '/');
+        did = cpath{1};
+        [driver, driver_name] = self.initDeviceDriver(did);
 
-      driver.initChannel(cid);
-      cur_cids = self.driver_cids(driver_name);
-      self.driver_cids(driver_name) = unique([cur_cids, cid]);
+        driver.initChannel(cid);
+        cur_cids = self.driver_cids(driver_name);
+        self.driver_cids(driver_name) = unique([cur_cids, cid]);
     end
 
     function cid = findChannelId(self, name)
