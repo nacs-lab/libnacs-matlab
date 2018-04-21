@@ -97,9 +97,12 @@ classdef loadConfig < handle
 
         %%
         function res = translateChannel(self, name)
-            try
+            if isKey(self.name_map, name)
                 res = self.name_map(name);
-            catch
+                if isempty(res)
+                    error('Alias loop detected: %s.', name);
+                end
+            else
                 cpath = strsplit(name, '/');
                 self.name_map(name) = [];
                 if isKey(self.channelAlias, cpath{1})
@@ -109,11 +112,6 @@ classdef loadConfig < handle
                     res = name;
                 end
                 self.name_map(name) = res;
-                return;
-            end
-
-            if isempty(res)
-                error('Alias loop detected: %s.', name);
             end
         end
     end
