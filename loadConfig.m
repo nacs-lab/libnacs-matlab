@@ -13,8 +13,6 @@
 
 classdef loadConfig < handle
     % The loadConfig object contains hardware info, channel names.
-    % The object is stored in the TimeSeq.config  property for all TimeSeq
-    % objects.
 
     % All Methods
     % self = loadConfig()

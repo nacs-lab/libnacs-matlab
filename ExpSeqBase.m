@@ -12,11 +12,9 @@
 % License along with this library.
 
 classdef ExpSeqBase < TimeSeq
-    % ExpSeqBase is a subclass of TimeSeq, and the parent class of ExpSeq.
-    % It only adds one property, 'curTime' (number), which keeps track of
-    % the current time.
-    % Its role is to store other ExpSeqBase objects (in the SubSeqs
-    % property).  The methods of ExpSeqBase are used to add ExpSeqBase's and
+    % ExpSeqBase is the parent class of ExpSeq.
+    % Its role is to store other ExpSeqBase objects (in the subSeqs
+    % property). The methods of ExpSeqBase are used to add ExpSeqBase's and
     % pulses to the experiment.
 
     % All Methods:
@@ -32,7 +30,6 @@ classdef ExpSeqBase < TimeSeq
     % step = addTimeStep(self, len, offset)
     % step = addCustomStep(self, start_time, cls, varargin)
     properties(Hidden)
-        % TimeSeq properties: config (class), logger (class), subSeqs (struct), len,  parnet, seq_id, tOffset
         curTime = 0;
     end
     properties(SetAccess = private, Hidden)
@@ -41,7 +38,6 @@ classdef ExpSeqBase < TimeSeq
 
     methods
         function self = ExpSeqBase(parent_or_C, toffset)
-            %% Constructor. Just initializes a TimeSeq object.
             if exist('toffset', 'var')
                 toplevel = 0;
                 ts_args = {parent_or_C, toffset};
@@ -62,7 +58,7 @@ classdef ExpSeqBase < TimeSeq
                 C.(fn) = consts.(fn);
             end
             if exist('parent_or_C', 'var')
-                %% Allow parameters to overwrite consts in config
+                % Allow parameters to overwrite consts in config
                 fields = fieldnames(parent_or_C);
                 for i = 1:length(fields)
                     fn = fields{i};
@@ -82,7 +78,7 @@ classdef ExpSeqBase < TimeSeq
         %%
         function res = waitAll(self)
             % Wait for everything that have been currently added to finish.
-            self.curTime = self.length(); % method in TimeSeq
+            self.curTime = length(self);
             res = self;
         end
 

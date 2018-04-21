@@ -15,7 +15,6 @@ classdef ExpSeq < ExpSeqBase
     % ExpSeq is an object representing the entire experimental sequence.
     % ExpSeq is a subclass of ExpSeqBase, which is a subclass of TimeSeq.
     % ExpSeq adds properties related to hardware, ie the drivers and channels.
-    % TimeStep is also a subclass of TimeSeq. It contains proprety 'pulses', which have values for outputs.
 
     %Methods:  %self = ExpSeq(name)
     %cid = translateChannel(self, name)
@@ -34,8 +33,6 @@ classdef ExpSeq < ExpSeqBase
     %logDefault(self)
     %plotReal(self, cids, names)
     properties
-        % TimeSeq properties: config, subSeqs, len, parnet, seq_id, tOffset
-        % ExpSeqBase properties:  curTime
         drivers;            % map with key values 'FPGABackend' 'NiDACBackend'. This is updated when channel is used in a pulse, so it starts empty.
         driver_cids;        %
         generated = false;  %
