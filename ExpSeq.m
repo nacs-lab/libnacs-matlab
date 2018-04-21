@@ -511,9 +511,7 @@ classdef ExpSeq < ExpSeqBase
     methods(Static)
         function reset()
             global nacsExpSeqDisableRunHack;
-            global nacsExpSeqNameSuffixHack;
             nacsExpSeqDisableRunHack = 0;
-            nacsExpSeqNameSuffixHack = [];
         end
     end
 end

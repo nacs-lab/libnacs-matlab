@@ -118,13 +118,7 @@ seqlist = cell(1, nseq);
           seq_map(arg0) = idx;
         end
         global nacsExpSeqDisableRunHack;
-        global nacsExpSeqNameSuffixHack;
         nacsExpSeqDisableRunHack = 1;
-        if is_random
-            nacsExpSeqNameSuffixHack = sprintf('-runRandom_%d-%d', idx, nseq);
-        else
-            nacsExpSeqNameSuffixHack = sprintf('-runSeq_%d-%d', idx, nseq);
-        end
         if is_scanseq
           s = ExpSeq(getSingle(scanseq, arglist{idx}{:}));
           func(s);
@@ -133,7 +127,6 @@ seqlist = cell(1, nseq);
           seqlist{idx} = func(arglist{idx}{:});
         end
         nacsExpSeqDisableRunHack = 0;
-        nacsExpSeqNameSuffixHack = [];
         seqlist{idx}.generate();
     end
 
