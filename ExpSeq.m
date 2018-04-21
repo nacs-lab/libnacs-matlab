@@ -33,10 +33,10 @@ classdef ExpSeq < ExpSeqBase
     %[driver, driver_name] = initDeviceDriver(self, did)
     %logDefault(self)
     %plotReal(self, cids, names)
-    properties%(Access=private)
-        %TimeSeq properties: config (class), logger (class), subSeqs (struct), len,  parnet, seq_id, tOffset
-        %ExpSeqBase properties:  curTime
-        drivers;            %map with key values 'FPGABackend' 'NiDACBackend'. This is updated when channel is used in a pulse, so it starts empty.
+    properties
+        % TimeSeq properties: config, subSeqs, len, parnet, seq_id, tOffset
+        % ExpSeqBase properties:  curTime
+        drivers;            % map with key values 'FPGABackend' 'NiDACBackend'. This is updated when channel is used in a pulse, so it starts empty.
         driver_cids;        %
         generated = false;  %
         default_override;   %
