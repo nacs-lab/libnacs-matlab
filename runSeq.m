@@ -36,6 +36,12 @@ notify = [];
 
 seq_map = containers.Map('KeyType', 'double', 'ValueType', 'double');
 
+function runSeqCleanup()
+    ExpSeq.reset();
+end
+
+cleanup = onCleanup(@runSeqCleanup);
+
 %Set up memory map to share variables between MATLAB instances.
 m = MemoryMap();
 
