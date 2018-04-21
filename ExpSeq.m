@@ -154,8 +154,8 @@ classdef ExpSeq < ExpSeqBase
         function run_async(self)
             % Do **NOT** put anything related to runSeq in this file!!!!!!!!!!
             % It messes up EVERYTHING!!!!!!!!!!!!!!!!!!!!!!
-            global nacsTimeSeqDisableRunHack;
-            if ~isempty(nacsTimeSeqDisableRunHack) && nacsTimeSeqDisableRunHack
+            global nacsExpSeqDisableRunHack;
+            if ~isempty(nacsExpSeqDisableRunHack) && nacsExpSeqDisableRunHack
                 return;
             end
             generate(self);
@@ -187,8 +187,8 @@ classdef ExpSeq < ExpSeqBase
         function waitFinish(self)
             % Do **NOT** put anything related to runSeq in this file!!!!!!!!!!
             % It messes up EVERYTHING!!!!!!!!!!!!!!!!!!!!!!
-            global nacsTimeSeqDisableRunHack;
-            if ~isempty(nacsTimeSeqDisableRunHack) && nacsTimeSeqDisableRunHack
+            global nacsExpSeqDisableRunHack;
+            if ~isempty(nacsExpSeqDisableRunHack) && nacsExpSeqDisableRunHack
                 return;
             end
             drivers = {};
@@ -218,8 +218,8 @@ classdef ExpSeq < ExpSeqBase
             % Also, this function has to be only run_async() and then
             % waitFinish() do not put any more complex logic in.
             % DisableRunHack is fine since it doesn't mutate anything.
-            global nacsTimeSeqDisableRunHack;
-            if ~isempty(nacsTimeSeqDisableRunHack) && nacsTimeSeqDisableRunHack
+            global nacsExpSeqDisableRunHack;
+            if ~isempty(nacsExpSeqDisableRunHack) && nacsExpSeqDisableRunHack
                 return;
             end
             self.run_async();
@@ -506,6 +506,14 @@ classdef ExpSeq < ExpSeqBase
             plot(ts, data);
             xlabel('t / s');
             legend(names{:});
+        end
+    end
+    methods(Static)
+        function reset()
+            global nacsExpSeqDisableRunHack;
+            global nacsExpSeqNameSuffixHack;
+            nacsExpSeqDisableRunHack = 0;
+            nacsExpSeqNameSuffixHack = [];
         end
     end
 end
