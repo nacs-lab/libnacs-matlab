@@ -462,7 +462,7 @@ classdef ExpSeq < ExpSeqBase
             %%     time_in_pulse, length, old_val_before_pulse
             %% and should return the new value @time_in_pulse after the step_start.
             %% The returned value should be sorted with toffset.
-            res = self.getPulsesRaw(cid);
+            res = appendPulses(self, cid, {}, 0);
             if ~isempty(res)
                 res = sortrows(res', 1);
             end

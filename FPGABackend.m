@@ -73,12 +73,12 @@ classdef FPGABackend < PulseBackend
         end
 
         %%
+        % generate(self[ExpSeq], cids[list])
+        % Called in ExpSeq generate() method. Makes data to be sent to FPGA.
+        % Afterwards, run() method is called and data is sent to board.
+        % Commands are stored in 'code', which is then scheduled to byteode and stored in
+        % self.req, and is sent to the board in the run() method.
         function generate(self, cids)
-            %generate(self[ExpSeq], cids[list])
-            %Called in ExpSeq generate() method. Makes data to be sent to FPGA. Afterwards, run() method is
-            %called and data is sent to board. Commands are stored in
-            %'code', which is then encoded to binary and stored in
-            %self.cmd_str, and is sent to the board in the run() method.
             %% [TTL default: 4B]
             %% [n_non_ttl: 4B]
             %% [[[chn_type: 4B][chn_id: 4B][defaults: 8B]] x n_non_ttl]

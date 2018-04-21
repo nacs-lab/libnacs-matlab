@@ -23,7 +23,6 @@ classdef (Sealed) TimeStep < TimeSeq
         % self = TimeStep(varargin)
         % res = add(self, varargin)
         % ret = addPulse(self, name, pulse)
-        % res = getPulsesRaw(self, cid)
 
   properties
       % TimeSeq properties:
@@ -62,16 +61,6 @@ classdef (Sealed) TimeStep < TimeSeq
         pulse = FuncPulse(pulse);
       end
       self.pulses{cid} = pulse;
-    end
-  end
-
-  methods(Access=protected)
-      %%
-    function res = getPulsesRaw(self, cid)
-      % Caller checks that pulses exists
-      step_len = self.len;
-      pulse = self.pulses{cid};
-      res = {0, step_len, pulse}';
     end
   end
 end

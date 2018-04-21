@@ -45,7 +45,6 @@ classdef TimeSeq < handle
         % id = nextSeqId(self)
         % val = getDefault(self, ~)
         % addSubSeq(self, sub_seq)
-        % res = getPulsesRaw(self, cid)
 
 
   methods
@@ -198,20 +197,18 @@ classdef TimeSeq < handle
       self.subSeqs{end + 1} = sub_seq;
     end
 
-    %%
-    function res = getPulsesRaw(self, cid)
+    function res = appendPulses(self, cid, res, toffset)
       %% Called in getPulse method.
       % TODOPULSE use struct
-      res = {};
       subSeqs = self.subSeqs;
       nsub = size(subSeqs, 2);
       for i = 1:nsub
         sub_seq = subSeqs{i};
-        seq_toffset = sub_seq.tOffset;
+        seq_toffset = sub_seq.tOffset + toffset;
         if isnan(seq_toffset)
           error('Cannot get length with floating sub sequence.');
         end
-        % The following code is manually inlined from TimeStep::getPulsesRaw
+        % The following code is manually inlined for TimeStep.
         % since function call is super slow...
         if isa(sub_seq, 'TimeStep')
             subseq_pulses = sub_seq.pulses;
@@ -223,23 +220,8 @@ classdef TimeSeq < handle
                 continue;
             end
             res(1:3, end + 1) = {seq_toffset, sub_seq.len, subseq_pulse};
-            continue;
         else
-            sub_pulses = getPulsesRaw(sub_seq, cid);
-        end
-
-        nsub_pulses = size(sub_pulses, 2);
-        res_offset = size(res, 2);
-        if nsub_pulses <= 0
-            continue;
-        end
-        res(3, res_offset + nsub_pulses) = {0};
-        for j = 1:nsub_pulses
-          sub_tuple = sub_pulses(:, j);
-          pulse_toffset = sub_tuple{1};
-          pulse_len = sub_tuple{2};
-          pulse_func = sub_tuple{3};
-          res(1:3, res_offset + j) = {pulse_toffset + seq_toffset, pulse_len, pulse_func};
+            res = appendPulses(sub_seq, cid, res, seq_toffset);
         end
       end
     end
