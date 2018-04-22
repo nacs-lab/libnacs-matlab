@@ -111,9 +111,8 @@ classdef USRPBackend < PulseBackend
                 chn_num = num_cache(cid);
                 pulses = all_pulses{i};
                 for j = 1:size(pulses, 1)
-                    pulse = pulses(j, :);
-                    pulse_obj = pulse{3};
-                    t_start = pulse{1};
+                    pulse_obj = pulses{j, 3};
+                    t_start = pulses{j, 1};
                     if isnumeric(pulse_obj)
                         val = pulse_obj;
                         n_pulses = n_pulses + 1;
@@ -122,7 +121,7 @@ classdef USRPBackend < PulseBackend
                                 0, 0, 0, typecast(double(val), 'int32')];
                         continue;
                     end
-                    step_len = pulse{2};
+                    step_len = pulses{j, 2};
                     n_pulses = n_pulses + 1;
                     code = [code, chn_type, chn_num, ...
                             typecast(double(t_start), 'int32'), ...

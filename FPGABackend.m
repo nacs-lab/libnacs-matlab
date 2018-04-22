@@ -153,9 +153,8 @@ classdef FPGABackend < PulseBackend
                 pulses = all_pulses{i};
 
                 for j = 1:size(pulses, 1)
-                    pulse = pulses(j, :);
-                    pulse_obj = pulse{3};
-                    t_start = pulse{1} + SEQ_DELAY;
+                    pulse_obj = pulses{j, 3};
+                    t_start = pulses{j, 1} + SEQ_DELAY;
                     if isnumeric(pulse_obj)
                         val = pulse_obj;
                         n_pulses = n_pulses + 1;
@@ -164,7 +163,7 @@ classdef FPGABackend < PulseBackend
                                 0, 0, 0, typecast(double(val), 'int32')];
                         continue;
                     end
-                    step_len = pulse{2};
+                    step_len = pulses{j, 2};
                     if chn_type == TTL_CHN
                         error('Function pulse not allowed on TTL channel');
                     end

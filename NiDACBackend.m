@@ -111,10 +111,9 @@ classdef NiDACBackend < PulseBackend
             for cid = self.cids
                 pulses = getPulses(seq, cid);
                 for i = 1:size(pulses, 1)
-                    pulse = pulses(i, :);
-                    pulse_obj = pulse{3};
-                    toffset = pulse{1};
-                    step_len = pulse{2};
+                    pulse_obj = pulses{i, 3};
+                    toffset = pulses{i, 1};
+                    step_len = pulses{i, 2};
                     toffset_idx = cld(toffset, clk_period);
                     if isnumeric(pulse_obj)
                         times(1:2, end + 1) = [toffset_idx, toffset_idx + 1];
@@ -206,18 +205,17 @@ classdef NiDACBackend < PulseBackend
                             pidx = 0;
                             break;
                         end
-                        pulse = pulses(pidx, :);
-                        pulse_t = pulse{1};
+                        pulse_t = pulses{pidx, 1};
                         if pulse_t > next_time
                             break;
                         end
-                        pulse_obj = pulse{3};
+                        pulse_obj = pulses{pidx, 3};
                         if isnumeric(pulse_obj)
                             cur_value = pulse_obj;
                             pidx = pidx + 1;
                             continue;
                         end
-                        pulse_len = pulse{2};
+                        pulse_len = pulses{pidx, 2};
                         if pulse_t + pulse_len > next_time
                             has_pulse_running = 1;
                             break;
