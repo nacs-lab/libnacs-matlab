@@ -431,19 +431,17 @@ classdef ExpSeq < ExpSeqBase
             pulses = self.getPulses(cid);
             for i = 1:size(pulses, 1)
                 pulse = pulses(i, :);
-                pulse_obj = pulse{3};
                 toffset = pulse{1};
                 step_len = pulse{2};
+                pulse_obj = pulse{3};
                 if isnumeric(pulse_obj)
                     res(end + 1, 1:7) = {toffset, int32(TimeType.Dirty), pulse_obj, ...
                                          toffset, step_len, cid, 0};
                 else
-                    tstart = pulse{1};
-                    tlen = pulse{2};
-                    res(end + 1, 1:7) = {tstart, int32(TimeType.Start), pulse_obj, ...
+                    res(end + 1, 1:7) = {toffset, int32(TimeType.Start), pulse_obj, ...
                                          toffset, step_len, cid, 0};
-                    res(end + 1, 1:7) = {tstart + tlen, int32(TimeType.End), pulse_obj, ...
-                                         toffset, step_len, cid, tlen};
+                    res(end + 1, 1:7) = {toffset + step_len, int32(TimeType.End), pulse_obj, ...
+                                         toffset, step_len, cid, step_len};
                 end
             end
             if ~isempty(res)
