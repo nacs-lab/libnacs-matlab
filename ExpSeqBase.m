@@ -259,7 +259,11 @@ classdef ExpSeqBase < TimeSeq
             nsub = size(self.subSeqs, 2);
             for i = 1:nsub
                 sub_seq = self.subSeqs{i};
-                sub_end = length(sub_seq) + sub_seq.tOffset;
+                if isa(sub_seq, 'TimeStep')
+                    sub_end = sub_seq.len + sub_seq.tOffset;
+                else
+                    sub_end = length(sub_seq) + sub_seq.tOffset;
+                end
                 if sub_end > res
                     res = sub_end;
                 end

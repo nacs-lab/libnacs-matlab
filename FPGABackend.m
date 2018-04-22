@@ -89,17 +89,20 @@ classdef FPGABackend < PulseBackend
             %% [[n_clocks: 4B][[[t_start_ns: 8B][t_len_ns: 8B][clock_div: 4B]] x n_clocks]]
 
             TTL_CHN = self.TTL_CHN;
-            DDS_FREQ = self.DDS_FREQ;
-            DDS_AMP = self.DDS_AMP;
-            DAC_CHN = self.DAC_CHN;
             SEQ_DELAY = self.SEQ_DELAY;
             ircache = IRCache.get();
 
             type_cache = self.type_cache;
             num_cache = self.num_cache;
             nchn = size(cids, 2);
-            ttl_values = self.getTTLDefault();
-            default_values = zeros(1, nchn);
+            ttl_values = uint32(0);
+            for i = 1:nchn
+                cid = cids(i);
+                if type_cache(cid) ~= self.TTL_CHN
+                    continue;
+                end
+                ttl_values = bitset(ttl_values, num_cache(cid) + 1, getDefaults(self.seq, cid));
+            end
 
             n_non_ttl = 0;
             n_pulses = 0;
@@ -107,7 +110,7 @@ classdef FPGABackend < PulseBackend
             %
             for i = 1:nchn
                 cid = cids(i);
-                pulses = self.seq.getPulses(cid);
+                pulses = getPulses(self.seq, cid);
                 all_pulses{i} = pulses;
                 np = size(pulses, 1);
                 if np == 0
@@ -117,7 +120,6 @@ classdef FPGABackend < PulseBackend
                 if chn_type ~= TTL_CHN
                     n_non_ttl = n_non_ttl + 1;
                 end
-                default_values(i) = self.seq.getDefaults(cid);
             end
 
             code = int32([]);  %code is where all command data is stored.
@@ -135,7 +137,7 @@ classdef FPGABackend < PulseBackend
                     continue;
                 end
                 chn_num = num_cache(cid);
-                default_val = default_values(i);
+                default_val = getDefaults(self.seq, cid);
                 code = [code, chn_type, chn_num, ...
                         typecast(double(default_val), 'int32')];
             end
@@ -285,26 +287,6 @@ classdef FPGABackend < PulseBackend
                 end
             else
                 error('Unknown channel type "%s"', cpath{1});
-            end
-        end
-
-        %%
-        function val = singleTTLDefault(self, chn)
-            val = false;
-            try
-                cid = self.seq.translateChannel(sprintf('FPGA1/TTL%d', chn));
-                if cid > 0 && self.seq.getDefaults(cid)
-                    val = true;
-                end
-            catch
-            end
-        end
-
-        %%
-        function val = getTTLDefault(self)
-            val = uint32(0);
-            for i = 0:31
-                val = bitset(val, i + 1, self.singleTTLDefault(i));
             end
         end
     end
