@@ -96,7 +96,14 @@ classdef ExpSeqBase < TimeSeq
                 else
                     real_step = step;
                 end
-                tstep = endof(real_step) + offset;
+                step_toffset = real_step.tOffset;
+                if isnan(step_toffset)
+                    error('Cannot get offset of floating sequence.');
+                elseif isa(real_step, 'TimeStep')
+                    tstep = step_toffset + real_step.len + offset;
+                else
+                    tstep = step_toffset + real_step.curTime + offset;
+                end
                 if real_step.parent ~= self
                     tstep = tstep + offsetDiff(self, real_step.parent);
                 end
@@ -216,15 +223,6 @@ classdef ExpSeqBase < TimeSeq
             old_time = self.curTime;
             step = addStepReal(self, nan, true, first_arg, varargin{:});
             self.curTime = old_time;
-        end
-
-        function res = endof(self)
-            %% Do not include background pulse as current time.
-            toffset = self.tOffset;
-            if isnan(toffset)
-                error('Cannot get end time of floating sequence.');
-            end
-            res = toffset + self.curTime;
         end
 
         function res=alignEnd(self, seq1, seq2, offset)

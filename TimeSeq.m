@@ -55,14 +55,6 @@ classdef TimeSeq < handle
             end
         end
 
-        function res = endof(self)
-            toffset = self.tOffset;
-            if isnan(toffset)
-                error('Cannot get end time of floating sequence.');
-            end
-            res = toffset + length(self);
-        end
-
         function cid = translateChannel(self, name)
             cid = translateChannel(self.topLevel, name);
         end
