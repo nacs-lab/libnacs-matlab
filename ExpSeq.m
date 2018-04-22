@@ -35,7 +35,8 @@ classdef ExpSeq < ExpSeqBase
         drivers;            % map with key values 'FPGABackend' 'NiDACBackend'. This is updated when channel is used in a pulse, so it starts empty.
         driver_cids;        %
         generated = false;  %
-        default_override;   %
+        default_override = false(0);
+        default_override_val = [];
         orig_channel_names; %
         cid_cache;          %
         chn_manager;        %
@@ -58,7 +59,6 @@ classdef ExpSeq < ExpSeqBase
             self.chn_manager = ChannelManager();
             self.drivers = containers.Map();
             self.driver_cids = containers.Map();
-            self.default_override = {};
             self.orig_channel_names = {};
             self.before_start_cbs = {};
             self.cid_cache = containers.Map('KeyType', 'char', 'ValueType', 'double');
@@ -138,7 +138,8 @@ classdef ExpSeq < ExpSeqBase
                 self.drivers_sorted = drivers(:, 1);
                 self.generated = true;
                 if ~preserve
-                    self.default_override = [];
+                    self.default_override = false(0);
+                    self.default_override_val = [];
                     self.orig_channel_names = [];
                     self.cid_cache = [];
                     self.chn_manager = [];
@@ -226,7 +227,8 @@ classdef ExpSeq < ExpSeqBase
         function res = setDefault(self, name, val)
             res = self;
             cid = self.translateChannel(name);
-            self.default_override{cid} = val;
+            self.default_override(cid) = true;
+            self.default_override_val(cid) = val;
         end
 
         function plot(self, varargin)
@@ -413,19 +415,6 @@ classdef ExpSeq < ExpSeqBase
             end
         end
 
-        function vals = getDefaults(self, cids)
-            %% @cid: a column array of channel id numbers
-            if isnumeric(cids)
-                vals = self.getDefault(cids);
-            else
-                nchn = size(cids, 1);
-                vals = zeros(nchn, 1);
-                for i = 1:nchn
-                    vals(i) = self.getDefault(cids(i));
-                end
-            end
-        end
-
         function res = getPulseTimes(self, cid)
             %% TODOPULSE use struct
             res = {};
@@ -464,17 +453,14 @@ classdef ExpSeq < ExpSeqBase
             end
         end
         function val = getDefault(self, cid)
-            try
-                val = self.default_override{cid};
-                if ~isempty(val)
-                    return;
-                end
-            catch
+            if size(self.default_override, 2) >= cid && self.default_override(cid)
+                val = self.default_override_val(cid);
+                return;
             end
             name = channelName(self, cid);
-            try
+            if isKey(self.config.defaultVals, name)
                 val = self.config.defaultVals(name);
-            catch
+            else
                 val = 0;
             end
         end

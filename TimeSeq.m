@@ -35,7 +35,6 @@ classdef TimeSeq < handle
     % log(self, s)
     % logf(self, varargin)
     % res = length(self)
-    % vals = getDefaults(self, cids)
     % vals = getValues(self, dt, varargin)
     % cid = translateChannel(self, name)
     % id = nextPulseId(self)

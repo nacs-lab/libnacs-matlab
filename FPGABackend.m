@@ -101,7 +101,7 @@ classdef FPGABackend < PulseBackend
                 if type_cache(cid) ~= self.TTL_CHN
                     continue;
                 end
-                ttl_values = bitset(ttl_values, num_cache(cid) + 1, getDefaults(self.seq, cid));
+                ttl_values = bitset(ttl_values, num_cache(cid) + 1, getDefault(self.seq, cid));
             end
 
             n_non_ttl = 0;
@@ -137,9 +137,8 @@ classdef FPGABackend < PulseBackend
                     continue;
                 end
                 chn_num = num_cache(cid);
-                default_val = getDefaults(self.seq, cid);
                 code = [code, chn_type, chn_num, ...
-                        typecast(double(default_val), 'int32')];
+                        typecast(double(getDefault(self.seq, cid)), 'int32')];
             end
             code = [code, 0];
             n_pulses_idx = length(code);

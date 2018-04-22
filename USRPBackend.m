@@ -88,7 +88,7 @@ classdef USRPBackend < PulseBackend
                 if np == 0
                     continue;
                 end
-                default_values(i) = self.seq.getDefaults(cid);
+                default_values(i) = getDefault(self.seq, cid);
                 if type_cache(cid) == CH_AMP && default_values(i) ~= 0
                     %% We do this for two reasons:
                     %% 1. The semantics of default value would be kind of surprising since we
