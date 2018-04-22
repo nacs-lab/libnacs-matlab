@@ -34,6 +34,7 @@ classdef (Sealed) TimeStep < TimeSeq
             % methods of ExpSeqBase.
 
             self = self@TimeSeq(varargin{:});  %this uses TimeSeq to constuctor to initialize self.
+            addSubSeq(self.parent, self);
             self.pulses = {};
             if self.len <= 0
                 error('Time steps should have a fixed and positive length');

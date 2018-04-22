@@ -13,8 +13,8 @@
 
 classdef ExpSeqBase < TimeSeq
     % ExpSeqBase is the parent class of ExpSeq.
-    % Its role is to store other ExpSeqBase objects (in the subSeqs
-    % property). The methods of ExpSeqBase are used to add ExpSeqBase's and
+    % Its role is to store other ExpSeqBase objects.
+    % The methods of ExpSeqBase are used to add ExpSeqBase's and
     % pulses to the experiment.
 
     % All Methods:
@@ -48,6 +48,7 @@ classdef ExpSeqBase < TimeSeq
             self = self@TimeSeq(ts_args{:});
             if ~toplevel
                 self.C = self.parent.C;
+                addSubSeq(self.parent, self);
                 return
             end
             C = struct();
@@ -260,8 +261,9 @@ classdef ExpSeqBase < TimeSeq
         %%
         function step = addTimeStep(self, len, start_time)
             %% step [TimeStep] = addTimeStep(self [ExpSeqBase], len, start_time)
-            %     addTimeStep makes an empty TimeStep object 'step' and adds it to subSeqs
-            %     of self.  A pulse is added to the TimeStep by applying add
+            %     addTimeStep makes an empty TimeStep object 'step'
+            %     and adds it to the step list.
+            %     A pulse is added to the TimeStep by applying add
             %     (equiv to addPulse) to the TimeStep.
             %     addTimeStep and addCustomStep are the only functions that add
             %     TimeStep objects (which contain pulses).
@@ -279,12 +281,12 @@ classdef ExpSeqBase < TimeSeq
 
         %%
         function step = addCustomStep(self, start_time, cls, varargin)
-            % step [TimeStep] = addCustomStep(self [ExpSeq], offset, cls [function handle], varargin [optional])
-            % Inserts a new ExpSeqBase in self.subSeqs, then applies the
+            % step [TimeStep] = addCustomStep(self, offset, cls, varargin)
+            % Inserts a new ExpSeqBase in sub sequence list, then applies the
             % function handle cls to it. Advances self.curTime.
             % addTimeStep and addCustomStep are the only functions that add
-            % TimeStep objects (which contain pulses).  All above methods eventually call one of these
-            % mtehods.
+            % TimeStep objects (which contain pulses).
+            % All above methods eventually call one of these methods.
 
 
             if ischar(cls)  % if cls is string, converts to function handle
@@ -292,7 +294,7 @@ classdef ExpSeqBase < TimeSeq
             end
 
             self.curTime = start_time; % advance current time
-            step = ExpSeqBase(self, start_time); % creates ExpSeqBase in self.subSeqs.
+            step = ExpSeqBase(self, start_time);
             % return proxy since I'm not sure there's a good way to forward
             % return values in matlab, especially since the return value can
             % depend on the number of return values.

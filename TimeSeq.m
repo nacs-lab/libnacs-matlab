@@ -54,7 +54,6 @@ classdef TimeSeq < handle
                 self.tOffset = toffset;
                 self.config = parent.config;
                 self.topLevel = parent.topLevel;
-                addSubSeq(parent, self);
                 if exist('len', 'var')
                     self.len = len;
                 end

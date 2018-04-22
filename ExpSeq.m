@@ -13,7 +13,6 @@
 
 classdef ExpSeq < ExpSeqBase
     % ExpSeq is an object representing the entire experimental sequence.
-    % ExpSeq is a subclass of ExpSeqBase, which is a subclass of TimeSeq.
     % ExpSeq adds properties related to hardware, ie the drivers and channels.
 
     %Methods:  %self = ExpSeq(name)
