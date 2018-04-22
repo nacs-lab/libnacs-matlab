@@ -450,12 +450,11 @@ classdef ExpSeq < ExpSeqBase
         end
 
         function res = getPulses(self, cid)
-            %% Return a array of tuples (toffset, length, pulse_obj,
-            %%                           step_start, step_len, cid)
-            %% the pulse_obj should be a number or have a method calcValue that take 3 parameters:
-            %%     time_in_pulse, length, old_val_before_pulse
-            %% and should return the new value @time_in_pulse after the step_start.
-            %% The returned value should be sorted with toffset.
+            %% Return a array of tuples (toffset, length, pulse_obj)
+            %  the pulse_obj should be a number or have a method calcValue that take 3 parameters:
+            %      time_in_pulse, length, old_val_before_pulse
+            %  and should return the new value @time_in_pulse after the step_start.
+            %  The returned value should be sorted with toffset.
             res = appendPulses(self, cid, {}, 0);
             if ~isempty(res)
                 res = sortrows(res', 1);
