@@ -21,12 +21,9 @@ classdef TimeSeq < handle
     properties(Hidden)
         parent = 0;
         tOffset = 0;
-        topLevel = 0;
-        chn_mask;
-    end
-
-    properties(Hidden)
+        topLevel;
         global_path = {};
+        chn_mask;
     end
 
     % All Methods:
@@ -43,18 +40,6 @@ classdef TimeSeq < handle
 
 
     methods
-        function self = TimeSeq(parent, toffset)
-            if exist('parent', 'var')
-                self.parent = parent;
-                self.tOffset = toffset;
-                self.config = parent.config;
-                self.topLevel = parent.topLevel;
-            else
-                self.config = SeqConfig.get();
-                self.topLevel = self;
-            end
-        end
-
         function cid = translateChannel(self, name)
             cid = translateChannel(self.topLevel, name);
         end

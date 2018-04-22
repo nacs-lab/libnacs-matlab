@@ -20,11 +20,11 @@ classdef (Sealed) TimeStep < TimeSeq
 
     % All Methods:
     % self = TimeStep(varargin)
-    % res = add(self, varargin)
-    % ret = addPulse(self, name, pulse)
+    % ret = add(self, name, pulse)
 
     properties
-        pulses; % contains numbers or PulseBase objects, which are children of the PulseBase class.
+        % contains numbers or PulseBase objects, which are children of the PulseBase class.
+        pulses = {};
         len;
     end
 
@@ -32,10 +32,11 @@ classdef (Sealed) TimeStep < TimeSeq
         %%
         function self = TimeStep(parent, start_time, len)
             % Made only in the ExpSeqBase::addTimeStep.
-
-            self = self@TimeSeq(parent, start_time);
+            self.parent = parent;
+            self.tOffset = start_time;
+            self.config = parent.config;
+            self.topLevel = parent.topLevel;
             self.len = len;
-            self.pulses = {};
             parent.subSeqs{end + 1} = self;
         end
 

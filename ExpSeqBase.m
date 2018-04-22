@@ -31,7 +31,7 @@ classdef ExpSeqBase < TimeSeq
     % step = addCustomStep(self, start_time, cls, varargin)
     properties(Hidden)
         curTime = 0;
-        subSeqs;
+        subSeqs = {};
     end
     properties(SetAccess = private, Hidden)
         C;
@@ -40,19 +40,16 @@ classdef ExpSeqBase < TimeSeq
     methods
         function self = ExpSeqBase(parent_or_C, toffset)
             if exist('toffset', 'var')
-                toplevel = 0;
-                ts_args = {parent_or_C, toffset};
-            else
-                toplevel = 1;
-                ts_args = {};
-            end
-            self = self@TimeSeq(ts_args{:});
-            self.subSeqs = {};
-            if ~toplevel
+                self.parent = parent_or_C;
+                self.tOffset = toffset;
+                self.config = parent_or_C.config;
+                self.topLevel = parent_or_C.topLevel;
                 self.C = parent_or_C.C;
                 parent_or_C.subSeqs{end + 1} = self;
-                return
+                return;
             end
+            self.config = SeqConfig.get();
+            self.topLevel = self;
             C = struct();
             consts = self.config.consts;
             fields = fieldnames(consts);
