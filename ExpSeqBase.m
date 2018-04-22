@@ -31,6 +31,7 @@ classdef ExpSeqBase < TimeSeq
     % step = addCustomStep(self, start_time, cls, varargin)
     properties(Hidden)
         curTime = 0;
+        subSeqs;
     end
     properties(SetAccess = private, Hidden)
         C;
@@ -46,6 +47,7 @@ classdef ExpSeqBase < TimeSeq
                 ts_args = {};
             end
             self = self@TimeSeq(ts_args{:});
+            self.subSeqs = {};
             if ~toplevel
                 self.C = self.parent.C;
                 addSubSeq(self.parent, self);
@@ -104,6 +106,47 @@ classdef ExpSeqBase < TimeSeq
             end
             self.curTime = t;
             res = self;
+        end
+
+        function addSubSeq(self, sub_seq)
+            %% addSubSeq  puts the TimeSeq object 'sub_seq' in the cell array subSeqs.
+            self.subSeqs{end + 1} = sub_seq;
+        end
+
+        function subSeqForeach(self, func)
+            nsub = size(self.subSeqs, 2);
+            for i = 1:nsub
+                func(self.subSeqs{i});
+            end
+        end
+
+        function res = appendPulses(self, cid, res, toffset)
+            %% Called in getPulse method.
+            % TODOPULSE use struct
+            subSeqs = self.subSeqs;
+            nsub = size(subSeqs, 2);
+            for i = 1:nsub
+                sub_seq = subSeqs{i};
+                seq_toffset = sub_seq.tOffset + toffset;
+                if isnan(seq_toffset)
+                    error('Cannot get length with floating sub sequence.');
+                end
+                % The following code is manually inlined for TimeStep.
+                % since function call is super slow...
+                if isa(sub_seq, 'TimeStep')
+                    subseq_pulses = sub_seq.pulses;
+                    if size(subseq_pulses, 2) < cid
+                        continue;
+                    end
+                    subseq_pulse = subseq_pulses{cid};
+                    if isempty(subseq_pulse)
+                        continue;
+                    end
+                    res(1:3, end + 1) = {seq_toffset, sub_seq.len, subseq_pulse};
+                else
+                    res = appendPulses(sub_seq, cid, res, seq_toffset);
+                end
+            end
         end
 
         function res = waitBackground(self)
@@ -194,6 +237,21 @@ classdef ExpSeqBase < TimeSeq
                 seq1.setEndTime(endTime(seq2));
             end
             res = {seq1, seq2};
+        end
+
+        function res = length(self)
+            res = 0;
+            nsub = size(self.subSeqs, 2);
+            for i = 1:nsub
+                sub_seq = self.subSeqs{i};
+                sub_end = length(sub_seq) + sub_seq.tOffset;
+                if sub_end > res
+                    res = sub_end;
+                end
+            end
+            if isnan(res)
+                error('Cannot get length with floating sub sequence.');
+            end
         end
     end
 

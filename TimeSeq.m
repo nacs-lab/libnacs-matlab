@@ -26,7 +26,6 @@ classdef TimeSeq < handle
     end
 
     properties(Hidden)
-        subSeqs;
         global_path = {};
     end
 
@@ -39,7 +38,6 @@ classdef TimeSeq < handle
     % vals = getDefaults(self, cids)
     % vals = getValues(self, dt, varargin)
     % cid = translateChannel(self, name)
-    % subSeqForeach(self, func)
     % id = nextPulseId(self)
     % id = nextSeqId(self)
     % val = getDefault(self, ~)
@@ -48,7 +46,6 @@ classdef TimeSeq < handle
 
     methods
         function self = TimeSeq(parent, toffset, len)
-            self.subSeqs = {};
             if exist('parent', 'var')
                 self.parent = parent;
                 self.tOffset = toffset;
@@ -60,26 +57,6 @@ classdef TimeSeq < handle
             else
                 self.config = loadConfig();
                 self.topLevel = self;
-            end
-        end
-
-        function res = length(self)
-            if self.len > 0
-                res = self.len;
-                return;
-            else
-                res = 0;
-                nsub = size(self.subSeqs, 2);
-                for i = 1:nsub
-                    sub_seq = self.subSeqs{i};
-                    sub_end = sub_seq.length() + sub_seq.tOffset;
-                    if sub_end > res
-                        res = sub_end;
-                    end
-                end
-            end
-            if isnan(res)
-                error('Cannot get length with floating sub sequence.');
             end
         end
 
@@ -176,50 +153,6 @@ classdef TimeSeq < handle
             end
             if isnan(res)
                 error('Cannot compute offset different for floating sequence');
-            end
-        end
-
-        function subSeqForeach(self, func)
-            nsub = size(self.subSeqs, 2);
-            for i = 1:nsub
-                func(self.subSeqs{i});
-            end
-        end
-
-        function addSubSeq(self, sub_seq)
-            %% addSubSeq  puts the TimSeq object 'sub_seq' in the cell array subSeqs.
-            if self.len > 0
-                error(['Cannot add sub sequence to a fixed length sequence']);
-            end
-            self.subSeqs{end + 1} = sub_seq;
-        end
-
-        function res = appendPulses(self, cid, res, toffset)
-            %% Called in getPulse method.
-            % TODOPULSE use struct
-            subSeqs = self.subSeqs;
-            nsub = size(subSeqs, 2);
-            for i = 1:nsub
-                sub_seq = subSeqs{i};
-                seq_toffset = sub_seq.tOffset + toffset;
-                if isnan(seq_toffset)
-                    error('Cannot get length with floating sub sequence.');
-                end
-                % The following code is manually inlined for TimeStep.
-                % since function call is super slow...
-                if isa(sub_seq, 'TimeStep')
-                    subseq_pulses = sub_seq.pulses;
-                    if size(subseq_pulses, 2) < cid
-                        continue;
-                    end
-                    subseq_pulse = subseq_pulses{cid};
-                    if isempty(subseq_pulse)
-                        continue;
-                    end
-                    res(1:3, end + 1) = {seq_toffset, sub_seq.len, subseq_pulse};
-                else
-                    res = appendPulses(sub_seq, cid, res, seq_toffset);
-                end
             end
         end
     end

@@ -59,5 +59,9 @@ classdef (Sealed) TimeStep < TimeSeq
             end
             self.pulses{cid} = pulse;
         end
+
+        function res = length(self)
+            res = self.len;
+        end
     end
 end
