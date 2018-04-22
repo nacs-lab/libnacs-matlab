@@ -50,7 +50,7 @@ classdef ExpSeqBase < TimeSeq
             self.subSeqs = {};
             if ~toplevel
                 self.C = parent_or_C.C;
-                addSubSeq(parent_or_C, self);
+                parent_or_C.subSeqs{end + 1} = self;
                 return
             end
             C = struct();
@@ -106,11 +106,6 @@ classdef ExpSeqBase < TimeSeq
             end
             self.curTime = t;
             res = self;
-        end
-
-        function addSubSeq(self, sub_seq)
-            %% addSubSeq  puts the TimeSeq object 'sub_seq' in the cell array subSeqs.
-            self.subSeqs{end + 1} = sub_seq;
         end
 
         function subSeqForeach(self, func)

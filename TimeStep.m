@@ -35,11 +35,8 @@ classdef (Sealed) TimeStep < TimeSeq
 
             self = self@TimeSeq(parent, start_time);
             self.len = len;
-            addSubSeq(parent, self);
             self.pulses = {};
-            if self.len <= 0
-                error('Time steps should have a fixed and positive length');
-            end
+            parent.subSeqs{end + 1} = self;
         end
 
         function ret = add(self, name, pulse)

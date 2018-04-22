@@ -41,7 +41,6 @@ classdef TimeSeq < handle
     % id = nextPulseId(self)
     % id = nextSeqId(self)
     % val = getDefault(self, ~)
-    % addSubSeq(self, sub_seq)
 
 
     methods
