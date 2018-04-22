@@ -19,7 +19,6 @@ classdef TimeSeq < handle
     end
 
     properties(Hidden)
-        len = 0;
         parent = 0;
         tOffset = 0;
         topLevel = 0;
@@ -31,7 +30,7 @@ classdef TimeSeq < handle
     end
 
     % All Methods:
-    % self = TimeSeq(parent_or_name, toffset, len)
+    % self = TimeSeq(parent_or_name, toffset)
     % res = logFile(self)
     % log(self, s)
     % logf(self, varargin)
@@ -46,15 +45,12 @@ classdef TimeSeq < handle
 
 
     methods
-        function self = TimeSeq(parent, toffset, len)
+        function self = TimeSeq(parent, toffset)
             if exist('parent', 'var')
                 self.parent = parent;
                 self.tOffset = toffset;
                 self.config = parent.config;
                 self.topLevel = parent.topLevel;
-                if exist('len', 'var')
-                    self.len = len;
-                end
             else
                 self.config = loadConfig();
                 self.topLevel = self;

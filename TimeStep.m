@@ -25,16 +25,17 @@ classdef (Sealed) TimeStep < TimeSeq
 
     properties
         pulses; % contains numbers or PulseBase objects, which are children of the PulseBase class.
+        len;
     end
 
     methods
         %%
-        function self = TimeStep(varargin)
-            % TimeStep object is made only in the addTimeStep and addCustomStep
-            % methods of ExpSeqBase.
+        function self = TimeStep(parent, start_time, len)
+            % Made only in the ExpSeqBase::addTimeStep.
 
-            self = self@TimeSeq(varargin{:});  %this uses TimeSeq to constuctor to initialize self.
-            addSubSeq(self.parent, self);
+            self = self@TimeSeq(parent, start_time);
+            self.len = len;
+            addSubSeq(parent, self);
             self.pulses = {};
             if self.len <= 0
                 error('Time steps should have a fixed and positive length');

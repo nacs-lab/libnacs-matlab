@@ -49,8 +49,8 @@ classdef ExpSeqBase < TimeSeq
             self = self@TimeSeq(ts_args{:});
             self.subSeqs = {};
             if ~toplevel
-                self.C = self.parent.C;
-                addSubSeq(self.parent, self);
+                self.C = parent_or_C.C;
+                addSubSeq(parent_or_C, self);
                 return
             end
             C = struct();
