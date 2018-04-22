@@ -122,8 +122,7 @@ classdef FPGABackend < PulseBackend
                 end
             end
 
-            code = int32([]);  %code is where all command data is stored.
-            code = [code, ttl_values, n_non_ttl];
+            code = [int32(ttl_values), int32(n_non_ttl)];
 
             %
             for i = 1:nchn
@@ -155,12 +154,14 @@ classdef FPGABackend < PulseBackend
                 for j = 1:size(pulses, 1)
                     pulse_obj = pulses{j, 3};
                     t_start = pulses{j, 1} + SEQ_DELAY;
+                    nc = length(code);
                     if isnumeric(pulse_obj)
                         val = pulse_obj;
                         n_pulses = n_pulses + 1;
-                        code = [code, chn_type, chn_num, ...
-                                typecast(double(t_start), 'int32'), ...
-                                0, 0, 0, typecast(double(val), 'int32')];
+                        code(nc + 8:nc + 9) = typecast(double(val), 'int32');
+                        code(nc + 1) = chn_type;
+                        code(nc + 2) = chn_num;
+                        code(nc + 3:nc + 4) = typecast(double(t_start), 'int32');
                         continue;
                     end
                     step_len = pulses{j, 2};
@@ -168,16 +169,17 @@ classdef FPGABackend < PulseBackend
                         error('Function pulse not allowed on TTL channel');
                     end
                     n_pulses = n_pulses + 1;
-                    code = [code, chn_type, chn_num, ...
-                            typecast(double(t_start), 'int32'), ...
-                            typecast(double(step_len), 'int32')];
+                    code(nc + 5:nc + 6) = typecast(double(step_len), 'int32');
+                    code(nc + 1) = chn_type;
+                    code(nc + 2) = chn_num;
+                    code(nc + 3:nc + 4) = typecast(double(t_start), 'int32');
                     isir = 0;
                     if isa(pulse_obj, 'IRPulse')
                         irpulse_id = sprintf('%s::%d', pulse_obj.id, ...
                                              typecast(double(step_len), 'int64'));
                         ir = getindex(ircache, irpulse_id);
                         if ~isempty(ir)
-                            code = [code, ir];
+                            code(end + 1:end + length(ir)) = ir;
                             continue;
                         end
                         isir = 1;
@@ -193,7 +195,7 @@ classdef FPGABackend < PulseBackend
                         func.setCode(val);
                         ser = func.serialize();
                         ir = [length(ser), ser];
-                        code = [code, ir];
+                        code(end + 1:end + length(ir)) = ir;
                         if isir
                             setindex(ircache, ir, irpulse_id);
                         end
