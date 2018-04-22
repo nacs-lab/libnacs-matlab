@@ -14,37 +14,37 @@
 classdef ChannelManager < handle
     %A ChannelManager object is set as ExpSeq.chn_manager
 
-  properties
-    channels = {};
-  end
-  properties(Access=private)
-    cid_map;
-  end
-
-  methods
-      %%
-    function self = ChannelManager()
-      self.cid_map = containers.Map();
+    properties
+        channels = {};
+    end
+    properties(Access=private)
+        cid_map;
     end
 
-    %%
-    function id = findId(self, name)
-      try
-        id = self.cid_map(name);
-      catch
-        id = 0;
-      end
-    end
+    methods
+        %%
+        function self = ChannelManager()
+            self.cid_map = containers.Map();
+        end
 
-    %%
-    function id = getId(self, name)
-      try
-        id = self.cid_map(name);
-      catch
-        id = size(self.channels, 2) + 1;
-        self.channels{id} = name;
-        self.cid_map(name) = id;
-      end
+        %%
+        function id = findId(self, name)
+            try
+                id = self.cid_map(name);
+            catch
+                id = 0;
+            end
+        end
+
+        %%
+        function id = getId(self, name)
+            try
+                id = self.cid_map(name);
+            catch
+                id = size(self.channels, 2) + 1;
+                self.channels{id} = name;
+                self.cid_map(name) = id;
+            end
+        end
     end
-  end
 end

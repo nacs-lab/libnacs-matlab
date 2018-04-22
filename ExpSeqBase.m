@@ -127,26 +127,46 @@ classdef ExpSeqBase < TimeSeq
             nsub = size(subSeqs, 2);
             for i = 1:nsub
                 sub_seq = subSeqs{i};
+                if ~sub_seq.chn_mask(cid)
+                    continue;
+                end
                 seq_toffset = sub_seq.tOffset + toffset;
-                if isnan(seq_toffset)
-                    error('Cannot get length with floating sub sequence.');
+                % The following code is manually inlined for TimeStep.
+                % since function call is super slow...
+                if isa(sub_seq, 'TimeStep')
+                    res(1:3, end + 1) = {seq_toffset, sub_seq.len, sub_seq.pulses{cid}};
+                else
+                    res = appendPulses(sub_seq, cid, res, seq_toffset);
+                end
+            end
+        end
+
+        function res = populateChnMask(self, nchn)
+            res = false(1, nchn);
+            subSeqs = self.subSeqs;
+            nsub = size(subSeqs, 2);
+            for i = 1:nsub
+                sub_seq = subSeqs{i};
+                if isnan(sub_seq.tOffset)
+                    error('Sub sequence still floating');
                 end
                 % The following code is manually inlined for TimeStep.
                 % since function call is super slow...
                 if isa(sub_seq, 'TimeStep')
                     subseq_pulses = sub_seq.pulses;
-                    if size(subseq_pulses, 2) < cid
-                        continue;
+                    sub_res = false(1, nchn);
+                    for j = 1:size(subseq_pulses, 2)
+                        if ~isempty(subseq_pulses{j})
+                            sub_res(j) = true;
+                            res(j) = true;
+                        end
                     end
-                    subseq_pulse = subseq_pulses{cid};
-                    if isempty(subseq_pulse)
-                        continue;
-                    end
-                    res(1:3, end + 1) = {seq_toffset, sub_seq.len, subseq_pulse};
+                    sub_seq.chn_mask = sub_res;
                 else
-                    res = appendPulses(sub_seq, cid, res, seq_toffset);
+                    res = res | populateChnMask(sub_seq, nchn);
                 end
             end
+            self.chn_mask = res;
         end
 
         function res = waitBackground(self)

@@ -41,6 +41,7 @@ classdef ExpSeq < ExpSeqBase
         chn_manager;        %
         before_start_cbs;
         drivers_sorted;
+        mask_created = false;
     end
 
     methods
@@ -455,6 +456,10 @@ classdef ExpSeq < ExpSeqBase
             %      time_in_pulse, length, old_val_before_pulse
             %  and should return the new value @time_in_pulse after the step_start.
             %  The returned value should be sorted with toffset.
+            if ~self.mask_created
+                populateChnMask(self, size(self.chn_manager.channels, 2));
+                self.mask_created = true;
+            end
             res = appendPulses(self, cid, {}, 0);
             if ~isempty(res)
                 res = sortrows(res', 1);

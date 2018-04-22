@@ -23,13 +23,14 @@ classdef TimeSeq < handle
         parent = 0;
         tOffset = 0;
         topLevel = 0;
+        chn_mask;
     end
 
     properties(Hidden)
         global_path = {};
     end
 
-    %All Methods:
+    % All Methods:
     % self = TimeSeq(parent_or_name, toffset, len)
     % res = logFile(self)
     % log(self, s)
