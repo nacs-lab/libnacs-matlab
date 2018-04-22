@@ -51,10 +51,6 @@ m.Data(1).CurrentSeqNum = 0;
 
 arglist = {{}};
 
-if ischar(func)
-    func = str2func(func);
-end
-
 argidx = 1;
 arglist_set = false;
 is_scanseq = false;

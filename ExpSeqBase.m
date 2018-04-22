@@ -366,11 +366,6 @@ classdef ExpSeqBase < TimeSeq
             % TimeStep objects (which contain pulses).
             % All above methods eventually call one of these methods.
 
-
-            if ischar(cls)  % if cls is string, converts to function handle
-                cls = str2func(cls);
-            end
-
             self.curTime = start_time; % advance current time
             step = ExpSeqBase(self, start_time);
             % return proxy since I'm not sure there's a good way to forward
