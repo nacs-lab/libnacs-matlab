@@ -12,8 +12,6 @@
 # License along with this library.
 
 import zmq
-import struct
-import sys
 import libnacs
 
 class FPGAPoster(object):
