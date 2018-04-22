@@ -29,18 +29,18 @@ classdef ChannelManager < handle
 
         %%
         function id = findId(self, name)
-            try
+            if isKey(self.cid_map, name)
                 id = self.cid_map(name);
-            catch
+            else
                 id = 0;
             end
         end
 
         %%
         function id = getId(self, name)
-            try
+            if isKey(self.cid_map, name)
                 id = self.cid_map(name);
-            catch
+            else
                 id = size(self.channels, 2) + 1;
                 self.channels{id} = name;
                 self.cid_map(name) = id;
