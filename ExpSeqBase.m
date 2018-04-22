@@ -305,14 +305,21 @@ classdef ExpSeqBase < TimeSeq
             elseif isempty(varargin)
                 % If we only have one numerical argument it must be a simple time step.
                 % What fall through should be (number, at_least_another_arg, *arg)
-                if first_arg < 0
+                if first_arg <= 0
                     if isnan(curtime)
                         error('Floating time step with time offset not allowed.');
+                    elseif first_arg == 0
+                        error('Length of time step must be positive.');
                     end
-                    step = self.addTimeStep(-first_arg, first_arg + curtime);
+                    start_time = first_arg + curtime;
+                    len = -first_arg;
                 else
-                    step = self.addTimeStep(first_arg, curtime);  % Case 1
+                    start_time = curtime;
+                    len = first_arg;
+                    curtime = curtime + len;
                 end
+                step = TimeStep(self, start_time, len);
+                self.curTime = curtime;
             elseif isnumeric(varargin{1})
                 % If we only have two numerical argument it must be a simple time step
                 % with custom offset.
@@ -323,10 +330,14 @@ classdef ExpSeqBase < TimeSeq
                     error('Floating time step with time offset not allowed.');
                 end
                 offset = varargin{1};
-                if ~is_background && offset + first_arg < 0
+                end_offset = offset + first_arg;
+                if ~is_background && end_offset < 0
                     error('Implicitly going back in time is not allowed.');
+                elseif first_arg <= 0
+                    error('Length of time step must be positive.');
                 end
-                step = self.addTimeStep(first_arg, offset + curtime);
+                step = TimeStep(self, offset + curtime, first_arg);
+                self.curTime = end_offset + curtime;
             else
                 % The not_number must be a custom step. Do it.
                 if isnan(curtime)
@@ -334,27 +345,6 @@ classdef ExpSeqBase < TimeSeq
                 end
                 step = self.addCustomStep(curtime + first_arg, varargin{:});
             end
-        end
-
-        %%
-        function step = addTimeStep(self, len, start_time)
-            %% step [TimeStep] = addTimeStep(self [ExpSeqBase], len, start_time)
-            %     addTimeStep makes an empty TimeStep object 'step'
-            %     and adds it to the step list.
-            %     A pulse is added to the TimeStep by applying add
-            %     (equiv to addPulse) to the TimeStep.
-            %     addTimeStep and addCustomStep are the only functions that add
-            %     TimeStep objects (which contain pulses).
-            %     All above methods eventually call one of these methods.
-
-            if len <= 0
-                error('Length of time step must be positive.');
-            end
-
-            self.curTime = start_time;
-            % makes a TimeStep object 'step', and adds it to the subSeq of self.
-            step = TimeStep(self, start_time, len);
-            self.curTime = self.curTime + len;
         end
 
         %%
