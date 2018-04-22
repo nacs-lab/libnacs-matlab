@@ -416,7 +416,6 @@ classdef ExpSeq < ExpSeqBase
         end
 
         function res = getPulseTimes(self, cid)
-            %% TODOPULSE use struct
             res = {};
             pulses = self.getPulses(cid);
             for i = 1:size(pulses, 1)

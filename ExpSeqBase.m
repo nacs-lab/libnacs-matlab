@@ -120,8 +120,7 @@ classdef ExpSeqBase < TimeSeq
         end
 
         function res = appendPulses(self, cid, res, toffset)
-            %% Called in getPulse method.
-            % TODOPULSE use struct
+            % Called in getPulse method.
             subSeqs = self.subSeqs;
             nsub = size(subSeqs, 2);
             for i = 1:nsub

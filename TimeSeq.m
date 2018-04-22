@@ -1,49 +1,81 @@
-%% Copyright (c) 2014-2018, Yichao Yu <yyc1992@gmail.com>
+% Copyright (c) 2014-2018, Yichao Yu <yyc1992@gmail.com>
+%
+% This library is free software; you can redistribute it and/or
+% modify it under the terms of the GNU Lesser General Public
+% License as published by the Free Software Foundation; either
+% version 3.0 of the License, or (at your option) any later version.
+% This library is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+% Lesser General Public License for more details.
+% You should have received a copy of the GNU Lesser General Public
+% License along with this library.
+
 %%
-%% This library is free software; you can redistribute it and/or
-%% modify it under the terms of the GNU Lesser General Public
-%% License as published by the Free Software Foundation; either
-%% version 3.0 of the License, or (at your option) any later version.
-%% This library is distributed in the hope that it will be useful,
-%% but WITHOUT ANY WARRANTY; without even the implied warranty of
-%% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-%% Lesser General Public License for more details.
-%% You should have received a copy of the GNU Lesser General Public
-%% License along with this library.
-
+% This is the base class of `TimeStep` and `ExpSeqBase`,
+% which form a sequence in a directed acyclic graph (DAG).
+% All the non-leaf nodes are `ExpSeqBase`, which represents a sub-sequence that
+% host an arbitrary number of steps or sub-sequences.
+% All outputs (pulses) are stored in the leaf nodes `TimeStep`.
+%
+% The timing info is stored in the DAG. See `ExpSeqBase` for the timing APIs.
+% The pulse (output) info is stored in the step (leaf node).
+% See `TimeStep` for the APIs that operate on the output.
+%
+% This class stores information that's needed for both sub-sequences and steps,
+% e.g. global config, parent, timing information, etc.
+%
+% The main differences between the two immediate subclasses are,
+% * `ExpSeqBase` may have childs but will not have a fixed length.
+% * `TimeStep` will have a fixed length but cannot have childs.
+%   Instead, `TimeStep` can only contain pulses, which describe the
+%   output to be done on certain channels.
 classdef TimeSeq < handle
-    % Parent class of TimeStep, ExpSeqBase > ExpSeq.
-
-    properties
-        config;     % SeqConfig class. Contains hardware info, channel aliases, etc.
-    end
-
     properties(Hidden)
+        % This is a `SeqConfig` that contains global config loaded from `nacsConfig`.
+        config;
+        % Points to parent node, or `0` for root node.
         parent = 0;
+        % The time offset of this node within the parent node.
         tOffset = 0;
+        % The root node (the toplevel sequence).
         topLevel;
+        % This is the path from the root node, including self and not including the root.
+        % This is computed lazily (see `TimeSeq::globalPath`) and is used to find the
+        % closest common ancestor of two nodes (see `TimeSeq::offsetDiff`).
         global_path = {};
+        % This is a boolean array storing whether the sequence contain pulses for
+        % each channel. The array is indexed by the channel ID.
+        % The field is computed and cached before generation starts (see `ExpSeq::generate`).
         chn_mask;
     end
 
-    % All Methods:
-    % self = TimeSeq(parent_or_name, toffset)
-    % res = logFile(self)
-    % log(self, s)
-    % logf(self, varargin)
-    % res = length(self)
-    % vals = getValues(self, dt, varargin)
-    % cid = translateChannel(self, name)
-    % id = nextPulseId(self)
-    % id = nextSeqId(self)
-    % val = getDefault(self, ~)
-
-
     methods
+        %%
+        % Translate from channel name to channel ID.
+        % This is just a wrapper for `ExpSeq::translateChannel`.
+        % All internal users should use `translateChannel(self.topLevel, name)` due to
+        % the slowness of function call and this is provided for convinience of the user.
+        % For example, the user could pre-lookup the channel ID and
+        % use that instead of the channel name in the sequence if it is known that
+        % the channel will be used many times later.
         function cid = translateChannel(self, name)
             cid = translateChannel(self.topLevel, name);
         end
 
+        %%
+        % Position a currently floating step/sub sequence (`self`)
+        % The `anchor` percentage point of the current `TimeSeq` will be positioned
+        % `offset` after the time point. The length of the current sequence
+        % is the current time for sub sequences (`ExpSeqBase`)
+        % and length for steps (`TimeStep`), consistent with the logic in `TimePoint`.
+        %
+        % NOTE: The choice of the definition for `TimeStep` is obvious and the choice for
+        %   `ExpSeqBase` is because current time is what's more visible to the user
+        %   than the total length of the subsquence including all background sequence.
+        %   In fact, total length of the sequence is rarely useful/reliable
+        %   since sub-sequences within the current sequence could have late background steps
+        %   that are very hard to discover.
         function setTime(self, time, anchor, offset)
             if ~exist('anchor', 'var')
                 anchor = 0;
@@ -53,8 +85,7 @@ classdef TimeSeq < handle
             end
             if ~isa(time, 'TimePoint')
                 error('Time must be a `TimePoint`.');
-            end
-            if ~isnan(self.tOffset)
+            elseif ~isnan(self.tOffset)
                 error('Not a floating sequence.');
             end
             other = time.seq;
@@ -76,9 +107,15 @@ classdef TimeSeq < handle
                 end
                 tdiff = tdiff - len * anchor;
             end
+            if tdiff < 0
+                error('Negative time offset not allowed.');
+            end
             self.tOffset = tdiff;
         end
 
+        %%
+        % See `TimeSeq::setTime`. Wrapper of `TimeSeq::setTime` to set the time
+        % based on end time.
         function setEndTime(self, time, offset)
             if ~exist('offset', 'var')
                 offset = 0;
@@ -88,7 +125,7 @@ classdef TimeSeq < handle
     end
 
     methods(Access=protected)
-        function p=globalPath(self)
+        function p = globalPath(self)
             p = self.global_path;
             if isempty(p)
                 self.global_path = globalPath(self.parent);
@@ -98,7 +135,7 @@ classdef TimeSeq < handle
         end
 
         function res = offsetDiff(self, step)
-            %% compute the offset different starting from the lowest common ancestor
+            % compute the offset different starting from the lowest common ancestor
             % This reduce rounding error and make it possible to support floating sequence
             % in the common ancestor.
             self_path = globalPath(self);
