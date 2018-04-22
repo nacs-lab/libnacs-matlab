@@ -14,7 +14,7 @@
 classdef Consts < DynProps
   methods
     function self = Consts()
-        conf = loadConfig();
+        conf = SeqConfig.get();
         self = self@DynProps(conf.consts);
     end
   end

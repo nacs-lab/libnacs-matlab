@@ -15,7 +15,7 @@ classdef TimeSeq < handle
     % Parent class of TimeStep, ExpSeqBase > ExpSeq.
 
     properties
-        config;     %LoadConfig class. Contains hardware info, channel aliases, etc.
+        config;     % SeqConfig class. Contains hardware info, channel aliases, etc.
     end
 
     properties(Hidden)
@@ -50,7 +50,7 @@ classdef TimeSeq < handle
                 self.config = parent.config;
                 self.topLevel = parent.topLevel;
             else
-                self.config = loadConfig();
+                self.config = SeqConfig.get();
                 self.topLevel = self;
             end
         end

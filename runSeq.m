@@ -35,9 +35,11 @@ return_array = false;
 notify = [];
 
 seq_map = containers.Map('KeyType', 'double', 'ValueType', 'double');
+SeqConfig.cache();
 
 function runSeqCleanup()
     ExpSeq.reset();
+    SeqConfig.reset();
 end
 
 cleanup = onCleanup(@runSeqCleanup);

@@ -1,21 +1,21 @@
-%% Copyright (c) 2014-2014, Yichao Yu <yyc1992@gmail.com>
-%%
-%% This library is free software; you can redistribute it and/or
-%% modify it under the terms of the GNU Lesser General Public
-%% License as published by the Free Software Foundation; either
-%% version 3.0 of the License, or (at your option) any later version.
-%% This library is distributed in the hope that it will be useful,
-%% but WITHOUT ANY WARRANTY; without even the implied warranty of
-%% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-%% Lesser General Public License for more details.
-%% You should have received a copy of the GNU Lesser General Public
-%% License along with this library.
+% Copyright (c) 2014-2018, Yichao Yu <yyc1992@gmail.com>
+%
+% This library is free software; you can redistribute it and/or
+% modify it under the terms of the GNU Lesser General Public
+% License as published by the Free Software Foundation; either
+% version 3.0 of the License, or (at your option) any later version.
+% This library is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+% Lesser General Public License for more details.
+% You should have received a copy of the GNU Lesser General Public
+% License along with this library.
 
-classdef loadConfig < handle
-    % The loadConfig object contains hardware info, channel names.
+classdef SeqConfig < handle
+    % The SeqConfig object contains hardware info, channel names.
 
     % All Methods
-    % self = loadConfig()
+    % self = SeqConfig()
     % res = translateChannel(self, name)
 
     properties(Access=private)
@@ -37,7 +37,7 @@ classdef loadConfig < handle
 
     methods
         %%
-        function self = loadConfig()
+        function self = SeqConfig()
             self.name_map = containers.Map();
             % Create empty maps
             fpgaUrls = containers.Map();
@@ -111,6 +111,24 @@ classdef loadConfig < handle
                 end
                 self.name_map(name) = res;
             end
+        end
+    end
+    methods(Static)
+        function config = get()
+            global nacsSeqConfigCache;
+            if ~isempty(nacsSeqConfigCache)
+                config = nacsSeqConfigCache;
+            else
+                config = SeqConfig();
+            end
+        end
+        function reset()
+            global nacsSeqConfigCache;
+            nacsSeqConfigCache = [];
+        end
+        function cache()
+            global nacsSeqConfigCache;
+            nacsSeqConfigCache = SeqConfig();
         end
     end
 end
