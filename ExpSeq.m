@@ -189,17 +189,9 @@ classdef ExpSeq < ExpSeqBase
             if ~isempty(nacsExpSeqDisableRunHack) && nacsExpSeqDisableRunHack
                 return;
             end
-            drivers = {};
-            for driver = self.drivers.values()
-                % Do waiting in reverse order, mainly so that we wait for NiDAC
-                % as the last one and avoid much of the busy wait.
-                drivers = [drivers; {driver{:}, driver{:}.getPriority()}];
-            end
-            if ~isempty(drivers)
-                drivers = sortrows(drivers, [2]);
-            end
+            drivers = self.drivers_sorted;
             for i = 1:length(drivers)
-                drivers{i, 1}.wait();
+                wait(drivers{i, 1});
             end
         end
 
