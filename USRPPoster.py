@@ -34,7 +34,7 @@ class USRPPoster(object):
         self.__sock.send(data)
 
     def post_reply(self):
-        if self.__sock.poll(1) == 0:
+        if self.__sock.poll(1000) == 0:
             return 0
         return struct.unpack('@Q', self.__sock.recv())[0]
 
