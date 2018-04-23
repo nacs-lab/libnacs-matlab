@@ -74,7 +74,7 @@ classdef ExpSeq < ExpSeqBase
             cid = getId(self.chn_manager, name);
             self.cid_cache(orig_name) = cid;
 
-            if (cid > size(self.orig_channel_names, 2) || ...
+            if (cid > length(self.orig_channel_names) || ...
                 isempty(self.orig_channel_names{cid}))
                 self.orig_channel_names{cid} = orig_name;
             else
@@ -115,7 +115,7 @@ classdef ExpSeq < ExpSeqBase
                           self.length(), self.config.maxLength);
                 end
                 disp('Generating ...');
-                populateChnMask(self, size(self.chn_manager.channels, 2));
+                populateChnMask(self, length(self.chn_manager.channels));
                 for key = self.drivers.keys()
                     driver_name = key{:};
                     driver = self.drivers(driver_name);
@@ -167,7 +167,7 @@ classdef ExpSeq < ExpSeqBase
                     cb{:}();
                 end
             end
-            for i = 1:size(drivers, 1)
+            for i = 1:length(drivers)
                 run(drivers{i});
             end
             disp(['Started at ' datestr(now, 'HH:MM:SS, yyyy/mm/dd')]);
@@ -198,7 +198,7 @@ classdef ExpSeq < ExpSeqBase
             if ~isempty(drivers)
                 drivers = sortrows(drivers, [2]);
             end
-            for i = 1:size(drivers, 1)
+            for i = 1:length(drivers)
                 drivers{i, 1}.wait();
             end
         end
@@ -248,7 +248,7 @@ classdef ExpSeq < ExpSeqBase
                     prefix = self.config.translateChannel(matches{1}{1});
                     prefix_len = size(prefix, 2);
 
-                    for cid = 1:size(self.orig_channel_names, 2)
+                    for cid = 1:length(self.orig_channel_names)
                         orig_name = self.orig_channel_names{cid};
                         if isempty(orig_name)
                             continue;
@@ -262,7 +262,7 @@ classdef ExpSeq < ExpSeqBase
                 elseif arg(1) == '~'
                     arg = arg(2:end);
 
-                    for cid = 1:size(self.orig_channel_names, 2)
+                    for cid = 1:length(self.orig_channel_names)
                         orig_name = self.orig_channel_names{cid};
                         if isempty(orig_name)
                             continue;
@@ -452,7 +452,7 @@ classdef ExpSeq < ExpSeqBase
             end
         end
         function val = getDefault(self, cid)
-            if size(self.default_override, 2) >= cid && self.default_override(cid)
+            if length(self.default_override) >= cid && self.default_override(cid)
                 val = self.default_override_val(cid);
                 return;
             end

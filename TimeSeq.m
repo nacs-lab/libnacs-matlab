@@ -140,8 +140,8 @@ classdef TimeSeq < handle
             % in the common ancestor.
             self_path = globalPath(self);
             other_path = globalPath(step);
-            nself = size(self_path, 2);
-            nother = size(other_path, 2);
+            nself = length(self_path);
+            nother = length(other_path);
             res = 0;
             for i = 1:max(nself, nother)
                 if i <= nself

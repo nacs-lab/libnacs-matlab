@@ -113,8 +113,7 @@ classdef ExpSeqBase < TimeSeq
         end
 
         function subSeqForeach(self, func)
-            nsub = size(self.subSeqs, 2);
-            for i = 1:nsub
+            for i = 1:length(self.subSeqs)
                 func(self.subSeqs{i});
             end
         end
@@ -122,8 +121,7 @@ classdef ExpSeqBase < TimeSeq
         function res = appendPulses(self, cid, res, toffset)
             % Called in getPulse method.
             subSeqs = self.subSeqs;
-            nsub = size(subSeqs, 2);
-            for i = 1:nsub
+            for i = 1:length(subSeqs)
                 sub_seq = subSeqs{i};
                 if ~sub_seq.chn_mask(cid)
                     continue;
@@ -142,8 +140,7 @@ classdef ExpSeqBase < TimeSeq
         function res = populateChnMask(self, nchn)
             res = false(1, nchn);
             subSeqs = self.subSeqs;
-            nsub = size(subSeqs, 2);
-            for i = 1:nsub
+            for i = 1:length(subSeqs)
                 sub_seq = subSeqs{i};
                 if isnan(sub_seq.tOffset)
                     error('Sub sequence still floating');
@@ -153,7 +150,7 @@ classdef ExpSeqBase < TimeSeq
                 if isa(sub_seq, 'TimeStep')
                     subseq_pulses = sub_seq.pulses;
                     sub_res = false(1, nchn);
-                    for j = 1:size(subseq_pulses, 2)
+                    for j = 1:length(subseq_pulses)
                         if ~isempty(subseq_pulses{j})
                             sub_res(j) = true;
                             res(j) = true;
@@ -250,8 +247,7 @@ classdef ExpSeqBase < TimeSeq
 
         function res = length(self)
             res = 0;
-            nsub = size(self.subSeqs, 2);
-            for i = 1:nsub
+            for i = 1:length(self.subSeqs)
                 sub_seq = self.subSeqs{i};
                 if isa(sub_seq, 'TimeStep')
                     sub_end = sub_seq.len + sub_seq.tOffset;

@@ -67,7 +67,7 @@ classdef NiDACBackend < PulseBackend
         %%
         function initChannel(self, cid)
             %
-            if size(self.cid_map, 2) >= cid && ~isempty(self.cid_map{cid})
+            if length(self.cid_map) >= cid && ~isempty(self.cid_map{cid})
                 return;
             end
             name = channelName(self.seq, cid);
@@ -266,7 +266,7 @@ classdef NiDACBackend < PulseBackend
             inited_devs = containers.Map();
 
             %
-            for i = 1:size(self.cids, 2)
+            for i = 1:length(self.cids)
                 cid = self.cids(i);
                 dev_name = self.cid_map{cid}{1};
                 output_id = self.cid_map{cid}{2};
@@ -284,7 +284,7 @@ classdef NiDACBackend < PulseBackend
             % skip the check if the age didn't change. The current implementation
             % seems to be fast enough though ;-)
             Channels = session.Channels;
-            nchns = size(self.cids, 2);
+            nchns = length(self.cids);
             if length(Channels) ~= nchns
                 res = 0;
                 return;

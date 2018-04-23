@@ -41,7 +41,7 @@ classdef USRPBackend < PulseBackend
         end
 
         function initChannel(self, cid)
-            if size(self.type_cache, 2) >= cid && self.type_cache(cid) > 0
+            if length(self.type_cache) >= cid && self.type_cache(cid) > 0
                 return;
             end
             name = channelName(self.seq, cid);
@@ -75,7 +75,7 @@ classdef USRPBackend < PulseBackend
 
             type_cache = self.type_cache;
             num_cache = self.num_cache;
-            nchn = size(cids, 2);
+            nchn = length(cids);
             default_values = zeros(1, nchn);
 
             n_pulses = 0;

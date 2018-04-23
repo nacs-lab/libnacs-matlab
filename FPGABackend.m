@@ -51,7 +51,7 @@ classdef FPGABackend < PulseBackend
         %%
         function initChannel(self, cid)
             %
-            if size(self.type_cache, 2) >= cid && self.type_cache(cid) > 0
+            if length(self.type_cache) >= cid && self.type_cache(cid) > 0
                 return;
             end
             name = channelName(self.seq, cid);
@@ -94,7 +94,7 @@ classdef FPGABackend < PulseBackend
 
             type_cache = self.type_cache;
             num_cache = self.num_cache;
-            nchn = size(cids, 2);
+            nchn = length(cids);
             ttl_values = uint32(0);
             for i = 1:nchn
                 cid = cids(i);
