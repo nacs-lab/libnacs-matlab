@@ -24,7 +24,7 @@ classdef (Sealed) TimeStep < TimeSeq
 
     properties
         % contains numbers or PulseBase objects, which are children of the PulseBase class.
-        pulses = {};
+        pulses = {[], [], [], [], [], [], [], []};
         len;
     end
 
@@ -60,6 +60,9 @@ classdef (Sealed) TimeStep < TimeSeq
             elseif ~isa(pulse, 'PulseBase')
                 % Treat as function
                 pulse = FuncPulse(pulse);
+            end
+            if cid > length(self.pulses)
+                self.pulses{cid + 5} = [];
             end
             self.pulses{cid} = pulse;
         end
