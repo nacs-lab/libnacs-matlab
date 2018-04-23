@@ -50,10 +50,10 @@ classdef WavemeterServer < handle
         numInBound = 1; % number of sucesses before aborting
         Vmax = 9;
         Vmin = 7;
-        
+
         kyhdl = Keithley.get();
         wm = Wavemeter.get(wmLogFile);
-        
+
         flist = [];
         ferr = [];
         Vlist = [];
@@ -83,23 +83,23 @@ classdef WavemeterServer < handle
                     numInBoundIdx = numInBoundIdx + 1;
                 end
             end
-            
+
             % Set voltage
             Vcurr = kyhdl.getVoltage();
             Vnew = Vcurr + deltaV;
             if Vnew > Vmax || Vnew < Vmin
                 error('Voltage outside of range. Aborting...');
             end
-            
+
             kyhdl.setVoltage(Vnew);
             %SetVInnolume((Vnew - Vcenter) * 10 + 5); % Cannot use NIDAQ while experiment running
             disp(['Set new voltage: ' num2str(Vnew)]);
-            
+
             % Save to lists
             flist(i) = fMeasured;
             ferr(i) = std(freqs)/sqrt(1);
             Vlist(i) = Vnew;
-            
+
             % Plot
             subplot(1,2,1);
             %errorbar( 1:length(flist), flist, ferr, '.-');
@@ -111,11 +111,11 @@ classdef WavemeterServer < handle
             xlabel('Iteration');
             ylabel('VPATemp (V)');
             subplot(1,2,2);
-            
+
             i=i+1;
         end
-        
-        
+
+
     end
 
     function run(self)
