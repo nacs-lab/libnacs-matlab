@@ -37,7 +37,12 @@ classdef (Sealed) TimeStep < TimeSeq
             self.config = parent.config;
             self.topLevel = parent.topLevel;
             self.len = len;
-            parent.subSeqs{end + 1} = self;
+            ns = parent.nSubSeqs + 1;
+            parent.nSubSeqs = ns;
+            if ns > length(parent.subSeqs)
+                parent.subSeqs{round(ns * 1.3) + 8} = [];
+            end
+            parent.subSeqs{ns} = self;
         end
 
         function ret = add(self, name, pulse)

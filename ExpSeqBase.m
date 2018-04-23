@@ -32,6 +32,7 @@ classdef ExpSeqBase < TimeSeq
     properties(Hidden)
         curTime = 0;
         subSeqs = {};
+        nSubSeqs = 0;
     end
     properties(SetAccess = private, Hidden)
         C;
@@ -45,7 +46,12 @@ classdef ExpSeqBase < TimeSeq
                 self.config = parent_or_C.config;
                 self.topLevel = parent_or_C.topLevel;
                 self.C = parent_or_C.C;
-                parent_or_C.subSeqs{end + 1} = self;
+                ns = parent_or_C.nSubSeqs + 1;
+                parent_or_C.nSubSeqs = ns;
+                if ns > length(parent_or_C.subSeqs)
+                    parent_or_C.subSeqs{round(ns * 1.3) + 8} = [];
+                end
+                parent_or_C.subSeqs{ns} = self;
                 return;
             end
             self.config = SeqConfig.get();
@@ -113,7 +119,7 @@ classdef ExpSeqBase < TimeSeq
         end
 
         function subSeqForeach(self, func)
-            for i = 1:length(self.subSeqs)
+            for i = 1:self.nSubSeqs
                 func(self.subSeqs{i});
             end
         end
@@ -121,7 +127,7 @@ classdef ExpSeqBase < TimeSeq
         function res = appendPulses(self, cid, res, toffset)
             % Called in getPulse method.
             subSeqs = self.subSeqs;
-            for i = 1:length(subSeqs)
+            for i = 1:self.nSubSeqs
                 sub_seq = subSeqs{i};
                 if ~sub_seq.chn_mask(cid)
                     continue;
@@ -140,7 +146,7 @@ classdef ExpSeqBase < TimeSeq
         function res = populateChnMask(self, nchn)
             res = false(1, nchn);
             subSeqs = self.subSeqs;
-            for i = 1:length(subSeqs)
+            for i = 1:self.nSubSeqs
                 sub_seq = subSeqs{i};
                 if isnan(sub_seq.tOffset)
                     error('Sub sequence still floating');
@@ -247,7 +253,7 @@ classdef ExpSeqBase < TimeSeq
 
         function res = length(self)
             res = 0;
-            for i = 1:length(self.subSeqs)
+            for i = 1:self.nSubSeqs
                 sub_seq = self.subSeqs{i};
                 if isa(sub_seq, 'TimeStep')
                     sub_end = sub_seq.len + sub_seq.tOffset;
