@@ -24,6 +24,23 @@ classdef DynProps < handle
       end
       self.V = V;
     end
+    function res = getfields(self, varargin)
+        res = struct();
+        if isempty(varargin)
+            return;
+        end
+        if isstruct(varargin{1})
+            res = varargin{1};
+            args = varargin{2:end};
+        else
+            args = varargin;
+        end
+        for i = 1:length(args)
+            arg = args{i};
+            v = self.V.(arg);
+            res.(arg) = v;
+        end
+    end
     function B = subsref(self, S)
       nS = length(S);
       %% Scan through all the '.' in the leading access items
