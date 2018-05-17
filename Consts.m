@@ -12,10 +12,10 @@
 %% License along with this library.
 
 classdef Consts < DynProps
-  methods
-    function self = Consts()
-        conf = SeqConfig.get();
-        self = self@DynProps(conf.consts);
+    methods
+        function self = Consts()
+            conf = SeqConfig.get();
+            self = self@DynProps(conf.consts);
+        end
     end
-  end
 end
