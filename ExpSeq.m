@@ -67,7 +67,7 @@ classdef ExpSeq < ExpSeqBase
         function mgr = addOutputMgr(self, chn, cls, varargin)
             chn = translateChannel(self, chn);
             mgr = cls(self, chn, varargin{:});
-            self.output_manager{chn} = chn;
+            self.output_manager{chn} = mgr;
         end
 
         function cid = translateChannel(self, name)

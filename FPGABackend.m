@@ -155,7 +155,7 @@ classdef FPGABackend < PulseBackend
                     pulse_obj = pulses{j, 3};
                     t_start = pulses{j, 1} + SEQ_DELAY;
                     nc = length(code);
-                    if isnumeric(pulse_obj)
+                    if isnumeric(pulse_obj) || islogical(pulse_obj)
                         val = pulse_obj;
                         n_pulses = n_pulses + 1;
                         code(nc + 8:nc + 9) = typecast(double(val), 'int32');

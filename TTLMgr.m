@@ -116,10 +116,14 @@ classdef TTLMgr < handle
                         continue;
                     end
                 end
-                assert(cur_t > 0 && t > 0 && t > cur_t);
+                assert(t > 0 && t > cur_t);
                 if cur_v ~= output_v
-                    res(1:3, end + 1) = {cur_t, 0, cur_v};
-                    output_t = cur_t;
+                    if cur_t == 0
+                        setDefault(self.s, self.chn, cur_v);
+                    else
+                        res(1:3, end + 1) = {cur_t, 0, cur_v};
+                        output_t = cur_t;
+                    end
                     output_v = cur_v;
                 end
                 cur_t = t;
