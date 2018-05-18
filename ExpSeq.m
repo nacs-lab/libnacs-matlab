@@ -37,11 +37,13 @@ classdef ExpSeq < ExpSeqBase
         generated = false;  %
         default_override = false(0);
         default_override_val = [];
-        orig_channel_names; %
+        orig_channel_names = {};
         cid_cache;          %
         chn_manager;        %
-        before_start_cbs;
+        before_start_cbs = {};
         drivers_sorted;
+        output_manager = {};
+        pulses_overwrite = {};
     end
 
     methods
@@ -59,9 +61,13 @@ classdef ExpSeq < ExpSeqBase
             self.chn_manager = ChannelManager();
             self.drivers = containers.Map();
             self.driver_cids = containers.Map();
-            self.orig_channel_names = {};
-            self.before_start_cbs = {};
             self.cid_cache = containers.Map('KeyType', 'char', 'ValueType', 'double');
+        end
+
+        function mgr = addOutputMgr(self, chn, cls, varargin)
+            chn = translateChannel(self, chn);
+            mgr = cls(self, chn, varargin{:});
+            self.output_manager{chn} = chn;
         end
 
         function cid = translateChannel(self, name)
@@ -143,6 +149,8 @@ classdef ExpSeq < ExpSeqBase
                     self.orig_channel_names = [];
                     self.cid_cache = [];
                     self.chn_manager = [];
+                    self.output_manager = [];
+                    self.pulses_overwrite = [];
                     % NiDAC backend currently need config
                     self.subSeqs = [];
                 end
@@ -438,9 +446,17 @@ classdef ExpSeq < ExpSeqBase
             %  The returned value should be sorted with toffset.
             %
             %  This must be run after `populateMask`
+            if length(self.pulses_overwrite) >= cid && ~isempty(self.pulses_overwrite{cid})
+                res = self.pulses_overwrite{cid};
+                return;
+            end
             res = appendPulses(self, cid, {}, 0);
             if ~isempty(res)
                 res = sortrows(res', 1);
+            end
+            if length(self.output_manager) >= cid && ~isempty(self.output_manager{cid})
+                res = processPulses(self.output_manager{cid}, res);
+                self.pulses_overwrite{cid} = res;
             end
         end
         function val = getDefault(self, cid)
