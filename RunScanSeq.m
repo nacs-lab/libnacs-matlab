@@ -158,7 +158,8 @@ runSeq(seq, 0, scanseq, Scan.Params, ['email:' Email]);
 % Scan is now finished.
 m.Data(1).ScanComplete = 1;
 m.Data(1).NumPerGroup = 0;
-disp(['Finished scan ' CurrentDate '-' CurrentTime])
+disp(['Finished scan ' CurrentDate '-' CurrentTime]);
+%copyFigures(); % Copy figures before starting again.
 beep
 
 end
