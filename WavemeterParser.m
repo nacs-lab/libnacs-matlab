@@ -12,20 +12,21 @@
 %% License along with this library.
 
 classdef WavemeterParser < handle
-  properties
-    parser;
-  end
+    properties
+        parser;
+    end
 
-  methods
-    function self = WavemeterParser()
-      pyglob = py.dict();
-      py.exec('from libnacs.wavemeter import WavemeterParser', pyglob);
-      self.parser = py.eval('WavemeterParser()', pyglob);
+    methods
+        function self = WavemeterParser(varargin)
+            pyglob = py.dict();
+            py.exec('from libnacs.wavemeter import WavemeterParser', pyglob);
+            wp = py.eval('WavemeterParser', pyglob);
+            self.parser = wp(varargin{:});
+        end
+        function [t, d] = parse(self, name, use_cache)
+            res = self.parser.parse(name, use_cache ~= 0);
+            t = double(res{1});
+            d = double(res{2});
+        end
     end
-    function [t, d] = parse(self, name, use_cache)
-      res = self.parser.parse(name, use_cache ~= 0);
-      t = double(res{1});
-      d = double(res{2});
-    end
-  end
 end
