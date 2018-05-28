@@ -120,7 +120,8 @@ classdef ExpSeq < ExpSeqBase
                     error('Sequence length %f exceeds max sequence length of maxLength=%f', ...
                           self.length(), self.config.maxLength);
                 end
-                disp('Generating ...');
+                %disp('Generating ...');
+                fprintf('|');
                 populateChnMask(self, length(self.chn_manager.channels));
                 for key = self.drivers.keys()
                     driver_name = key{:};
@@ -178,7 +179,7 @@ classdef ExpSeq < ExpSeqBase
             for i = 1:length(drivers)
                 run(drivers{i});
             end
-            disp(['Started at ' datestr(now, 'HH:MM:SS, yyyy/mm/dd')]);
+            %disp(['Started at ' datestr(now, 'HH:MM:SS, yyyy/mm/dd')]);
         end
 
         function res=regBeforeStart(self, cb)

@@ -143,8 +143,15 @@ seqlist = cell(1, nseq);
             arglist_str = [arglist_str ', ' num2str(arglist{idx}{j})];
         end
         arglist_str(1) = ' ';
-        disp(['Preparing to run sequence #' int2str(m.Data(1).CurrentSeqNum)...
-            ' with ' int2str(length(arglist{idx})) ' arguments:' arglist_str]);
+        %disp(['Preparing to run sequence #' int2str(m.Data(1).CurrentSeqNum)...
+        %    ' with ' int2str(length(arglist{idx})) ' arguments:' arglist_str]);
+        delta = 5; % which to print.
+        if  mod(m.Data(1).CurrentSeqNum, delta) == 0
+            fprintf(' %d', m.Data(1).CurrentSeqNum);
+        end
+         if  mod(m.Data(1).CurrentSeqNum, 20*delta) == 0
+             fprintf('\n');
+         end
         params{end + 1} = arglist{idx};
     end
 
