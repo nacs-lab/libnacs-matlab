@@ -29,8 +29,11 @@ classdef ExpSeqBase < TimeSeq
     % step = addStepReal(self, curtime, is_background, first_arg, varargin)
     % step = addTimeStep(self, len, offset)
     % step = addCustomStep(self, start_time, cls, varargin)
-    properties(Hidden)
+    properties
         curTime = 0;
+    end
+    properties (Hidden)
+        %curTime = 0;
         subSeqs = {[], [], [], [], [], []};
         nSubSeqs = 0;
     end
