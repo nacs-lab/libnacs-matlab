@@ -137,21 +137,23 @@ seqlist = cell(1, nseq);
 
 
 %%
+    prev_date = '';
     function log_run(idx)
-        arglist_str = [];
-        for j = 1:length(arglist{idx})
-            arglist_str = [arglist_str ', ' num2str(arglist{idx}{j})];
-        end
-        arglist_str(1) = ' ';
-        %disp(['Preparing to run sequence #' int2str(m.Data(1).CurrentSeqNum)...
-        %    ' with ' int2str(length(arglist{idx})) ' arguments:' arglist_str]);
         delta = 5; % which to print.
         if  mod(m.Data(1).CurrentSeqNum, delta) == 0
             fprintf(' %d', m.Data(1).CurrentSeqNum);
         end
-         if  mod(m.Data(1).CurrentSeqNum, 15*delta) == 0
-             fprintf('\n%s', datestr(now(), 'HH:MM:SS, yyyy/mm/dd'));
-         end
+        if mod(m.Data(1).CurrentSeqNum, 15*delta) == 0
+            t = now();
+            date = datestr(t, 'yyyy/mm/dd');
+            time = datestr(t, 'HH:MM:SS');
+            if ~strcmp(date, prev_date)
+                fprintf('\n%s %s', date, time);
+                prev_date = date;
+            else
+                fprintf('\n%s', time);
+            end
+        end
         params{end + 1} = arglist{idx};
     end
 
