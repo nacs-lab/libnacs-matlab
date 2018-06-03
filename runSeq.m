@@ -149,8 +149,8 @@ seqlist = cell(1, nseq);
         if  mod(m.Data(1).CurrentSeqNum, delta) == 0
             fprintf(' %d', m.Data(1).CurrentSeqNum);
         end
-         if  mod(m.Data(1).CurrentSeqNum, 20*delta) == 0
-             fprintf('\n');
+         if  mod(m.Data(1).CurrentSeqNum, 15*delta) == 0
+             fprintf('\n%s', datestr(now(), 'HH:MM:SS, yyyy/mm/dd'));
          end
         params{end + 1} = arglist{idx};
     end

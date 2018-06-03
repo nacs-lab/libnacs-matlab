@@ -179,7 +179,6 @@ classdef ExpSeq < ExpSeqBase
             for i = 1:length(drivers)
                 run(drivers{i});
             end
-            %disp(['Started at ' datestr(now, 'HH:MM:SS, yyyy/mm/dd')]);
         end
 
         function res=regBeforeStart(self, cb)
