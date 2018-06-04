@@ -120,7 +120,6 @@ classdef ExpSeq < ExpSeqBase
                     error('Sequence length %f exceeds max sequence length of maxLength=%f', ...
                           self.length(), self.config.maxLength);
                 end
-                %disp('Generating ...');
                 fprintf('|');
                 populateChnMask(self, length(self.chn_manager.channels));
                 for key = self.drivers.keys()
@@ -221,6 +220,7 @@ classdef ExpSeq < ExpSeqBase
                 return;
             end
             self.run_async();
+            fprintf('Running @%s\n', datestr(now(), 'yyyy/mm/dd HH:MM:SS'));
             self.waitFinish();
         end
 
