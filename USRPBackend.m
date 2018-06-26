@@ -24,6 +24,7 @@ classdef USRPBackend < PulseBackend
     properties(Constant, Hidden)
         CH_AMP = 0;
         CH_FREQ = 1;
+        CH_PHASE = 2;
     end
 
     methods
@@ -68,8 +69,8 @@ classdef USRPBackend < PulseBackend
             %% [[[chn_type: 4B][chn_id: 4B][t_start: 8B][t_len: 8B]
             %%  [[0: 4B][val: 8B] / [code_len: 4B][code: code_len x 4B]]] x n_pulses]
 
-            CH_FREQ = self.CH_FREQ;
             CH_AMP = self.CH_AMP;
+            CH_PHASE = self.CH_PHASE;
 
             ircache = IRCache.get();
 
@@ -120,6 +121,9 @@ classdef USRPBackend < PulseBackend
                                 typecast(double(t_start), 'int32'), ...
                                 0, 0, 0, typecast(double(val), 'int32')];
                         continue;
+                    end
+                    if chn_type == CH_PHASE
+                        error('Phase ramp not allowed.');
                     end
                     step_len = pulses{j, 2};
                     n_pulses = n_pulses + 1;
@@ -189,6 +193,8 @@ classdef USRPBackend < PulseBackend
                     chn_type = self.CH_FREQ;
                 elseif strcmp(cpath{2}, 'AMP')
                     chn_type = self.CH_AMP;
+                elseif strcmp(cpath{2}, 'PHASE')
+                    chn_type = self.CH_PHASE;
                 else
                     error('Invalid USRP parameter name "%s".', cpath{2});
                 end
