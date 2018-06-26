@@ -71,19 +71,8 @@ classdef ExpSeq < ExpSeqBase
         end
 
         function cid = translateChannel(self, name)
-            if isKey(self.cid_cache, name)
-                cid = self.cid_cache(name);
-                return;
-            end
-            orig_name = name;
-            name = translateChannel(self.config, name);
-            cid = getId(self.chn_manager, name);
-            self.cid_cache(orig_name) = cid;
-
-            if (cid > length(self.orig_channel_names) || ...
-                isempty(self.orig_channel_names{cid}))
-                self.orig_channel_names{cid} = orig_name;
-            else
+            [cid, inited] = getChannelId(self, name);
+            if inited
                 return;
             end
             cpath = strsplit(name, '/');
@@ -480,6 +469,24 @@ classdef ExpSeq < ExpSeqBase
     end
 
     methods(Access=private)
+        function [cid, inited] = getChannelId(self, name)
+            inited = true;
+            if isKey(self.cid_cache, name)
+                cid = self.cid_cache(name);
+                return;
+            end
+            orig_name = name;
+            name = translateChannel(self.config, name);
+            cid = getId(self.chn_manager, name);
+            self.cid_cache(orig_name) = cid;
+
+            if (cid > length(self.orig_channel_names) || ...
+                isempty(self.orig_channel_names{cid}))
+                self.orig_channel_names{cid} = orig_name;
+                inited = false;
+            end
+        end
+
         function [driver, driver_name] = initDeviceDriver(self, did)
             driver_name = self.config.pulseDrivers(did);
             driver = self.findDriver(driver_name);
