@@ -71,7 +71,7 @@ classdef ExpSeq < ExpSeqBase
         end
 
         function cid = translateChannel(self, name)
-            [cid, inited] = getChannelId(self, name);
+            [cid, name, inited] = getChannelId(self, name);
             if inited
                 return;
             end
@@ -460,6 +460,13 @@ classdef ExpSeq < ExpSeqBase
                 val = 0;
             end
         end
+        function disableChannel(self, name)
+            % This prevent the next call of translateChannel from enabling the channel.
+            [~, ~, inited] = getChannelId(self, name);
+            if inited
+                error('Cannot disable channel that is already initialized');
+            end
+        end
     end
 
     methods(Access=protected)
@@ -469,7 +476,7 @@ classdef ExpSeq < ExpSeqBase
     end
 
     methods(Access=private)
-        function [cid, inited] = getChannelId(self, name)
+        function [cid, name, inited] = getChannelId(self, name)
             inited = true;
             if isKey(self.cid_cache, name)
                 cid = self.cid_cache(name);
