@@ -215,7 +215,11 @@ classdef ExpSeq < ExpSeqBase
 
         function res = setDefault(self, name, val)
             res = self;
-            cid = self.translateChannel(name);
+            if isnumeric(name)
+                cid = name;
+            else
+                cid = translateChannel(self, name);
+            end
             self.default_override(cid) = true;
             self.default_override_val(cid) = val;
         end
