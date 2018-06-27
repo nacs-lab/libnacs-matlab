@@ -44,6 +44,7 @@ classdef ExpSeq < ExpSeqBase
         drivers_sorted;
         output_manager = {};
         pulses_overwrite = {};
+        cached_length = -1;
     end
 
     methods
@@ -62,6 +63,16 @@ classdef ExpSeq < ExpSeqBase
             self.drivers = containers.Map();
             self.driver_cids = containers.Map();
             self.cid_cache = containers.Map('KeyType', 'char', 'ValueType', 'double');
+        end
+
+        function res=length(self)
+            % Note that this length does not account for the timing
+            % difference caused by output managers.
+            if self.cached_length > 0
+                res = self.cached_length;
+                return;
+            end
+            res = length@ExpSeqBase(self);
         end
 
         function mgr = addOutputMgr(self, chn, cls, varargin)
@@ -105,6 +116,7 @@ classdef ExpSeq < ExpSeqBase
                 if ~exist('preserve', 'var')
                     preserve = 0;
                 end
+                self.cached_length = self.length();
                 if self.config.maxLength > 0 && self.length() > self.config.maxLength
                     error('Sequence length %f exceeds max sequence length of maxLength=%f', ...
                           self.length(), self.config.maxLength);
