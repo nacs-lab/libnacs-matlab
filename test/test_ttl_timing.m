@@ -1,4 +1,4 @@
-function test_ttl_timing(chn, init, times, mgrarg)
+function s=test_ttl_timing(chn, init, times, mgrarg)
 s = ExpSeq();
 if exist('mgrarg', 'var')
     s.addOutputMgr(mgrarg{:});
