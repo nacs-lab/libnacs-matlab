@@ -139,6 +139,7 @@ classdef TTLMgr < handle
                 % Make sure the TLL channel is used.
                 res(1:3, end + 1) = {0, 0, cur_v};
             end
+            res = res';
         end
     end
 end
