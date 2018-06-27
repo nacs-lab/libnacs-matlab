@@ -131,8 +131,8 @@ classdef TTLMgr < handle
             end
             if cur_t > 0 && cur_v ~= output_v
                 res(1:3, end + 1) = {cur_t, 0, cur_v};
-                output_t = cur_t;
-                output_v = cur_v;
+                % output_t = cur_t;
+                % output_v = cur_v;
             end
             if cur_t == 0
                 assert(size(res, 1) == 0);
