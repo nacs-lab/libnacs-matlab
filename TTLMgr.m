@@ -84,8 +84,10 @@ classdef TTLMgr < handle
                 t = pulses{j, 1};
                 if val == off_val
                     if t == 0
-                        % We only allow letting turning off happen earlier than what it
-                        % otherwise would if it is programmed to happen at `t = 0`.
+                        % If a turn off needs to be started at t < 0,
+                        % only do it if the original time is t = 0.
+                        % This makes sure the channel is at the beginning
+                        % of the sequence as programmed by the user.
                         assert(cur_t == 0 && output_t < 0);
                         setDefault(self.s, self.chn, val);
                         cur_v = val;
