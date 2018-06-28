@@ -111,9 +111,17 @@ classdef TTLMgr < handle
                             cur_v = val;
                             output_v = val;
                             continue;
+                        elseif output_t < 0
+                            % This means that we have one pulse pending,
+                            % i.e. `cur_t > 0`, but we don't have anything
+                            % actually outputed yet.
+                            % The way to skip the pending pulse is to
+                            % basically revert to the state we started
+                            % with.
+                            cur_t = 0;
+                        else
+                            cur_t = output_t;
                         end
-                        assert(output_t > 0);
-                        cur_t = output_t;
                         cur_v = output_v;
                         continue;
                     end
@@ -133,8 +141,6 @@ classdef TTLMgr < handle
             end
             if cur_t > 0 && cur_v ~= output_v
                 res(1:3, end + 1) = {cur_t, 0, cur_v};
-                % output_t = cur_t;
-                % output_v = cur_v;
             end
             if cur_t == 0
                 assert(size(res, 1) == 0);
