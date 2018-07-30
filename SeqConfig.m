@@ -47,15 +47,16 @@ classdef SeqConfig < handle
             channelAlias = containers.Map();
             defaultVals = containers.Map();
             % Channel prefix to be disabled
-            _disabledChannels = containers.Map('KeyType', 'char', ...
-                                              'ValueType', 'double');
+            m_disabledChannels = containers.Map('KeyType', 'char', ...
+                                                'ValueType', 'double');
             niClocks = containers.Map();
             niStart = containers.Map();
             consts = struct();
             maxLength = 0;
-            function disableChannel(chn)
-                _disabledChannels(chn) = 0;
+            function m_disableChannel(chn)
+                m_disabledChannels(chn) = 0;
             end
+            disableChannel = @m_disableChannel;
 
             % Run script which loads the empty maps.
             nacsConfig();
@@ -101,7 +102,7 @@ classdef SeqConfig < handle
 
             self.disabledChannels = containers.Map('KeyType', 'char', ...
                                                   'ValueType', 'double');
-            for key = keys(_disabledChannels)
+            for key = keys(m_disabledChannels)
                 key = key{:};
                 name = translateChannel(self, key);
                 self.disabledChannels(name) = 0;

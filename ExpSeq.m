@@ -141,8 +141,8 @@ classdef ExpSeq < ExpSeqBase
                 end
                 if ~isempty(drivers)
                     drivers = sortrows(drivers, [2]);
+                    self.drivers_sorted = drivers(:, 1);
                 end
-                self.drivers_sorted = drivers(:, 1);
                 self.generated = true;
                 if ~preserve
                     self.default_override = false(0);
@@ -513,7 +513,7 @@ classdef ExpSeq < ExpSeqBase
             name = translateChannel(self.config, name);
             cid = getId(self.chn_manager, name);
             self.cid_cache(orig_name) = cid;
-            if !strcmp(name, orig_name)
+            if ~strcmp(name, orig_name)
                 % This makes sure that disableChannel
                 % could iterate over all the translated names.
                 self.cid_cache(name) = cid;
