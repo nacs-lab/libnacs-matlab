@@ -26,6 +26,7 @@ classdef SeqConfig < handle
         channelAlias;
         defaultVals;
         consts;
+        disabledChannels;
 
         fpgaUrls;
         usrpUrls;
@@ -45,10 +46,16 @@ classdef SeqConfig < handle
             pulseDrivers = containers.Map();
             channelAlias = containers.Map();
             defaultVals = containers.Map();
+            % Channel prefix to be disabled
+            _disabledChannels = containers.Map('KeyType', 'char', ...
+                                              'ValueType', 'double');
             niClocks = containers.Map();
             niStart = containers.Map();
             consts = struct();
             maxLength = 0;
+            function disableChannel(chn)
+                _disabledChannels(chn) = 0;
+            end
 
             % Run script which loads the empty maps.
             nacsConfig();
@@ -91,6 +98,42 @@ classdef SeqConfig < handle
                 end
                 self.defaultVals(name) = defaultVals(key);
             end
+
+            self.disabledChannels = containers.Map('KeyType', 'char', ...
+                                                  'ValueType', 'double');
+            for key = keys(_disabledChannels)
+                key = key{:};
+                name = translateChannel(self, key);
+                self.disabledChannels(name) = 0;
+            end
+        end
+
+        %% name is assumed to be translated. Returns false for untranslated name.
+        function res = checkChannelDisabled(self, name)
+            % This is `O(N)` in channel numbers. `O(log(N))` should be possible with a
+            % sorted data structure but I'm not sure how that could be done in matlab.
+            % We hopefully don't have enough channels for this to be an issue.....
+            for key = keys(self.disabledChannels)
+                % The map only contains translated name which are not translatable anymore,
+                % i.e. calling translateChannel on them will return the input value.
+                % Therefore, any untranslated names (i.e. names where translateChannel
+                % is not a no-op) will not match any prefix and
+                % the return value is guaranteed to be false.
+                key = key{:};
+                if strcmp(name, key)
+                    res = true;
+                    return;
+                elseif startsWith(name, [key, '/'])
+                    res = true;
+                    return;
+                end
+            end
+            res = false;
+        end
+
+        %% name is assumed to be translated.
+        function disableChannel(self, name)
+            self.disabledChannels(name) = 0;
         end
 
         %%

@@ -83,7 +83,7 @@ classdef ExpSeq < ExpSeqBase
 
         function cid = translateChannel(self, name)
             [cid, name, inited] = getChannelId(self, name);
-            if inited
+            if inited || checkChannelDisabled(self.config, name)
                 return;
             end
             cpath = strsplit(name, '/');
@@ -477,11 +477,22 @@ classdef ExpSeq < ExpSeqBase
             end
         end
         function disableChannel(self, name)
-            % This prevent the next call of translateChannel from enabling the channel.
-            [~, ~, inited] = getChannelId(self, name);
-            if inited
-                error('Cannot disable channel that is already initialized');
+            % This check is in principle O(M * N) in total
+            % where M is No of disabled channel and N is No of used channel.
+            % However, in practice the disable channel should only be called
+            % at the beginning of the sequence so this shouldn't be too bad.
+            name = translateChannel(self.config, name);
+            % `getChannelId` guarantees that all translated names used are in `cid_cache`
+            for key = keys(self.cid_cache)
+                % This should not have false positive disabled channels
+                % for the same reason as `SeqConfig::checkChannelDisabled`.
+                % name is always translated here.
+                key = key{:};
+                if strcmp(key, name) || startsWith(key, [name, '/'])
+                    error('Cannot disable channel that is already initialized');
+                end
             end
+            disableChannel(self.config, name);
         end
     end
 
@@ -502,6 +513,11 @@ classdef ExpSeq < ExpSeqBase
             name = translateChannel(self.config, name);
             cid = getId(self.chn_manager, name);
             self.cid_cache(orig_name) = cid;
+            if !strcmp(name, orig_name)
+                % This makes sure that disableChannel
+                % could iterate over all the translated names.
+                self.cid_cache(name) = cid;
+            end
 
             if (cid > length(self.orig_channel_names) || ...
                 isempty(self.orig_channel_names{cid}))
