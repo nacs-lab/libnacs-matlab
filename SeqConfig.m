@@ -98,11 +98,15 @@ classdef SeqConfig < handle
             end
 
             self.disabledChannels = containers.Map('KeyType', 'char', ...
-                                                  'ValueType', 'double');
+                                                   'ValueType', 'double');
             for key = keys(m_disabledChannels)
                 key = key{:};
                 name = translateChannel(self, key);
                 self.disabledChannels(name) = 0;
+            end
+            if ~isempty(self.disabledChannels)
+                warning('%d channel disabled globally.', ...
+                        length(self.disabledChannels));
             end
         end
 
