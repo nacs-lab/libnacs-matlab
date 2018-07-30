@@ -53,10 +53,7 @@ classdef SeqConfig < handle
             niStart = containers.Map();
             consts = struct();
             maxLength = 0;
-            function m_disableChannel(chn)
-                m_disabledChannels(chn) = 0;
-            end
-            disableChannel = @m_disableChannel;
+            disableChannel = SeqConfig.getDisableChannelSetter(m_disabledChannels);
 
             % Run script which loads the empty maps.
             nacsConfig();
@@ -155,6 +152,14 @@ classdef SeqConfig < handle
                 end
                 self.name_map(name) = res;
             end
+        end
+    end
+    methods(Static, Access=private)
+        function func=getDisableChannelSetter(m_disabledChannels)
+            function disableChannel(chn)
+                m_disabledChannels(chn) = 0;
+            end
+            func = @disableChannel;
         end
     end
     methods(Static)
