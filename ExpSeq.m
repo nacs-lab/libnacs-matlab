@@ -41,6 +41,7 @@ classdef ExpSeq < ExpSeqBase
         cid_cache;          %
         chn_manager;        %
         before_start_cbs = {};
+        after_end_cbs = {};
         drivers_sorted;
         output_manager = {};
         pulses_overwrite = {};
@@ -190,6 +191,15 @@ classdef ExpSeq < ExpSeqBase
             res = self;
         end
 
+        function res=regAfterEnd(self, cb)
+            %% Register a callback function that will be executed after
+            % the sequence ends.
+            % The callbacks will be called in the order they are registerred
+            % without any arguments.
+            self.after_end_cbs{end + 1} = cb;
+            res = self;
+        end
+
         function waitFinish(self)
             % Do **NOT** put anything related to runSeq in this file!!!!!!!!!!
             % It messes up EVERYTHING!!!!!!!!!!!!!!!!!!!!!!
@@ -200,6 +210,11 @@ classdef ExpSeq < ExpSeqBase
             drivers = self.drivers_sorted;
             for i = 1:length(drivers)
                 wait(drivers{i, 1});
+            end
+            if ~isempty(self.after_end_cbs)
+                for cb = self.after_end_cbs
+                    cb{:}();
+                end
             end
         end
 
