@@ -22,6 +22,14 @@ function params = runSeq(func, varargin)
 %        'random': run the sequences in random order
 %        'email:xxx': send an email upon completion.  xxx can be a name
 %            appearing in matlabmail, or an email address.
+%        'pre_cb' <cb>: register a callback that will be called before
+%            the sequence starts. The callback will be called
+%            with the global sequence index (1-based) and
+%            the current parameter list.
+%        'post_cb' <cb>: register a callback that will be called after
+%            the sequence ends. The callback will be called
+%            with the global sequence index (1-based) and
+%            the current parameter list.
 %    @arguments (optional, multiple): cell arrays of the arguments to
 %        construct the sequence. Each argument will be used to construct
 %        a sequence.
@@ -65,6 +73,9 @@ function res = ary2cell(ary)
   end
 end
 
+pre_cb = {};
+post_cb = {};
+
 %%
 while argidx < nargin
     arg = varargin{argidx};
@@ -83,6 +94,12 @@ while argidx < nargin
     elseif ischar(arg)
         if strcmp(arg, 'random')
             is_random = true;
+        elseif strcmp(arg, 'pre_cb')
+            argidx = argidx + 1;
+            pre_cb{end + 1} = varargin{argidx};
+        elseif strcmp(arg, 'post_cb')
+            argidx = argidx + 1;
+            post_cb{end + 1} = varargin{argidx};
         elseif strcmp(arg(1:5), 'email')
             notify = arg(7:end);
         else
@@ -134,7 +151,15 @@ seqlist = cell(1, nseq);
         seqlist{idx}.generate();
     end
 
-
+    function run_cb(cbs, idx)
+        if isempty(cbs)
+            return;
+        end
+        arg = arglist{idx};
+        for cb = cbs
+            cb{:}(length(params), arg);
+        end
+    end
 
 %%
     prev_date = '';
@@ -166,12 +191,14 @@ seqlist = cell(1, nseq);
         abort = 0;
         prepare_seq(idx);
         log_run(idx);
+        run_cb(pre_cb, idx);
         run_real(seqlist{idx});
         if next_idx > 0
             prepare_seq(next_idx);
         end
         m.Data(1).CurrentSeqNum = m.Data(1).CurrentSeqNum + 1;
         waitFinish(seqlist{idx});
+        run_cb(post_cb, idx);
         % If we are using NumGroup to run sequences in groups, pause every
         % NumGroup sequences.
         if ~mod(m.Data(1).CurrentSeqNum, m.Data(1).NumPerGroup) && (m.Data(1).NumPerGroup>0)
