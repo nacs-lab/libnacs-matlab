@@ -32,7 +32,7 @@
 %   output to be done on certain channels.
 classdef TimeSeq < handle
     properties(Hidden)
-        % This is a `SeqConfig` that contains global config loaded from `nacsConfig`.
+        % This is a `SeqConfig` that contains global config loaded from `expConfig`.
         config;
         % Points to parent node, or `0` for root node.
         parent = 0;

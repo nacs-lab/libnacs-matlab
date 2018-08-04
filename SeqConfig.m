@@ -56,7 +56,7 @@ classdef SeqConfig < handle
             disableChannel = SeqConfig.getDisableChannelSetter(m_disabledChannels);
 
             % Run script which loads the empty maps.
-            nacsConfig();
+            expConfig();
 
             self.fpgaUrls = fpgaUrls;
             self.usrpUrls = usrpUrls;
