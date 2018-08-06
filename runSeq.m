@@ -75,6 +75,7 @@ end
 
 pre_cb = {};
 post_cb = {};
+tstartwait = 0;
 
 %%
 while argidx < nargin
@@ -100,6 +101,9 @@ while argidx < nargin
         elseif strcmp(arg, 'post_cb')
             argidx = argidx + 1;
             post_cb{end + 1} = varargin{argidx};
+        elseif strcmp(arg, 'tstartwait')
+            argidx = argidx + 1;
+            tstartwait = varargin{argidx};
         elseif strcmp(arg(1:5), 'email')
             notify = arg(7:end);
         else
@@ -191,6 +195,11 @@ seqlist = cell(1, nseq);
         abort = 0;
         prepare_seq(idx);
         log_run(idx);
+        if tstartwait > 0
+            % This wait could be used to workaround bug in the NI DAQ
+            % driver causing a timing error in the NI DAQ output.
+            pause(tstartwait);
+        end
         run_cb(pre_cb, idx);
         run_real(seqlist{idx});
         if next_idx > 0
