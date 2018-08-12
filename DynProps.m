@@ -15,7 +15,26 @@ classdef DynProps < handle
     properties(Hidden)
         V;
     end
-    methods(Access=private)
+    methods(Static, Access=private)
+        function [a, changed]=merge_struct(a, b, changed)
+            if ~exist('changed', 'var')
+                changed = false;
+            end
+            for name=fieldnames(b)
+                name = name{:};
+                newv = b.(name);
+                if ~isfield(a, name)
+                    changed = true;
+                    a.(name) = newv;
+                    continue;
+                end
+                defv = a.(name);
+                if ~isstruct(defv) || ~isstruct(newv)
+                    continue;
+                end
+                [a.(name), changed] = DynProps.merge_struct(defv, newv, changed);
+            end
+        end
     end
     methods
         function self = DynProps(V)
@@ -43,7 +62,7 @@ classdef DynProps < handle
         end
         function B = subsref(self, S)
             nS = length(S);
-            %% Scan through all the '.' in the leading access items
+            % Scan through all the '.' in the leading access items
             v = self.V;
             for i = 1:nS
                 switch S(i).type
@@ -67,16 +86,20 @@ classdef DynProps < handle
                             break;
                         end
                         if ~found
-                            % This throws the error similar to when access a undefined field in matlab
+                            % This throws the error similar to
+                            % when access a undefined field in matlab
                             B = v.(name);
-                            % The return here is just to make the control flow more clear and should never be
-                            % reached.
+                            % The return here is just to make the control flow more clear
+                            % and should never be reached.
                             return;
                         end
-                        if length(S(j).subs) ~= 1
-                            error('More than one default value');
+                        if isempty(S(j).subs)
+                            error('No default value given');
+                        elseif length(S(j).subs) ~= 1
+                            def = struct(S(j).subs{:});
+                        else
+                            def = S(j).subs{1};
                         end
-                        def = S(j).subs{1};
                         % Assign default value
                         self.V = subsasgn(self.V, S(1:j - 1), def);
                         if j == nS
@@ -86,8 +109,18 @@ classdef DynProps < handle
                         end
                         return;
                     case '()'
-                        if length(S(i).subs) ~= 1
-                            error('More than one default value');
+                        if ~isempty(S(i).subs)
+                            if length(S(i).subs) ~= 1
+                                def = struct(S(i).subs{:});
+                            else
+                                def = S(i).subs{1};
+                            end
+                            if isstruct(v) & isstruct(def)
+                                [v, changed] = DynProps.merge_struct(v, def);
+                                if changed
+                                    self.V = subsasgn(self.V, S(1:i - 1), v);
+                                end
+                            end
                         end
                         if i == nS
                             B = v;
