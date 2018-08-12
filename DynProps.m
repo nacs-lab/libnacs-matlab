@@ -12,103 +12,103 @@
 %% License along with this library.
 
 classdef DynProps < handle
-  properties(Hidden)
-    V;
-  end
-  methods(Access=private)
-  end
-  methods
-    function self = DynProps(V)
-      if ~exist('V', 'var')
-        V = struct();
-      end
-      self.V = V;
+    properties(Hidden)
+        V;
     end
-    function res = getfields(self, varargin)
-        res = struct();
-        if isempty(varargin)
-            return;
-        end
-        if isstruct(varargin{1})
-            res = varargin{1};
-            args = varargin{2:end};
-        else
-            args = varargin;
-        end
-        for i = 1:length(args)
-            arg = args{i};
-            v = self.V.(arg);
-            res.(arg) = v;
-        end
+    methods(Access=private)
     end
-    function B = subsref(self, S)
-      nS = length(S);
-      %% Scan through all the '.' in the leading access items
-      v = self.V;
-      for i = 1:nS
-        switch S(i).type
-          case '.'
-            name = S(i).subs;
-            if isfield(v, name)
-              v = v.(name);
-              continue;
+    methods
+        function self = DynProps(V)
+            if ~exist('V', 'var')
+                V = struct();
             end
-            j = i;
-            found = 0;
-            % Check if this is an access with default
-            while j <= nS
-              switch S(j).type
-                case '.'
-                  j = j + 1;
-                  continue;
-                case '()'
-                  found = 1;
-              end
-              break;
+            self.V = V;
+        end
+        function res = getfields(self, varargin)
+            res = struct();
+            if isempty(varargin)
+                return;
             end
-            if ~found
-              % This throws the error similar to when access a undefined field in matlab
-              B = v.(name);
-              % The return here is just to make the control flow more clear and should never be
-              % reached.
-              return;
-            end
-            if length(S(j).subs) ~= 1
-              error('More than one default value');
-            end
-            def = S(j).subs{1};
-            % Assign default value
-            self.V = subsasgn(self.V, S(1:j - 1), def);
-            if j == nS
-              B = def;
+            if isstruct(varargin{1})
+                res = varargin{1};
+                args = varargin{2:end};
             else
-              B = subsref(def, S(j + 1:end));
+                args = varargin;
             end
-            return;
-          case '()'
-            if length(S(i).subs) ~= 1
-              error('More than one default value');
+            for i = 1:length(args)
+                arg = args{i};
+                v = self.V.(arg);
+                res.(arg) = v;
             end
-            if i == nS
-              B = v;
-            else
-              B = subsref(v, S(i + 1:end));
-            end
-            return;
-          otherwise
-            B = subsref(v, S(i:end));
-            return;
         end
-      end
-      if isstruct(v)
-        B = SubProps(self, S);
-      else
-        B = v;
-      end
+        function B = subsref(self, S)
+            nS = length(S);
+            %% Scan through all the '.' in the leading access items
+            v = self.V;
+            for i = 1:nS
+                switch S(i).type
+                    case '.'
+                        name = S(i).subs;
+                        if isfield(v, name)
+                            v = v.(name);
+                            continue;
+                        end
+                        j = i;
+                        found = 0;
+                        % Check if this is an access with default
+                        while j <= nS
+                            switch S(j).type
+                                case '.'
+                                    j = j + 1;
+                                    continue;
+                                case '()'
+                                    found = 1;
+                            end
+                            break;
+                        end
+                        if ~found
+                            % This throws the error similar to when access a undefined field in matlab
+                            B = v.(name);
+                            % The return here is just to make the control flow more clear and should never be
+                            % reached.
+                            return;
+                        end
+                        if length(S(j).subs) ~= 1
+                            error('More than one default value');
+                        end
+                        def = S(j).subs{1};
+                        % Assign default value
+                        self.V = subsasgn(self.V, S(1:j - 1), def);
+                        if j == nS
+                            B = def;
+                        else
+                            B = subsref(def, S(j + 1:end));
+                        end
+                        return;
+                    case '()'
+                        if length(S(i).subs) ~= 1
+                            error('More than one default value');
+                        end
+                        if i == nS
+                            B = v;
+                        else
+                            B = subsref(v, S(i + 1:end));
+                        end
+                        return;
+                    otherwise
+                        B = subsref(v, S(i:end));
+                        return;
+                end
+            end
+            if isstruct(v)
+                B = SubProps(self, S);
+            else
+                B = v;
+            end
+        end
+        function A = subsasgn(self, S, B)
+            A = self;
+            self.V = subsasgn(self.V, S, B);
+        end
     end
-    function A = subsasgn(self, S, B)
-      A = self;
-      self.V = subsasgn(self.V, S, B);
-    end
-  end
 end
