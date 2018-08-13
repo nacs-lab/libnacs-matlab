@@ -46,6 +46,15 @@ function test_dynprops()
     assert(d0c2.D == 4);
     assert(isequaln(d0c2, struct('A', 1, 'B', 2, 'C', 3, 'D', 4)));
     assert(isequaln(dp0.C(), struct('A', 1, 'B', 2, 'C', 3, 'D', 4)));
+    d0c3 = dp0.C(struct('D', 5));
+    assert(d0c3.D == 4);
+    assert(isequaln(d0c3, struct('A', 1, 'B', 2, 'C', 3, 'D', 4)));
+    assert(isequaln(dp0.C(), struct('A', 1, 'B', 2, 'C', 3, 'D', 4)));
+    dp0.C.D = NaN;
+    d0c4 = dp0.C(struct('D', 5));
+    assert(d0c4.D == 5);
+    assert(isequaln(d0c4, struct('A', 1, 'B', 2, 'C', 3, 'D', 5)));
+    assert(isequaln(dp0.C(), struct('A', 1, 'B', 2, 'C', 3, 'D', 5)));
 
     %% Create new nested field
     dp1.D.E.F = 3;

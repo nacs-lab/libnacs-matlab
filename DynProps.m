@@ -16,14 +16,11 @@ classdef DynProps < handle
         V;
     end
     methods(Static, Access=private)
-        function [a, changed]=merge_struct(a, b, changed)
-            if ~exist('changed', 'var')
-                changed = false;
-            end
+        function [a, changed]=merge_struct(a, b, changed, undefnan)
             for name=fieldnames(b)
                 name = name{:};
                 newv = b.(name);
-                if ~isfield(a, name)
+                if ~DynProps.isfield_def(a, name, undefnan)
                     changed = true;
                     a.(name) = newv;
                     continue;
@@ -32,7 +29,16 @@ classdef DynProps < handle
                 if ~isstruct(defv) || ~isstruct(newv)
                     continue;
                 end
-                [a.(name), changed] = DynProps.merge_struct(defv, newv, changed);
+                [a.(name), changed] = DynProps.merge_struct(defv, newv, changed, undefnan);
+            end
+        end
+        function res=isfield_def(a, name, undefnan)
+            if ~isfield(a, name)
+                res = false;
+            elseif ~undefnan
+                res = true;
+            else
+                res = ~DynProps.isnanobj(a.(name));
             end
         end
         function res=isnanobj(obj)
@@ -145,7 +151,7 @@ classdef DynProps < handle
                                 end
                             end
                             if isstruct(v) & isstruct(def)
-                                [v, changed] = DynProps.merge_struct(v, def);
+                                [v, changed] = DynProps.merge_struct(v, def, false, true);
                                 if changed
                                     self.V = subsasgn(self.V, S(1:i - 1), v);
                                 end
