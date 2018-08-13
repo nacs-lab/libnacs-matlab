@@ -35,6 +35,13 @@ classdef DynProps < handle
                 [a.(name), changed] = DynProps.merge_struct(defv, newv, changed);
             end
         end
+        function res=isnanobj(obj)
+            if ~isnumeric(obj)
+                res = false;
+                return;
+            end
+            res = isnan(obj);
+        end
     end
     methods
         function self = DynProps(V)
@@ -57,6 +64,15 @@ classdef DynProps < handle
             for i = 1:length(args)
                 arg = args{i};
                 v = self.V.(arg);
+                if DynProps.isnanobj(v)
+                    % Treat NaN as missing value
+                    V = rmfield(self.V, arg);
+                    % This throws the error similar to
+                    % when access a undefined field in matlab
+                    V.(arg);
+                    %% unreachable
+                    return;
+                end
                 res.(arg) = v;
             end
         end
@@ -69,8 +85,16 @@ classdef DynProps < handle
                     case '.'
                         name = S(i).subs;
                         if isfield(v, name)
-                            v = v.(name);
-                            continue;
+                            newv = v.(name);
+                            % Treat NaN as missing value
+                            if ~DynProps.isnanobj(newv)
+                                v = newv;
+                                continue;
+                            else
+                                % Remove the field so that the error below can be
+                                % triggerred correctly.
+                                v = rmfield(v, name);
+                            end
                         end
                         j = i;
                         found = 0;
@@ -89,8 +113,7 @@ classdef DynProps < handle
                             % This throws the error similar to
                             % when access a undefined field in matlab
                             B = v.(name);
-                            % The return here is just to make the control flow more clear
-                            % and should never be reached.
+                            %% unreachable
                             return;
                         end
                         if isempty(S(j).subs)
@@ -99,6 +122,9 @@ classdef DynProps < handle
                             def = struct(S(j).subs{:});
                         else
                             def = S(j).subs{1};
+                            if DynProps.isnanobj(def)
+                                error('Default value cannot be NaN.');
+                            end
                         end
                         % Assign default value
                         self.V = subsasgn(self.V, S(1:j - 1), def);
@@ -114,6 +140,9 @@ classdef DynProps < handle
                                 def = struct(S(i).subs{:});
                             else
                                 def = S(i).subs{1};
+                                if DynProps.isnanobj(def)
+                                    error('Default value cannot be NaN.');
+                                end
                             end
                             if isstruct(v) & isstruct(def)
                                 [v, changed] = DynProps.merge_struct(v, def);

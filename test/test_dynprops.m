@@ -77,4 +77,9 @@ function test_dynprops()
     assert(dp0.C.B == 2);
     assert(dp0.C.C == 3);
     assert(dp0.C.D == 4);
+
+    c0.A = NaN;
+    assert(c0.A(1) == 1);
+    assert(c0.A() == 1);
+    assert(c0.A == 1);
 end
