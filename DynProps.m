@@ -110,7 +110,7 @@ classdef DynProps < handle
                                 case '.'
                                     j = j + 1;
                                     continue;
-                                case '()'
+                                case {'()', '{}'}
                                     found = 1;
                             end
                             break;
@@ -134,13 +134,16 @@ classdef DynProps < handle
                         end
                         % Assign default value
                         self.V = subsasgn(self.V, S(1:j - 1), def);
+                        if strcmp(S(j).type, '{}')
+                            def = SubProps(self, S(1:j - 1));
+                        end
                         if j == nS
                             B = def;
                         else
                             B = subsref(def, S(j + 1:end));
                         end
                         return;
-                    case '()'
+                    case {'()', '{}'}
                         if ~isempty(S(i).subs)
                             if length(S(i).subs) ~= 1
                                 def = struct(S(i).subs{:});
@@ -156,6 +159,9 @@ classdef DynProps < handle
                                     self.V = subsasgn(self.V, S(1:i - 1), v);
                                 end
                             end
+                        end
+                        if strcmp(S(i).type, '{}')
+                            v = SubProps(self, S(1:i - 1));
                         end
                         if i == nS
                             B = v;
