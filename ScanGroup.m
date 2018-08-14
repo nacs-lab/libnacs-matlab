@@ -186,7 +186,16 @@ classdef ScanGroup < handle
         function seq=getseq_in_scan(self, scanidx, seqidx)
             scan = getfullscan(self, scanidx);
             seq = scan.params;
-            % TODO
+            seqidx = seqidx - 1; % 0-based index from now on.
+            function setparam_cb(v, path)
+                seq = subsasgn(seq, path, v(subidx + 1));
+            end
+            for i=1:length(scan.vars)
+                var = scan.vars(i);
+                subidx = mod(seqidx, var.size); % 0-based
+                seqidx = (seqidx - subidx) / var.size;
+                ScanGroup.foreach_nonstruct(@setparam_cb, var.params);
+            end
         end
         function res=nseq(self)
             res = 0;
