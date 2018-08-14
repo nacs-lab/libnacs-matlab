@@ -143,8 +143,11 @@ classdef ScanGroup < handle
         base = struct();
         runparam;
         % whether there's any write to the scan or fallback parameter since the last cache.
+        % This should always be as long as `scans`.
         scandirty = boolean([]);
-        % cache of the full scan after combining with the base scan.
+        % Cache of the full scan after combining with the base scan.
+        % A `false` in `scandirty` means the corresponding entry is in bound and valid
+        % in `scanscache`.
         scanscache = struct([]);
     end
     methods
@@ -385,6 +388,7 @@ classdef ScanGroup < handle
             self.scans = obj.scans;
             self.base = obj.base;
             self.runparam(obj.runparam);
+            self.scandirty = false(length(self.scans), 1);
             self.validate();
         end
     end
