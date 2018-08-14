@@ -40,13 +40,60 @@ classdef ScanParam < handle
             self.group = group;
             self.idx = idx;
         end
+        function scan(self, S, dim, vals)
+            if ~ScanGroup.isarray(vals)
+                setparam(self, S, vals);
+                return;
+            end
+            % TODO
+        end
+        function setparam(self, S, val)
+            % TODO
+        end
     end
     methods
         function varargout = subsref(self, S)
-            [varargout{1:nargout}] = builtin('subsref', self, S);
+            nS = length(S);
+            for i = 1:nS
+                typ = S(i).type;
+                if ~strcmp(typ, '.')
+                    error('Invalid parameter access syntax.');
+                end
+                if strcmp(name, 'scan') && i < nS && strcmp(S(i + 1).type, '()')
+                    if i == 1
+                        error('Must specify parameter to scan.');
+                    elseif i + 1 < nS
+                        error('Invalid scan() syntax after scan.');
+                    end
+                    nargoutchk(0, 0);
+                    subs = S(i + 1).subs;
+                    switch length(subs)
+                        case 0
+                            error('Too few arguments for scan()');
+                        case 1
+                            scan(self, S(1:i - 1), 1, subs{1});
+                        case 2
+                            scan(self, S(1:i - 1), subs{1}, subs{2});
+                        otherwise
+                            error('Too many arguments for scan()');
+                    end
+                    return;
+                end
+            end
+            nargoutchk(0, 1);
+            if nargout ~= 0
+                varargout{1} = SubProps(self, S);
+            end
         end
-        function A = subsasgn(self, S, B)
-            A = builtin('subsasgn', self, S, B);
+        function self = subsasgn(self, S, B)
+            nS = length(S);
+            for i = 1:nS
+                typ = S(i).type;
+                if ~strcmp(typ, '.')
+                    error('Invalid parameter access syntax.');
+                end
+            end
+            setparam(self, S, B);
         end
     end
 end

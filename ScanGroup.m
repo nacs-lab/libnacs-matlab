@@ -297,7 +297,7 @@ classdef ScanGroup < handle
                 end
                 grp = ScanParam(self, idx);
                 if nS > 1
-                    [varargout{1:nargout}] = subsref(grp, S{2:end});
+                    [varargout{1:nargout}] = subsref(grp, S(2:end));
                 else
                     % At most one return value in this branch.
                     % Throw and error if we got more than that.
@@ -336,7 +336,7 @@ classdef ScanGroup < handle
                 if nS > 1
                     % Assignment to the `ScanParam`, pass that on.
                     grp = ScanParam(self, idx);
-                    grp = subsasgn(grp, S{2:end}, B);
+                    grp = subsasgn(grp, S(2:end), B);
                     return;
                 end
                 if isa(B, 'ScanParam')

@@ -12,7 +12,7 @@
 % License along with this library.
 
 classdef SubProps < handle
-  % This is a reference to a substruct in DynProps
+  % This is a delayed set/get operation on a parent class with a path prefix.
   properties(Hidden)
     parent;
     path;
