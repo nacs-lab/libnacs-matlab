@@ -176,7 +176,12 @@ classdef ScanGroup < handle
             res = length(self.scans);
         end
         function setbase(self, grp, base)
-            assert(base >= 0 && isscalar(base) && isinteger(base));
+            if ~(base >= 0 && isscalar(base) && isinteger(base))
+                error('Base index must be non-negative integer.');
+            end
+            if self.getbaseidx(grp) == base
+                return;
+            end
             if base == 0
                 self.scans(grp).baseidx = base;
                 self.scandirty(grp) = true;
@@ -202,7 +207,7 @@ classdef ScanGroup < handle
         end
 
         function varargout = subsref(self, S)
-            % This handles the `grp() ...` and `grp(n) ...` syntax.
+            % This handles the `grp([n]) ...` syntax.
             % We support chained operation so this needs to forward
             % the trailing index to the next handler by calling `subsref` directly.
             nS = length(S);
@@ -237,6 +242,92 @@ classdef ScanGroup < handle
             [varargout{1:nargout}] = builtin('subsref', self, S);
         end
         function A = subsasgn(self, S, B)
+            % This handles the `grp([n]) ... = ...` syntax,
+            % including both direct assignment `grp([n]) = ...`
+            % and assignment to the `ScanParam` object in a chained operation,
+            % i.e. `grp([n]). ... = ...`.
+            % Therefore, if there's more than one index,
+            % we need to pass those on to `ScanParam`.
+            nS = length(S);
+            if nS >= 1 && strcmp(S(1).type, '()')
+                if isempty(S(1).subs)
+                    % grp(): Fallback
+                    idx = 0;
+                elseif length(S(1).subs) == 1
+                    % grp(n): Real scan
+                    idx = S(1).subs{1};
+                    if ~(idx > 0)
+                        % Don't allow implicitly address fallback with 0.
+                        error('Scan index must be positive');
+                    end
+                else
+                    error('Too many scan index');
+                end
+                A = self;
+                if nS > 1
+                    % Assignment to the `ScanParam`, pass that on.
+                    grp = ScanParam(self, idx);
+                    grp = subsasgn(grp, S{2:end}, B);
+                    return;
+                end
+                if isa(B, 'ScanParam')
+                    if B.group ~= self
+                        error('Cannot assign scan from a different group.');
+                    end
+                    if B.idx == idx
+                        % no-op
+                        return;
+                    end
+                    if B.idx == 0
+                        rgrp = self.base;
+                        rbase = 0; % base index
+                    else
+                        rgrp = self.scans(B.idx);
+                        rbase = self.getbaseidx(B.idx); % base index
+                    end
+                    if idx == 0
+                        if isfield(rgrp, 'params')
+                            self.base.params = rgrp.params;
+                        else
+                            self.base.params = struct();
+                        end
+                        if isfield(rgrp, 'vars')
+                            self.base.vars = rgrp.vars;
+                        else
+                            self.base.vars = struct([]);
+                        end
+                        self.scandirty(:) = true;
+                    else
+                        % Call the setter function to check for loop.
+                        setbase(self, idx, rbase);
+                        if isfield(rgrp, 'params')
+                            self.scans(idx).params = rgrp.params;
+                        else
+                            self.scans(idx).params = struct();
+                        end
+                        if isfield(rgrp, 'vars')
+                            self.scans(idx).vars = rgrp.vars;
+                        else
+                            self.scans(idx).vars = struct([]);
+                        end
+                        self.scandirty(idx) = true;
+                    end
+                    return;
+                elseif ScanGroup.hasarray(B)
+                    error('Mixing fixed and variable parameters not allowed.');
+                end
+                if idx == 0
+                    self.base.params = B;
+                    self.base.vars = struct([]);
+                    self.scandirty(:) = true;
+                else
+                    self.scans(idx).params = B;
+                    self.scans(idx).vars = struct([]);
+                    self.scans(idx).baseidx = 0;
+                    self.scandirty(idx) = true;
+                end
+                return;
+            end
             A = builtin('subsasgn', self, S, B);
         end
     end
@@ -251,6 +342,38 @@ classdef ScanGroup < handle
         end
         function validate(self)
             % TODO
+        end
+    end
+    methods(Static, Access=?ScanParam)
+        %% Check if the object is an array for scan parameter.
+        % Rules are:
+        % 1. All scalar are not array
+        % 2. Cell arrays are always array
+        % 3. char array alone the horizontal direction does not count as array
+        % 4. All other arrays are array
+        function res = isarray(obj)
+            if iscell(obj)
+                res = true;
+            elseif ischar(obj)
+                res = length(obj) ~= size(obj, 2);
+            else
+                res = ~isscalar(obj);
+            end
+        end
+        %% Recursively check if any of the struct fields are array.
+        function res = hasarray(obj)
+            res = isarray(obj);
+            if res
+                return;
+            elseif ~isstruct(obj)
+                return;
+            end
+            for name=fieldnames(obj)
+                if isarray(obj.(name{:}))
+                    res = true;
+                    return;
+                end
+            end
         end
     end
     methods(Static)
