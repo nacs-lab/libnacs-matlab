@@ -41,4 +41,12 @@ classdef ScanParam < handle
             self.idx = idx;
         end
     end
+    methods
+        function varargout = subsref(self, S)
+            [varargout{1:nargout}] = builtin('subsref', self, S);
+        end
+        function A = subsasgn(self, S, B)
+            A = builtin('subsasgn', self, S, B);
+        end
+    end
 end

@@ -160,6 +160,18 @@ classdef ScanGroup < handle
             obj.base = self.base;
             obj.runparam = self.runparam();
         end
+        function seq=getseq(self, n)
+            % TODO
+        end
+        function res=nseq(self)
+            res = 0;
+            for i=1:groupsize(self)
+                res = res + scansize(self, i);
+            end
+        end
+        function res=scansize(self, idx)
+            % TODO
+        end
         function res=groupsize(self)
             res = length(self.scans);
         end
@@ -184,6 +196,16 @@ classdef ScanGroup < handle
             end
             self.scans(grp).baseidx = base;
             self.scandirty(grp) = true;
+        end
+        function horzcat(self, varargin)
+            % TODO
+        end
+
+        function varargout = subsref(self, S)
+            [varargout{1:nargout}] = builtin('subsref', self, S);
+        end
+        function A = subsasgn(self, S, B)
+            A = builtin('subsasgn', self, S, B);
         end
     end
     methods(Access=?ScanParam)
