@@ -58,10 +58,8 @@
 %     Create a new `ScanGroup` that runs the individual all input scans
 %     in the order they are listed.
 %     The new group will **NOT** be affected if the inputs are mutated later.
-%     The scans with the default base (0) will all have their respected
-%     fallback parameters merged into them.
-%     Scans with non-default base will have their base index updated
-%     to that of their fallback in the new group.
+%     The scans will all have their respected fallback parameters merged into them
+%     and the base index reset to `0`.
 %     The new group size (sequence count) will be the sum of that of the input
 %     groups and the order of the scans/sequences will be maintained.
 %     The run parameters will be the same as that of the first one.
