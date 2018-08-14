@@ -70,6 +70,9 @@
 %     Set the base index of the `scan` to `base`. A `0` `base` means the default base.
 %     Throws an error if this would create a loop.
 %
+% All mutation on a scan (assignment and `setbase`) will make sure the scan being mutated
+% is created if it didn't exist.
+%
 %
 % For sequence running/saving/loading:
 % * groupsize(grp) / grp.groupsize():
@@ -114,6 +117,11 @@
 % Ideally, this information should also be versioned so that future improvements
 % can be added without breaking the loading of the old code.
 classdef ScanGroup < handle
+    properties(Constant, Access=?ScanParam)
+        DEF_SCAN = struct('params', struct(), 'vars', struct('size', {}, 'params', {}));
+        DEF_VARS = struct('size', 0, 'params', struct());
+        DEF_SCANCACHE = struct('dirty', true, 'params', struct(), 'vars', struct());
+    end
     properties(Access=?ScanParam)
         %% we don't use class here since
         % 1. it's annoy to use for simple stuff in MATLAB.
@@ -132,23 +140,25 @@ classdef ScanGroup < handle
         %         If this is empty, the group represent a single sequence.
         % * Scan1D: struct
         %     size::integer
-        %         The size of the 1D scan. Must be greater than 1, all the parameters in the
-        %         scan must have the same length.
+        %         The size of the 1D scan. Must be greater than 1,
+        %         all the parameters in the scan must have the same length.
         %     params::struct
         %         Each array members of the struct represents a list of parameter to scan.
-        scans = struct([]);
+        scans = struct('baseidx', {}, 'params', {}, 'vars', {});
         % * base::Scan
         %     This is the fallback parameter accessible by indexing without index, i.e. `grp()`.
         %     See above for the format of `Scan`.
-        base = struct();
+        base = struct('params', struct(), 'vars', struct('size', {}, 'params', {}));
         runparam;
-        % whether there's any write to the scan or fallback parameter since the last cache.
-        % This should always be as long as `scans`.
-        scandirty = boolean([]);
+
+        %%
+        % Fields below this line are caches that can be computed from the ones above
+        % or book keeping information to keep these cache in sync.
+
         % Cache of the full scan after combining with the base scan.
-        % A `false` in `scandirty` means the corresponding entry is in bound and valid
-        % in `scanscache`.
-        scanscache = struct([]);
+        % The `dirty` flag marks whether this is invalid due to modification since last cache.
+        % This should always be as long as `scans`.
+        scanscache = struct('dirty', {}, 'params', {}, 'vars', {});
     end
     methods
         function self=ScanGroup()
@@ -178,20 +188,34 @@ classdef ScanGroup < handle
         function res=groupsize(self)
             res = length(self.scans);
         end
-        function setbase(self, grp, base)
+        function setbase(self, idx, base)
+            % This always makes sure that the scan we set the base for exists
+            % and is initialized. The cache entry for this will also be initialized.
+            % The caller might depend on this behavior.
             if ~(base >= 0 && isscalar(base) && isinteger(base))
                 error('Base index must be non-negative integer.');
+            elseif base > length(self.scans)
+                error('Cannot set base to non-existing scan');
+            elseif idx > length(self.scans)
+                % New scan
+                self.scans(length(self.scans) + 1:idx) = self.DEF_SCAN;
+                self.scans(idx).baseidx = base;
+                self.scanscache(length(self.scanscache) + 1:idx) = self.DEF_SCANCACHE;
+                return;
             end
-            if self.getbaseidx(grp) == base
+            % Fast pass to avoid invalidating anything
+            if self.getbaseidx(idx) == base
                 return;
             end
             if base == 0
-                self.scans(grp).baseidx = base;
-                self.scandirty(grp) = true;
+                % Set back to default, no possibility of new loop.
+                self.scans(idx).baseidx = base;
+                self.scanscache(idx).dirty = true;
                 return;
             end
+            % Loop detection.
             visited = false(length(self.scans), 1);
-            visited(grp) = true;
+            visited(idx) = true;
             while true
                 if visited(base)
                     error('Base index loop detected.');
@@ -202,8 +226,8 @@ classdef ScanGroup < handle
                     break;
                 end
             end
-            self.scans(grp).baseidx = base;
-            self.scandirty(grp) = true;
+            self.scans(idx).baseidx = base;
+            self.scanscache(idx).dirty = true;
         end
         function horzcat(self, varargin)
             % TODO
@@ -289,31 +313,18 @@ classdef ScanGroup < handle
                         rbase = self.getbaseidx(B.idx); % base index
                     end
                     if idx == 0
-                        if isfield(rgrp, 'params')
-                            self.base.params = rgrp.params;
-                        else
-                            self.base.params = struct();
+                        self.base.params = rgrp.params;
+                        self.base.vars = rgrp.vars;
+                        for i = 1:length(self.scanscache)
+                            self.scanscache(i).dirty = true;
                         end
-                        if isfield(rgrp, 'vars')
-                            self.base.vars = rgrp.vars;
-                        else
-                            self.base.vars = struct([]);
-                        end
-                        self.scandirty(:) = true;
                     else
                         % Call the setter function to check for loop.
+                        % This also makes sure the
                         setbase(self, idx, rbase);
-                        if isfield(rgrp, 'params')
-                            self.scans(idx).params = rgrp.params;
-                        else
-                            self.scans(idx).params = struct();
-                        end
-                        if isfield(rgrp, 'vars')
-                            self.scans(idx).vars = rgrp.vars;
-                        else
-                            self.scans(idx).vars = struct([]);
-                        end
-                        self.scandirty(idx) = true;
+                        self.scans(idx).params = rgrp.params;
+                        self.scans(idx).vars = rgrp.vars;
+                        self.scanscache(idx).dirty = true;
                     end
                     return;
                 elseif ScanGroup.hasarray(B)
@@ -321,13 +332,15 @@ classdef ScanGroup < handle
                 end
                 if idx == 0
                     self.base.params = B;
-                    self.base.vars = struct([]);
-                    self.scandirty(:) = true;
+                    self.base.vars = struct('size', {}, 'params', {});
+                    for i = 1:length(self.scanscache)
+                        self.scanscache(i).dirty = true;
+                    end
                 else
+                    self.scans(length(self.scans) + 1:idx) = self.DEF_SCAN;
                     self.scans(idx).params = B;
-                    self.scans(idx).vars = struct([]);
-                    self.scans(idx).baseidx = 0;
-                    self.scandirty(idx) = true;
+                    self.scanscache(length(self.scanscache) + 1:idx) = self.DEF_SCANCACHE;
+                    self.scanscache(idx).dirty = true;
                 end
                 return;
             end
@@ -337,14 +350,10 @@ classdef ScanGroup < handle
     methods(Access=?ScanParam)
         function base=getbaseidx(self, idx)
             scan = self.scans(grp);
-            if ~isfield(scan, 'baseidx')
+            base = scan.baseidx;
+            if isempty(base)
                 base = 0;
-            else
-                base = scan.baseidx;
             end
-        end
-        function validate(self)
-            % TODO
         end
     end
     methods(Static, Access=?ScanParam)
@@ -389,7 +398,7 @@ classdef ScanGroup < handle
             self.base = obj.base;
             self.runparam(obj.runparam);
             self.scandirty = false(length(self.scans), 1);
-            self.validate();
+            % TODO: validate
         end
     end
 end
