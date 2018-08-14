@@ -440,6 +440,58 @@ classdef ScanGroup < handle
                 end
             end
         end
+        function res=isscalarstruct(obj)
+            if ~isstruct(obj)
+                res = false;
+            elseif ~isscalar(obj)
+                res = false;
+            else
+                res = true;
+            end
+        end
+        % Helper to iterate through nested structure.
+        % It's not very efficient in MATLAB but
+        % I really don't want to write this multiple times.
+        function foreach_nonstruct(cb, obj)
+            if ~ScanGroup.isscalarstruct(obj)
+                error('Object is not a struct.');
+            end
+            topfields = fieldnames(obj);
+            if isempty(topfields)
+                % no fields
+                return;
+            end
+            cached_fields = {topfields};
+            path = struct('type', '.', 'subs', topfields{1});
+            state = [1];
+            while true
+                v = subsref(obj, path);
+                if ScanGroup.isscalarstruct(v)
+                    fields = fieldnames(v);
+                    if ~isempty(fields)
+                        cached_fields{end + 1} = fields;
+                        state(end + 1) = 1;
+                        path(end + 1) = struct('type', '.', 'subs', fields{1});
+                        continue;
+                    end
+                else
+                    cb(v, path);
+                end
+                state(end) = state(end) + 1;
+                fields = cached_fields{end};
+                while state(end) > length(fields)
+                    cached_fields(end) = [];
+                    state(end) = [];
+                    path(end) = [];
+                    if isempty(path)
+                        return;
+                    end
+                    state(end) = state(end) + 1;
+                    fields = cached_fields{end};
+                end
+                path(end).subs = fields{state(end)};
+            end
+        end
     end
     methods(Static)
         function self=load(obj)
