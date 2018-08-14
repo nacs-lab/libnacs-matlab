@@ -172,6 +172,17 @@ classdef ScanGroup < handle
             obj.runparam = self.runparam();
         end
         function seq=getseq(self, n)
+            for scani = 1:groupsize(self)
+                ss = scansize(self, scani);
+                if n <= ss
+                    seq = getseq_in_scan(self, scani, n);
+                    return;
+                end
+                n = n - ss;
+            end
+            error('Sequence index out of bound.');
+        end
+        function set=getseq_in_scan(self, scanidx, seqidx)
             % TODO
         end
         function res=nseq(self)
@@ -181,7 +192,14 @@ classdef ScanGroup < handle
             end
         end
         function res=scansize(self, idx)
-            % TODO
+            scan = getfullscan(sefl, idx);
+            res = 1;
+            for i = 1:length(scan.vars)
+                sz1d = vars(i).size;
+                if sz1d ~= 0
+                    res = res * sz1d;
+                end
+            end
         end
         function res=groupsize(self)
             res = length(self.scans);
@@ -227,8 +245,22 @@ classdef ScanGroup < handle
             self.scans(idx).baseidx = base;
             self.scanscache(idx).dirty = true;
         end
-        function horzcat(self, varargin)
-            % TODO
+        function res=horzcat(varargin)
+            res = ScanGroup();
+            for i = 1:nargin
+                grp = varargin{i};
+                if ~isa(grp, 'ScanGroup')
+                    error('Only ScanGroup allowed in concatenation.');
+                end
+                for j = 1:groupsize(grp)
+                    scan = getfullscan(grp, j);
+                    scan.baseidx = 0;
+                    res.scans(end + 1) = scan;
+                end
+            end
+            res.scanscache(1:length(res.scans)) = DEF_SCANCACHE;
+            self = varargin{1};
+            res.runparam(self.runparam());
         end
 
         function varargout = subsref(self, S)
@@ -352,6 +384,29 @@ classdef ScanGroup < handle
             if isempty(base)
                 base = 0;
             end
+        end
+        function res=check_dirty(self, idx)
+            while idx ~= 0
+                if self.scanscache(idx).dirty
+                    res = true;
+                    return;
+                end
+                idx = self.scans(idx).baseidx;
+            end
+            res = false;
+        end
+        function scan=getfullscan(self, idx)
+            if idx == 0
+                scan = self.base;
+                return;
+            elseif ~check_dirty(self, idx)
+                scan = self.scanscache(idx);
+                scan = rmfield(scan, 'dirty');
+                return;
+            end
+            scan = self.scans(idx);
+            base = getfullscan(self, getbaseidx(self, idx));
+            % TODO
         end
     end
     methods(Static, Access=?ScanParam)
