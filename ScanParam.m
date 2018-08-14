@@ -31,4 +31,14 @@
 %     instead.
 
 classdef ScanParam < handle
+    properties(Access=?ScanGroup)
+        group;
+        idx;
+    end
+    methods(Access=?ScanGroup)
+        function self=ScanParam(group, idx)
+            self.group = group;
+            self.idx = idx;
+        end
+    end
 end

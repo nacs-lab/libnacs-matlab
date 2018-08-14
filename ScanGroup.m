@@ -114,4 +114,101 @@
 % Ideally, this information should also be versioned so that future improvements
 % can be added without breaking the loading of the old code.
 classdef ScanGroup < handle
+    properties(Access=?ScanParam)
+        %% we don't use class here since
+        % 1. it's annoy to use for simple stuff in MATLAB.
+        % 2. it's harder to save (which I guess is also kind of annoy...)
+        %
+        % Structure:
+        % * scans::array of Scan
+        % * Scan: struct
+        %     baseidx::integer (where to find the missing values for this group)
+        %         A base index of `0` means that the base group is the toplevel base group.
+        %     params::struct (simple structures holding the fixed parameters)
+        %     vars::array of Scan1D
+        %         Each element of the Scan1D array represent a scan dimension.
+        %         The whole scan represent a rectangle N-dimension matrix.
+        %         Different variables parameters are not allowed to have the same field.
+        %         If this is empty, the group represent a single sequence.
+        % * Scan1D: struct
+        %     size::integer
+        %         The size of the 1D scan. Must be greater than 1, all the parameters in the
+        %         scan must have the same length.
+        %     params::struct
+        %         Each array members of the struct represents a list of parameter to scan.
+        scans = struct([]);
+        % * base::Scan
+        %     This is the fallback parameter accessible by indexing without index, i.e. `grp()`.
+        %     See above for the format of `Scan`.
+        base = struct();
+        runparam;
+        % whether there's any write to the scan or fallback parameter since the last cache.
+        scandirty = boolean([]);
+        % cache of the full scan after combining with the base scan.
+        scanscache = struct([]);
+    end
+    methods
+        function self=ScanGroup()
+            self.runparam = DynProps();
+        end
+        function res=runp(self)
+            res = self.runparam;
+        end
+        function obj=dump(self)
+            obj.version = 1;
+            obj.scans = self.scans;
+            obj.base = self.base;
+            obj.runparam = self.runparam();
+        end
+        function res=groupsize(self)
+            res = length(self.scans);
+        end
+        function setbase(self, grp, base)
+            assert(base >= 0 && isscalar(base) && isinteger(base));
+            if base == 0
+                self.scans(grp).baseidx = base;
+                self.scandirty(grp) = true;
+                return;
+            end
+            visited = false(length(self.scans), 1);
+            visited(grp) = true;
+            while true
+                if visited(base)
+                    error('Base index loop detected.');
+                end
+                visited(base) = true;
+                base = self.getbaseidx(base);
+                if base == 0
+                    break;
+                end
+            end
+            self.scans(grp).baseidx = base;
+            self.scandirty(grp) = true;
+        end
+    end
+    methods(Access=?ScanParam)
+        function base=getbaseidx(self, idx)
+            scan = self.scans(grp);
+            if ~isfield(scan, 'baseidx')
+                base = 0;
+            else
+                base = scan.baseidx;
+            end
+        end
+        function validate(self)
+            % TODO
+        end
+    end
+    methods(Static)
+        function self=load(obj)
+            self = ScanGroup();
+            if obj.version ~= 1
+                error('Wrong object version: %d', obj.version);
+            end
+            self.scans = obj.scans;
+            self.base = obj.base;
+            self.runparam(obj.runparam);
+            self.validate();
+        end
+    end
 end
