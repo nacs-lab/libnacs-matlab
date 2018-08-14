@@ -138,8 +138,9 @@ classdef ScanGroup < handle
         %         If this is empty, the group represent a single sequence.
         % * Scan1D: struct
         %     size::integer
-        %         The size of the 1D scan. Must be greater than 1,
+        %         The size of the 1D scan. Must be greater than 1, (or 0)
         %         all the parameters in the scan must have the same length.
+        %         0 size means a dummy/overwritten scan and should be ignored.
         %     params::struct
         %         Each array members of the struct represents a list of parameter to scan.
         scans = struct('baseidx', {}, 'params', {}, 'vars', {});
@@ -182,7 +183,9 @@ classdef ScanGroup < handle
             end
             error('Sequence index out of bound.');
         end
-        function set=getseq_in_scan(self, scanidx, seqidx)
+        function seq=getseq_in_scan(self, scanidx, seqidx)
+            scan = getfullscan(self, scanidx);
+            seq = scan.params;
             % TODO
         end
         function res=nseq(self)
@@ -369,6 +372,8 @@ classdef ScanGroup < handle
                 else
                     self.scans(length(self.scans) + 1:idx) = self.DEF_SCAN;
                     self.scans(idx).params = B;
+                    self.scans(idx).vars = struct('size', {}, 'params', {});
+                    self.scans(idx).baseidx = 0;
                     self.scanscache(length(self.scanscache) + 1:idx) = self.DEF_SCANCACHE;
                     self.scanscache(idx).dirty = true;
                 end
@@ -406,7 +411,43 @@ classdef ScanGroup < handle
             end
             scan = self.scans(idx);
             base = getfullscan(self, getbaseidx(self, idx));
-            % TODO
+            % Merge the fixed parameters
+            function param_cb(v, path)
+                if ScanGroup.find_scan_dim(scan, path) >= 0
+                    return;
+                end
+                scan.params = subsasgn(scan.params, path, v);
+            end
+            ScanGroup.foreach_nonstruct(@param_cb, base.params);
+            % Merge the variable parameters
+            function var_cb(v, path)
+                if ScanGroup.find_scan_dim(scan, path) >= 0
+                    return;
+                end
+                scan.vars(length(scan.vars) + 1:scanid) = self.DEF_VARS;
+                scan.vars(scanid).params = subsasgn(scan.vars(scanid).params, path, v);
+            end
+            for scanid = 1:length(base.vars)
+                ScanGroup.foreach_nonstruct(@var_cb, base.vars(scanid).params);
+            end
+            function count_vars(v, path)
+                nv = numel(v);
+                if nv == 1
+                    error('Too few elements to scan.');
+                elseif scansize == 0;
+                    scansize = nv;
+                elseif scansize ~= nv
+                    error('Inconsistent scan size.');
+                end
+            end
+            for scanid = 1:length(scan.vars)
+                scansize = 0;
+                ScanGroup.foreach_nonstruct(@count_vars, base.vars(scanid).params);
+                base.vars(scanid).size = scansize;
+            end
+            self.scanscache(idx).params = scan.params;
+            self.scanscache(idx).vars = scan.vars;
+            self.scanscache(idx).dirty = false;
         end
     end
     methods(Static, Access=?ScanParam)
@@ -448,6 +489,42 @@ classdef ScanGroup < handle
             else
                 res = true;
             end
+        end
+        % Check if the struct field reference path is overwritten in `obj`.
+        % Overwrite happens if the field itself exists or a parent of the field
+        % is overwritten to something that's not scalar struct.
+        function res=check_field(obj, path)
+            % Only handles `.` reference
+            for i = 1:length(path)
+                if ~ScanGroup.isscalarstruct(obj)
+                    % Non scalar struct in the path counts as existing override.
+                    % shouldn't really happen though...
+                    res = true;
+                    return;
+                end
+                name = path(i).subs;
+                if ~isfield(obj, name)
+                    res = false;
+                    return;
+                end
+                obj = obj.(name);
+            end
+            res = true;
+        end
+        % Find the scan dimention for the field referenced in `path`.
+        % Return `0` for fixed parameter, `-1` for not found in any scan.
+        function res=find_scan_dim(scan, path)
+            if ScanGroup.check_field(scan.params, path)
+                res = 0;
+                return;
+            end
+            for i = 1:length(scan.vars)
+                if ScanGroup.check_field(scan.vars(i).params, path)
+                    res = i;
+                    return;
+                end
+            end
+            res = -1;
         end
         % Helper to iterate through nested structure.
         % It's not very efficient in MATLAB but
