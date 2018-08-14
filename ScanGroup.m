@@ -202,6 +202,38 @@ classdef ScanGroup < handle
         end
 
         function varargout = subsref(self, S)
+            % This handles the `grp() ...` and `grp(n) ...` syntax.
+            % We support chained operation so this needs to forward
+            % the trailing index to the next handler by calling `subsref` directly.
+            nS = length(S);
+            if nS >= 1 && strcmp(S(1).type, '()')
+                if isempty(S(1).subs)
+                    % grp(): Fallback
+                    idx = 0;
+                elseif length(S(1).subs) == 1
+                    % grp(n): Real scan
+                    idx = S(1).subs{1};
+                    if ~(idx > 0)
+                        % Don't allow implicitly addressing the fallback with `0`
+                        % Also use the negative check to handle wierd thing like NaN...
+                        error('Scan index must be positive');
+                    end
+                else
+                    error('Too many scan index');
+                end
+                grp = ScanParam(self, idx);
+                if nS > 1
+                    [varargout{1:nargout}] = subsref(grp, S{2:end});
+                else
+                    % At most one return value in this branch.
+                    % Throw and error if we got more than that.
+                    nargoutchk(0, 1);
+                    if nargout ~= 0
+                        varargout{1} = grp;
+                    end
+                end
+                return;
+            end
             [varargout{1:nargout}] = builtin('subsref', self, S);
         end
         function A = subsasgn(self, S, B)
