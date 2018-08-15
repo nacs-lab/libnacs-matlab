@@ -431,6 +431,27 @@ classdef ScanGroup < handle
     end
     methods(Access=?ScanInfo)
         function [res, dim]=info_subsref(self, idx, info, S)
+            nS = length(S);
+            for i = 1:nS
+                if strcmp(S(i).type, '.')
+                    continue;
+                end
+                % Too lazy for anything fancier than this....
+                if strcmp(S(i).type, '()')
+                    if i ~= nS
+                        error('Invalid parameter access syntax');
+                    end
+                    if length(S(i).subs) ~= 1
+                        error('Wrong number of default value');
+                    end
+                    [res, dim] = try_getfield(self, idx, S, 1);
+                    if dim < 0
+                        dim = 0;
+                        res = S(i).subs{1};
+                    end
+                    return;
+                end
+            end
             [res, dim] = try_getfield(self, idx, S, 1);
             if dim < 0
                 res = SubProps(info, S);

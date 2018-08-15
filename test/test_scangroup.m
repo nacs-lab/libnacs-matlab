@@ -74,6 +74,12 @@ assert(x == 3 && y == 0);
 assert(isequaln(x, [1, 2]) && y == 2);
 [x, y] = g.get_scan(2).k;
 assert(isa(x, 'SubProps') && y == -1);
+[x, y] = g.get_scan(2).e;
+assert(isa(x, 'SubProps') && y == -1);
+[x, y] = g.get_scan(2).e(2);
+assert(x == 2 && y == 0);
+[x, y] = g.get_scan(2).e;
+assert(isa(x, 'SubProps') && y == -1);
 
 assert(isequaln(g.dump(), ...
                 struct('version', 1, ...
