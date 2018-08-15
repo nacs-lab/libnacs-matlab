@@ -141,9 +141,7 @@ classdef ScanParam < handle
                 end
             end
             nargoutchk(0, 1);
-            if nargout ~= 0
-                varargout{1} = SubProps(self, S);
-            end
+            varargout{1} = SubProps(self, S);
         end
         function self = subsasgn(self, S, B)
             nS = length(S);

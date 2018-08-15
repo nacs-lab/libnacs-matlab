@@ -302,9 +302,7 @@ classdef ScanGroup < handle
                     % At most one return value in this branch.
                     % Throw and error if we got more than that.
                     nargoutchk(0, 1);
-                    if nargout ~= 0
-                        varargout{1} = grp;
-                    end
+                    varargout{1} = grp;
                 end
                 return;
             end
