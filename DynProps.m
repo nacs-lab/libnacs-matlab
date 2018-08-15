@@ -83,6 +83,34 @@ classdef DynProps < handle
                 res.(arg) = v;
             end
         end
+        function res = fieldnames(self)
+            res = fieldnames(self.V);
+        end
+        function res = subfieldnames(self, S)
+            nS = length(S);
+            % Scan through all the '.' in the leading access items
+            v = self.V;
+            for i = 1:nS
+                switch S(i).type
+                    case '.'
+                        name = S(i).subs;
+                        if isfield(v, name)
+                            newv = v.(name);
+                            % Treat NaN as missing value
+                            if ~DynProps.isnanobj(newv)
+                                v = newv;
+                                continue;
+                            end
+                        end
+                        res = {};
+                        return;
+                    otherwise
+                        res = {};
+                        return;
+                end
+            end
+            res = fieldnames(v);
+        end
         function B = subsref(self, S)
             nS = length(S);
             % Scan through all the '.' in the leading access items
