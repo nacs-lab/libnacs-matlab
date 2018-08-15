@@ -469,7 +469,7 @@ classdef ScanGroup < handle
                     if length(S(i).subs) ~= 1
                         error('Wrong number of default value');
                     end
-                    [res, dim] = try_getfield(self, idx, S, 1);
+                    [res, dim] = try_getfield(self, idx, S(1:i - 1), 1);
                     if dim < 0
                         dim = 0;
                         res = S(i).subs{1};
