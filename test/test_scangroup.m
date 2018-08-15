@@ -45,6 +45,9 @@ assert(g.nseq() == 5);
 kstruct = struct('a', struct('b', struct('c', 2)));
 assert(isequaln(g.getseq(3), struct('d', 0, 'k', kstruct, 'a', 1, 'b', 2, 'c', 1)));
 
+[x, y] = g.get_scan(2).c;
+assert(isequaln(x, [1, 2, 3]) && y == 1);
+
 g2 = [g, g];
 assert(g2.nseq() == 10);
 for i=1:5
@@ -60,6 +63,17 @@ assert(g.nseq() == 3);
 assert(isequaln(g.getseq(1), struct('c', 3, 'a', 1, 'b', 2, 'd', 1)));
 assert(isequaln(g.getseq(2), struct('c', 3, 'a', 1, 'b', 2, 'd', 2)));
 assert(isequaln(g.getseq(3), struct('d', 0, 'k', kstruct, 'c', 3, 'a', 1, 'b', 2)));
+
+assert(isequaln(fieldnames(g.get_scan(1)), {'c', 'a', 'b', 'd'}))
+assert(isequaln(fieldnames(g.get_scan(2)), {'d', 'k', 'c', 'a', 'b'}))
+assert(isequaln(fieldnames(g.get_scan(2).k), {'a'}))
+
+[x, y] = g.get_scan(1).c;
+assert(x == 3 && y == 0);
+[x, y] = g.get_scan(1).d;
+assert(isequaln(x, [1, 2]) && y == 2);
+[x, y] = g.get_scan(2).k;
+assert(isa(x, 'SubProps') && y == -1);
 
 assert(isequaln(g.dump(), ...
                 struct('version', 1, ...

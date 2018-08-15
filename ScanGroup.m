@@ -304,6 +304,12 @@ classdef ScanGroup < handle
             end
             res = scan.vars(dim).params;
         end
+        function res=get_scan(self, idx)
+            if idx == 0
+                error('Out of bound scan index.');
+            end
+            res = ScanInfo(self, idx);
+        end
 
         function varargout = subsref(self, S)
             % This handles the `grp([n]) ...` syntax.
@@ -421,6 +427,46 @@ classdef ScanGroup < handle
                 return;
             end
             A = builtin('subsasgn', self, S, B);
+        end
+    end
+    methods(Access=?ScanInfo)
+        function [res, dim]=info_subsref(self, idx, info, S)
+            [res, dim] = try_getfield(self, idx, S, 1);
+            if dim < 0
+                res = SubProps(info, S);
+            end
+        end
+        function res=info_fieldnames(self, idx, info, S)
+            res = {};
+            function add_fieldnames(params)
+                % Only handles `.` reference
+                for i=1:length(S)
+                    if ~ScanGroup.isscalarstruct(params)
+                        error('Parameter parent overwriten');
+                    end
+                    name = S(i).subs;
+                    if ~isfield(params, name)
+                        return;
+                    end
+                    params = params.(name);
+                end
+                if ~ScanGroup.isscalarstruct(params)
+                    return;
+                end
+                fields = fieldnames(params);
+                for i=1:length(fields)
+                    name = fields{i};
+                    if any(strcmp(res, name))
+                        continue;
+                    end
+                    res{end + 1} = name;
+                end
+            end
+            scan = getfullscan(self, idx);
+            add_fieldnames(scan.params);
+            for j=1:length(scan.vars)
+                add_fieldnames(scan.vars(j).params);
+            end
         end
     end
     methods(Access=?ScanParam)
