@@ -17,8 +17,9 @@ classdef DynProps < handle
     end
     methods(Static, Access=private)
         function [a, changed]=merge_struct(a, b, changed, undefnan)
-            for name=fieldnames(b)
-                name = name{:};
+            fns = fieldnames(b);
+            for i=1:length(fns)
+                name = fns{i};
                 newv = b.(name);
                 if ~DynProps.isfield_def(a, name, undefnan)
                     changed = true;

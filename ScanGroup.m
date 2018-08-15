@@ -557,8 +557,9 @@ classdef ScanGroup < handle
             elseif ~isstruct(obj)
                 return;
             end
-            for name=fieldnames(obj)
-                if isarray(obj.(name{:}))
+            fns = fieldnames(obj);
+            for i=1:length(fns)
+                if isarray(obj.(fns{i}))
                     res = true;
                     return;
                 end
