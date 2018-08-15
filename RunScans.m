@@ -13,6 +13,12 @@ function [CurrentDate, CurrentTime] = RunScans(scangroup, seq)
 % acquiring images on separate MATLAB instances" for details.   Nick
 % Hutzler, 2 April 2015.
 
+if DisableScan.check()
+    CurrentDate = '';
+    CurrentTime = '';
+    return;
+end
+
 resetGlobal;
 
 if isa(scangroup, 'ScanSeq')

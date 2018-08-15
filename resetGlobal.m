@@ -9,4 +9,5 @@ function resetGlobal()
     KeySight.dropAll();
     WavemeterClient.dropAll();
     Wavemeter.dropAll();
+    DisableScan.set(0);
 end
