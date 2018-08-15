@@ -310,6 +310,31 @@ classdef ScanGroup < handle
             end
             res = ScanInfo(self, idx);
         end
+        function [val, path]=guess_scanaxis(self, idx, dim)
+            if idx == 0
+                error('Out of bound scan index.');
+            end
+            scan = getfullscan(self, idx);
+            if scan.vars(dim).size == 0
+                error('Non-existing dimension');
+            end
+            found = false;
+            function check_path(v, p)
+                if found
+                    return;
+                end
+                found = true;
+                val = v;
+                path = p;
+            end
+            var = scan.vars(dim);
+            ScanGroup.foreach_nonstruct(@check_path, var.params)
+            if ~found
+                % Shouldn't happen, but whatever...
+                val = 1:var.size;
+                path = struct('type', {}, 'subs', {});
+            end
+        end
 
         function varargout = subsref(self, S)
             % This handles the `grp([n]) ...` syntax.

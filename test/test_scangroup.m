@@ -135,7 +135,7 @@ assert(g.runp().b == 2);
 clear p0;
 
 p0.A = 1;
-p0.B = linspace(1, 10, 10);
+p0.B = linspace(10.1, 11, 10);
 
 p0(2).A = 2;
 
@@ -147,3 +147,6 @@ assert(isequaln(g4.get_vars(1), struct('B', p0(1).B)));
 assert(isequaln(g4.get_vars(1, 1), struct('B', p0(1).B)));
 assert(isequaln(g4.get_vars(2), struct('B', p0(1).B)));
 assert(isequaln(g4.get_vars(2, 1), struct('B', p0(1).B)));
+[val, path] = g4.guess_scanaxis(1, 1);
+assert(isequaln(val, p0(1).B));
+assert(isequaln(path, struct('type', '.', 'subs', 'B')));
