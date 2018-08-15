@@ -310,7 +310,10 @@ classdef ScanGroup < handle
             end
             res = ScanInfo(self, idx);
         end
-        function [val, path]=guess_scanaxis(self, idx, dim)
+        function [val, path]=guess_scanaxis(self, idx, dim, fieldidx)
+            if ~exist('fieldidx', 'var')
+                fieldidx = 1;
+            end
             if idx == 0
                 error('Out of bound scan index.');
             end
@@ -318,21 +321,18 @@ classdef ScanGroup < handle
             if scan.vars(dim).size == 0
                 error('Non-existing dimension');
             end
-            found = false;
             function check_path(v, p)
-                if found
+                fieldidx = fieldidx - 1;
+                if fieldidx ~= 0
                     return;
                 end
-                found = true;
                 val = v;
                 path = p;
             end
             var = scan.vars(dim);
             ScanGroup.foreach_nonstruct(@check_path, var.params)
-            if ~found
-                % Shouldn't happen, but whatever...
-                val = 1:var.size;
-                path = struct('type', {}, 'subs', {});
+            if fieldidx > 0
+                error('Cannot find scan field');
             end
         end
 
