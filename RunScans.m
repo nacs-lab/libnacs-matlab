@@ -1,4 +1,4 @@
-function [CurrentDate, CurrentTime] = RunScanSeq(scanseq, seq)
+function [CurrentDate, CurrentTime] = RunScans(scanseq, seq)
 % StartScan(scanseq)
 % Run a scan over parameters.  This function is designed to be run in one
 % MATLAB instance, while MonitorAndSaveAndorScans is running in another

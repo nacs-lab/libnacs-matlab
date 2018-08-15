@@ -104,7 +104,7 @@
 %
 % For both:
 % * runp(grp) / grp.runp():
-%     Run parameters. (parameters for RunSeq/RunScanSeq etc)
+%     Run parameters. (parameters for RunSeq/RunScans etc)
 %     The returned object is a `DynProps` and can be mutated.
 %
 
