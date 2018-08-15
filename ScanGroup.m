@@ -284,6 +284,26 @@ classdef ScanGroup < handle
             res.scanscache(1:length(res.scans)) = ScanGroup.DEF_SCANCACHE;
             res.runparam(self.runparam());
         end
+        function res=get_fixed(self, idx)
+            if idx == 0
+                error('Out of bound scan index.');
+            end
+            scan = getfullscan(self, idx);
+            res = scan.params;
+        end
+        function res=get_vars(self, idx, dim)
+            if idx == 0
+                error('Out of bound scan index.');
+            end
+            if ~exist('dim', 'var')
+                dim = 1;
+            end
+            scan = getfullscan(self, idx);
+            if scan.vars(dim).size == 0
+                error('Non-existing dimension');
+            end
+            res = scan.vars(dim).params;
+        end
 
         function varargout = subsref(self, S)
             % This handles the `grp([n]) ...` syntax.

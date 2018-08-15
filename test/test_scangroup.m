@@ -121,3 +121,9 @@ p0(2).A = 2;
 
 g4 = ScanGroup.load(struct('version', 0, 'p', p0, 'scan', struct()));
 assert(g4.nseq() == 20);
+assert(isequaln(g4.get_fixed(1), struct('A', 1)));
+assert(isequaln(g4.get_fixed(2), struct('A', 2)));
+assert(isequaln(g4.get_vars(1), struct('B', p0(1).B)));
+assert(isequaln(g4.get_vars(1, 1), struct('B', p0(1).B)));
+assert(isequaln(g4.get_vars(2), struct('B', p0(1).B)));
+assert(isequaln(g4.get_vars(2, 1), struct('B', p0(1).B)));
