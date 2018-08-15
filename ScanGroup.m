@@ -506,6 +506,39 @@ classdef ScanGroup < handle
                 end
             end
         end
+        % Try to get the field for a specific scan
+        % If `allow_scan` is `true`, also search for scan (variable) parameters.
+        % If no (leaf) field is found, return `[], -1`.
+        % Otherwise, return the value (possibly array) in `val` and the scan dimension
+        % (0 for fixed parameters) in `dim`.
+        % Throw an error if the field's parent is set to non-scalar struct
+        function [val, dim] = try_getfield(self, idx, S, allow_scan)
+            if idx == 0
+                scan = self.base;
+            elseif length(self.scans) < idx
+                val = [];
+                dim = -1;
+                return;
+            else
+                scan = getfullscan(self, idx);
+            end
+            [val, res] = ScanGroup.get_leaffield(scan.params, S);
+            if res
+                dim = 0;
+                return;
+            end
+            if ~allow_scan
+                dim = -1;
+                return;
+            end
+            for dim = 1:length(scan.vars)
+                [val, res] = ScanGroup.get_leaffield(scan.vars(dim).params, S);
+                if res
+                    return;
+                end
+            end
+            dim = -1;
+        end
         function addparam(self, idx, S, val)
             check_noconflict(self, idx, S, 0);
             if idx == 0
@@ -611,6 +644,27 @@ classdef ScanGroup < handle
                 obj = obj.(name);
             end
             res = true;
+        end
+        % Check if the field is a leaf field within the parameter tree.
+        % Throw an error if the field's parent is set to non-scalar struct.
+        function [val, res]=get_leaffield(obj, path)
+            % Only handles `.` reference
+            val = [];
+            for i = 1:length(path)
+                if ~ScanGroup.isscalarstruct(obj)
+                    error('Parameter parent overwriten');
+                end
+                name = path(i).subs;
+                if ~isfield(obj, name)
+                    res = false;
+                    return;
+                end
+                obj = obj.(name);
+            end
+            res = ~ScanGroup.isscalarstruct(obj);
+            if res
+                val = obj;
+            end
         end
         % Find the scan dimention for the field referenced in `path`.
         % Return `0` for fixed parameter, `-1` for not found in any scan.

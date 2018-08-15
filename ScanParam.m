@@ -13,13 +13,19 @@
 
 %% This represent a N-dimensional scan. See `ScanGroup`
 % API:
-% * (nested) field assignment (i.e. `group.a.b.c.d = x`):
+% * (nested) field access (i.e. `param.a.b.c.d`):
+%     If the result is a fixed parameter, the value of it will be returned.
+%     When using this syntax, the full parameter (with base applied) will be used
+%     and the scan has to be valid.
+%     Otherwise, a lazy lookup object will be returned and operation on that object
+%     will be equivalent to operating on this object with a field access prefix.
+% * (nested) field assignment (i.e. `param.a.b.c.d = x`):
 %     This always represent a single parameter. Never a scan.
 %     Throws an error if the field is already set as a scan.
-% * (nested) field scan (i.e. `group.a.b.c.d.scan([nd, ]array)`):
+% * (nested) field scan (i.e. `param.a.b.c.d.scan([nd, ]array)`):
 %     `nd` is the dimension of the scan. Default to 1.
 %     If `array` is a scalar or single element cell array,
-%     this is equivalent to `group.a.b.c.d = x` (or `group.a.b.c.d = x{1}` for cell array).
+%     this is equivalent to `param.a.b.c.d = x` (or `param.a.b.c.d = x{1}` for cell array).
 %     Otherwise, the `array` represent the list of parameters to scan.
 %     Throws an error if the field is already assigned as a parameter.
 %     Also throw an error if the field is already set as scan on another dimension.
@@ -77,7 +83,12 @@ classdef ScanParam < handle
                 end
             end
             nargoutchk(0, 1);
-            varargout{1} = SubProps(self, S);
+            [val, dim] = try_getfield(self.group, self.idx, S, 0);
+            if dim >= 0
+                varargout{1} = val;
+            else
+                varargout{1} = SubProps(self, S);
+            end
         end
         function self = subsasgn(self, S, B)
             nS = length(S);
