@@ -39,6 +39,7 @@
 %   grp(n) / grp(n) = ...:
 %     Access the group's fallback parameter (`grp()`) or
 %     the parameter for the n-th scan (`grp(n)`).
+%     `n` can use `end` syntax for the number of scans.
 %
 %     Mutation to the fallback parameter will affect the fallback values of
 %     **ALL** scans in this `ScanGroup` including future ones.
@@ -84,6 +85,9 @@
 %
 % * getseq(grp, n) / grp.getseq(n):
 %     Get the n-th sequence parameter.
+%
+% * getseq_in_scan(grp, scan, n) / grp.getseq_in_scan(scan, n):
+%     Get the n-th sequence parameter within the scan-th scan.
 %
 % * dump(grp) / grp.dump():
 %     Return a low level MATLAB data structure that can be saved without
