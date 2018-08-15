@@ -220,7 +220,7 @@ classdef ScanGroup < handle
             % This always makes sure that the scan we set the base for exists
             % and is initialized. The cache entry for this will also be initialized.
             % The caller might depend on this behavior.
-            if ~(base >= 0 && isscalar(base) && isinteger(base))
+            if ~(base >= 0 && isscalar(base) && floor(base) == base)
                 error('Base index must be non-negative integer.');
             elseif base > length(self.scans)
                 error('Cannot set base to non-existing scan');
@@ -455,6 +455,75 @@ classdef ScanGroup < handle
             self.scanscache(idx).params = scan.params;
             self.scanscache(idx).vars = scan.vars;
             self.scanscache(idx).dirty = false;
+        end
+        % Check if there's any conflict if we want to scan `S` in the `dim` dimension
+        % for the scan `idx`. `dim == 0` represent fixed parameter.
+        function check_noconflict(self, idx, S, dim)
+            if idx == 0
+                scan = self.base;
+            elseif length(self.scans) < idx
+                % Initialize the scans, no need to check for conflict yet since it's empty.
+                self.scans(length(self.scans) + 1:idx) = self.DEF_SCAN;
+                return;
+            else
+                scan = self.scans(idx);
+            end
+            if dim ~= 0
+                if ScanGroup.check_field(scan.params, S)
+                    error('Cannot scan a fixed parameter.');
+                end
+            end
+            for i = 1:length(scan.vars)
+                if dim == i
+                    continue;
+                end
+                if ScanGroup.check_field(scan.vars(i).params, S)
+                    if dim == 0
+                        error('Cannot fix a scanned parameter.');
+                    else
+                        error('Cannot scan a parameter in multiple dimensions.');
+                    end
+                end
+            end
+        end
+        function addparam(self, idx, S, val)
+            check_noconflict(self, idx, S, 0);
+            if idx == 0
+                self.base.params = subsasgn(self.base.params, S, val);
+            else
+                self.scans(idx).params = subsasgn(self.scans(idx).params, S, val);
+            end
+        end
+        function addscan(self, idx, S, dim, vals)
+            if ~ScanGroup.isarray(vals)
+                addparam(self, idx, S, vals);
+                return;
+            end
+            if ~(dim > 0 && isscalar(dim) && floor(dim) == dim)
+                error('Scan dimension must be positive integer.');
+            end
+            check_noconflict(self, idx, S, dim);
+            nvals = numel(vals);
+            if idx == 0
+                self.base.vars(length(self.base.vars) + 1:dim) = self.DEF_VARS;
+                sz = self.base.vars(dim).size;
+                if sz == 0
+                    self.base.vars(dim).size = nvals;
+                elseif sz ~= nvals
+                    error('Scan parameter size does not match');
+                end
+                self.base.vars(dim).params = subsasgn(self.base.vars(dim).params, S, vals);
+            else
+                self.scans(idx).vars(length(self.scans(idx).vars) + 1:dim) = self.DEF_VARS;
+                sz = self.scans(idx).vars(dim).size;
+                if sz == 0
+                    self.scans(idx).vars(dim).size = nvals;
+                elseif sz ~= nvals
+                    error('Scan parameter size does not match');
+                end
+                self.scans(idx).vars(dim).params = subsasgn(self.scans(idx).vars(dim).params, ...
+                                                            S, vals);
+            end
         end
     end
     methods(Static, Access=?ScanParam)

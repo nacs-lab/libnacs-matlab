@@ -40,76 +40,6 @@ classdef ScanParam < handle
             self.group = group;
             self.idx = idx;
         end
-        function check_noconflict(self, S, dim)
-            grp = self.group;
-            if self.idx == 0
-                scan = grp.base;
-            elseif length(grp.scans) < self.idx
-                % Initialize the scans, no need to check for conflict yet since it's empty.
-                grp.scans(length(grp.scans) + 1:self.idx) = grp.DEF_SCAN;
-                return;
-            else
-                scan = grp.scans(self.idx);
-            end
-            if dim ~= 0
-                if ScanGroup.check_field(scan.params, S)
-                    error('Cannot scan a fixed parameter.');
-                end
-            end
-            for i = 1:length(scan.vars)
-                if dim == i
-                    continue;
-                end
-                if ScanGroup.check_field(scan.vars(i).params, S)
-                    if dim == 0
-                        error('Cannot fix a scanned parameter.');
-                    else
-                        error('Cannot scan a parameter in multiple dimensions.');
-                    end
-                end
-            end
-        end
-        function scan(self, S, dim, vals)
-            if ~ScanGroup.isarray(vals)
-                setparam(self, S, vals);
-                return;
-            end
-            if ~(dim > 0 && isscalar(dim) && isinteger(dim))
-                error('Scan dimension must be positive integer.');
-            end
-            check_noconflict(self, S, dim);
-            grp = self.group;
-            idx = self.idx;
-            nvals = numel(vals);
-            if idx == 0
-                sz = grp.base.vars(dim).size;
-                if sz == 0
-                    grp.base.vars(dim).size = nvals;
-                elseif sz ~= nvals
-                    error('Scan parameter size does not match');
-                end
-                grp.base.vars(dim).params = subsasgn(grp.base.vars(dim).params, S, vals);
-            else
-                sz = grp.scans(idx).vars(dim).size;
-                if sz == 0
-                    grp.scans(idx).vars(dim).size = nvals;
-                elseif sz ~= nvals
-                    error('Scan parameter size does not match');
-                end
-                grp.scans(idx).vars(dim).params = subsasgn(grp.scans(idx).vars(dim).params, ...
-                                                           S, vals);
-            end
-        end
-        function setparam(self, S, val)
-            check_noconflict(self, S, 0);
-            grp = self.group;
-            idx = self.idx;
-            if idx == 0
-                grp.base.params = subsasgn(grp.base.params, S, val);
-            else
-                grp.scans(idx).params = subsasgn(grp.scans(idx).params, S, val);
-            end
-        end
     end
     methods
         function varargout = subsref(self, S)
@@ -119,7 +49,7 @@ classdef ScanParam < handle
                 if ~strcmp(typ, '.')
                     error('Invalid parameter access syntax.');
                 end
-                if strcmp(name, 'scan') && i < nS && strcmp(S(i + 1).type, '()')
+                if strcmp(S(i).subs, 'scan') && i < nS && strcmp(S(i + 1).type, '()')
                     if i == 1
                         error('Must specify parameter to scan.');
                     elseif i + 1 < nS
@@ -131,9 +61,9 @@ classdef ScanParam < handle
                         case 0
                             error('Too few arguments for scan()');
                         case 1
-                            scan(self, S(1:i - 1), 1, subs{1});
+                            addscan(self.group, self.idx, S(1:i - 1), 1, subs{1});
                         case 2
-                            scan(self, S(1:i - 1), subs{1}, subs{2});
+                            addscan(self.group, self.idx, S(1:i - 1), subs{1}, subs{2});
                         otherwise
                             error('Too many arguments for scan()');
                     end
@@ -151,7 +81,7 @@ classdef ScanParam < handle
                     error('Invalid parameter access syntax.');
                 end
             end
-            setparam(self, S, B);
+            addparam(self.group, self.idx, S, B);
         end
     end
 end
