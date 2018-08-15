@@ -221,6 +221,10 @@ classdef ScanGroup < handle
                 end
             end
         end
+        function res=scandim(self, idx)
+            scan = getfullscan(self, idx);
+            res = length(scan.vars);
+        end
         function res=groupsize(self)
             res = length(self.scans);
         end
