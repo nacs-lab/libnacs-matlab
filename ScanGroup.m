@@ -601,7 +601,7 @@ classdef ScanGroup < handle
         end
         %% Recursively check if any of the struct fields are array.
         function res = hasarray(obj)
-            res = isarray(obj);
+            res = ScanGroup.isarray(obj);
             if res
                 return;
             elseif ~isstruct(obj)
@@ -609,7 +609,7 @@ classdef ScanGroup < handle
             end
             fns = fieldnames(obj);
             for i=1:length(fns)
-                if isarray(obj.(fns{i}))
+                if ScanGroup.isarray(obj.(fns{i}))
                     res = true;
                     return;
                 end
