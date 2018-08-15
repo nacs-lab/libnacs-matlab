@@ -40,6 +40,12 @@ classdef ScanParam < handle
             self.group = group;
             self.idx = idx;
         end
+        function group=getgroup(self)
+            group = self.group;
+        end
+        function idx=getidx(self)
+            idx = self.idx;
+        end
     end
     methods
         function varargout = subsref(self, S)

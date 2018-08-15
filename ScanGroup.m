@@ -348,19 +348,21 @@ classdef ScanGroup < handle
                     return;
                 end
                 if isa(B, 'ScanParam')
-                    if B.group ~= self
+                    Bgroup = getgroup(B);
+                    Bidx = getidx(B);
+                    if Bgroup ~= self
                         error('Cannot assign scan from a different group.');
                     end
-                    if B.idx == idx
+                    if Bidx == idx
                         % no-op
                         return;
                     end
-                    if B.idx == 0
+                    if Bidx == 0
                         rscan = self.base;
                         rbase = 0; % base index
                     else
-                        rscan = self.scans(B.idx);
-                        rbase = self.getbaseidx(B.idx); % base index
+                        rscan = self.scans(Bidx);
+                        rbase = self.getbaseidx(Bidx); % base index
                     end
                     if idx == 0
                         self.base.params = rscan.params;
