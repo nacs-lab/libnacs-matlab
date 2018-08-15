@@ -1,5 +1,5 @@
-function [CurrentDate, CurrentTime] = RunScans(scanseq, seq)
-% StartScan(scanseq)
+function [CurrentDate, CurrentTime] = RunScans(scangroup, seq)
+% RunScan(scangroup)
 % Run a scan over parameters.  This function is designed to be run in one
 % MATLAB instance, while MonitorAndSaveAndorScans is running in another
 % instance.
@@ -15,9 +15,17 @@ function [CurrentDate, CurrentTime] = RunScans(scanseq, seq)
 
 resetGlobal;
 
-p = DynProps(scanseq.p(1));
-scanp = scanseq.scanp();
-fprintf('Total scan points = %f\n', scanseq.scanLengthTot);
+if isa(scangroup, 'ScanSeq')
+    p = DynProps(scangroup.p(1));
+    scanp = scangroup.scanp();
+    nseqs = scangroup.scanLengthTot;
+else
+    p = DynProps(scangroup.getseq(1));
+    scanp = scangroup.runp();
+    nseqs = scangroup.nseq();
+end
+
+fprintf('Total scan points = %f\n', nseqs);
 
 Scan = getfields(scanp, 'AndorCenter', 'BoxSize', 'FrameSize', ...
                  'NumImages', 'NumSites', 'SingleAtomSpecies', ...
@@ -25,16 +33,20 @@ Scan = getfields(scanp, 'AndorCenter', 'BoxSize', 'FrameSize', ...
                  'SurvivalLoadingLogicals', 'SurvivalLogicals');
 
 % Name of parameter to scan over
-Scan.ParamName = p.ParamName("");
+Scan.ParamName = p.ParamName('');
 % Units of the parameter
-Scan.ParamUnits = p.ParamUnits("");
+Scan.ParamUnits = p.ParamUnits('');
 % x-axis scale for plots.  Enter 1e-6 for micro, 1e3 for kilo, etc.
 Scan.PlotScale = p.PlotScale(1);
-Scan.ScanSeq = scanseq;
+if isa(scangroup, 'ScanSeq')
+    Scan.ScanSeq = scangroup;
+else
+    Scan.ScanGroup = scangroup;
+end
 % Parameter values to scan over.  Some helpful custom functions might be
 % stack, scramble, QuasirandomList.  Parameter values are in the units used
 % in the sequence.
-Params = 1:scanseq.scanLengthTot;
+Params = 1:nseqs;
 
 %%
 % Number of sequences to run between acquisitions of images from the
@@ -153,7 +165,7 @@ pause(0.1);
 
 % Run the sequences.  This will run forever until the average number of
 % loads per point is NumPerParamAvg.
-runSeq(seq, 0, scanseq, Scan.Params, ['email:' Email]);
+runSeq(seq, 0, scangroup, Scan.Params, ['email:' Email]);
 
 % Scan is now finished.
 m.Data(1).ScanComplete = 1;

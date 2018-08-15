@@ -65,6 +65,8 @@ argidx = 1;
 arglist_set = false;
 is_scanseq = false;
 scanseq = [];
+is_scangroup = false;
+scangroup = [];
 
 function res = ary2cell(ary)
   res = {};
@@ -117,8 +119,17 @@ while argidx < nargin
         arglist_set = true;
         break;
     elseif isa(arg, 'ScanSeq')
+        if is_scangroup
+            error('Cannot specify ScanSeq and ScanGroup at the same time.');
+        end
         scanseq = arg;
         is_scanseq = true;
+    elseif isa(arg, 'ScanGroup')
+        if is_scanseq
+            error('Cannot specify ScanSeq and ScanGroup at the same time.');
+        end
+        scangroup = arg;
+        is_scangroup = true;
     else
         error('Invalid argument.');
     end
@@ -144,7 +155,11 @@ seqlist = cell(1, nseq);
         end
         global nacsExpSeqDisableRunHack;
         nacsExpSeqDisableRunHack = 1;
-        if is_scanseq
+        if is_scangroup
+          s = ExpSeq(getseq(scangroup, arglist{idx}{:}));
+          func(s);
+          seqlist{idx} = s;
+        elseif is_scanseq
           s = ExpSeq(getSingle(scanseq, arglist{idx}{:}));
           func(s);
           seqlist{idx} = s;
