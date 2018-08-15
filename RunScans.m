@@ -41,7 +41,7 @@ Scan.PlotScale = p.PlotScale(1);
 if isa(scangroup, 'ScanSeq')
     Scan.ScanSeq = scangroup;
 else
-    Scan.ScanGroup = scangroup;
+    Scan.ScanGroup = scangroup.dump();
 end
 % Parameter values to scan over.  Some helpful custom functions might be
 % stack, scramble, QuasirandomList.  Parameter values are in the units used
