@@ -144,7 +144,7 @@ classdef ScanGroup < handle
         %         0 size means a dummy/overwritten scan and should be ignored.
         %     params::struct
         %         Each array members of the struct represents a list of parameter to scan.
-        scans = struct('baseidx', {}, 'params', {}, 'vars', {});
+        scans = ScanGroup.DEF_SCAN;
         % * base::Scan
         %     This is the fallback parameter accessible by indexing without index, i.e. `grp()`.
         %     See above for the format of `Scan`.
@@ -158,7 +158,7 @@ classdef ScanGroup < handle
         % Cache of the full scan after combining with the base scan.
         % The `dirty` flag marks whether this is invalid due to modification since last cache.
         % This should always be as long as `scans`.
-        scanscache = struct('dirty', {}, 'params', {}, 'vars', {});
+        scanscache = ScanGroup.DEF_SCANCACHE;
     end
     methods
         function self=ScanGroup()
@@ -193,6 +193,9 @@ classdef ScanGroup < handle
             end
             for i=1:length(scan.vars)
                 var = scan.vars(i);
+                if var.size == 0
+                    continue;
+                end
                 subidx = mod(seqidx, var.size); % 0-based
                 seqidx = (seqidx - subidx) / var.size;
                 ScanGroup.foreach_nonstruct(@setparam_cb, var.params);
@@ -227,9 +230,9 @@ classdef ScanGroup < handle
                 error('Cannot set base to non-existing scan');
             elseif idx > length(self.scans)
                 % New scan
-                self.scans(length(self.scans) + 1:idx) = self.DEF_SCAN;
+                self.scans(length(self.scans) + 1:idx) = ScanGroup.DEF_SCAN;
                 self.scans(idx).baseidx = base;
-                self.scanscache(length(self.scanscache) + 1:idx) = self.DEF_SCANCACHE;
+                self.scanscache(length(self.scanscache) + 1:idx) = ScanGroup.DEF_SCANCACHE;
                 return;
             end
             % Fast pass to avoid invalidating anything
@@ -242,6 +245,7 @@ classdef ScanGroup < handle
                 self.scanscache(idx).dirty = true;
                 return;
             end
+            newbase = base;
             % Loop detection.
             visited = false(length(self.scans), 1);
             visited(idx) = true;
@@ -255,11 +259,12 @@ classdef ScanGroup < handle
                     break;
                 end
             end
-            self.scans(idx).baseidx = base;
+            self.scans(idx).baseidx = newbase;
             self.scanscache(idx).dirty = true;
         end
         function res=horzcat(varargin)
             res = ScanGroup();
+            res.scans(end) = [];
             for i = 1:nargin
                 grp = varargin{i};
                 if ~isa(grp, 'ScanGroup')
@@ -271,8 +276,8 @@ classdef ScanGroup < handle
                     res.scans(end + 1) = scan;
                 end
             end
-            res.scanscache(1:length(res.scans)) = DEF_SCANCACHE;
             self = varargin{1};
+            res.scanscache(1:length(res.scans)) = ScanGroup.DEF_SCANCACHE;
             res.runparam(self.runparam());
         end
 
@@ -374,11 +379,11 @@ classdef ScanGroup < handle
                     self.base.vars = struct('size', {}, 'params', {});
                     set_dirty_all(self);
                 else
-                    self.scans(length(self.scans) + 1:idx) = self.DEF_SCAN;
+                    self.scans(length(self.scans) + 1:idx) = ScanGroup.DEF_SCAN;
                     self.scans(idx).params = B;
                     self.scans(idx).vars = struct('size', {}, 'params', {});
                     self.scans(idx).baseidx = 0;
-                    self.scanscache(length(self.scanscache) + 1:idx) = self.DEF_SCANCACHE;
+                    self.scanscache(length(self.scanscache) + 1:idx) = ScanGroup.DEF_SCANCACHE;
                     self.scanscache(idx).dirty = true;
                 end
                 return;
@@ -433,7 +438,7 @@ classdef ScanGroup < handle
                 if ScanGroup.find_scan_dim(scan, path) >= 0
                     return;
                 end
-                scan.vars(length(scan.vars) + 1:scanid) = self.DEF_VARS;
+                scan.vars(length(scan.vars) + 1:scanid) = ScanGroup.DEF_VARS;
                 scan.vars(scanid).params = subsasgn(scan.vars(scanid).params, path, v);
             end
             for scanid = 1:length(base.vars)
@@ -465,8 +470,8 @@ classdef ScanGroup < handle
                 scan = self.base;
             elseif length(self.scans) < idx
                 % Initialize the scans, no need to check for conflict yet since it's empty.
-                self.scans(length(self.scans) + 1:idx) = self.DEF_SCAN;
-                self.scanscache(length(self.scanscache) + 1:idx) = self.DEF_SCANCACHE;
+                self.scans(length(self.scans) + 1:idx) = ScanGroup.DEF_SCAN;
+                self.scanscache(length(self.scanscache) + 1:idx) = ScanGroup.DEF_SCANCACHE;
                 return;
             else
                 scan = self.scans(idx);
@@ -510,7 +515,7 @@ classdef ScanGroup < handle
             check_noconflict(self, idx, S, dim);
             nvals = numel(vals);
             if idx == 0
-                self.base.vars(length(self.base.vars) + 1:dim) = self.DEF_VARS;
+                self.base.vars(length(self.base.vars) + 1:dim) = ScanGroup.DEF_VARS;
                 sz = self.base.vars(dim).size;
                 if sz == 0
                     self.base.vars(dim).size = nvals;
@@ -520,7 +525,7 @@ classdef ScanGroup < handle
                 self.base.vars(dim).params = subsasgn(self.base.vars(dim).params, S, vals);
                 set_dirty_all(self);
             else
-                self.scans(idx).vars(length(self.scans(idx).vars) + 1:dim) = self.DEF_VARS;
+                self.scans(idx).vars(length(self.scans(idx).vars) + 1:dim) = ScanGroup.DEF_VARS;
                 sz = self.scans(idx).vars(dim).size;
                 if sz == 0
                     self.scans(idx).vars(dim).size = nvals;
@@ -663,7 +668,7 @@ classdef ScanGroup < handle
             self.scans = obj.scans;
             self.base = obj.base;
             self.runparam(obj.runparam);
-            self.scanscache(1:length(self.scans)) = self.DEF_SCANCACHE;
+            self.scanscache(1:length(self.scans)) = ScanGroup.DEF_SCANCACHE;
             % TODO: validate
         end
     end
