@@ -582,6 +582,14 @@ classdef ScanGroup < handle
                 self.scanscache(idx).dirty = true;
             end
         end
+        function validate(self)
+            % TODO
+            % base is scalar integer and inbound.
+            % base is loop free
+            % parameter conflict between scans
+            % scan size ~= 1
+            % consistent scan size
+        end
     end
     methods(Static, Access=?ScanParam)
         %% Check if the object is an array for scan parameter.
@@ -724,18 +732,63 @@ classdef ScanGroup < handle
                 path(end).subs = fields{state(end)};
             end
         end
-    end
-    methods(Static)
-        function self=load(obj)
+        function self=load_v1(obj)
             self = ScanGroup();
-            if obj.version ~= 1
-                error('Wrong object version: %d', obj.version);
-            end
             self.scans = obj.scans;
             self.base = obj.base;
             self.runparam(obj.runparam);
             self.scanscache(1:length(self.scans)) = ScanGroup.DEF_SCANCACHE;
-            % TODO: validate
+        end
+        function self=load_v0(obj)
+            % Loading the old style scan seq
+            self = ScanGroup();
+            self.runparam(obj.scan);
+            p = obj.p;
+            fields = fieldnames(p);
+            for i=1:length(p)
+                scan = ScanGroup.DEF_SCAN;
+                vars = ScanGroup.DEF_VARS;
+                for j=1:length(fields)
+                    name = fields{j};
+                    val = p(i).(name);
+                    if isempty(val)
+                        val = p(1).(name);
+                    end
+                    sz = numel(val);
+                    if sz <= 1
+                        scan.params.(name) = val;
+                        continue;
+                    end
+                    if vars.size == 0
+                        vars.size = sz;
+                    elseif vars.size ~= sz
+                        error('Scan size mismatch');
+                    end
+                    vars.params.(name) = val;
+                end
+                if vars.size ~= 0
+                    scan.vars = vars;
+                end
+                self.scans(i) = scan;
+            end
+            self.scanscache(1:length(self.scans)) = ScanGroup.DEF_SCANCACHE;
+        end
+    end
+    methods(Static)
+        function self=load(obj)
+            if isa(obj, 'ScanSeq')
+                scanp = obj.scanp();
+                self = ScanGroup.load_v0(struct('p', obj.p, 'scan', scanp()));
+            elseif ~isfield(obj, 'version')
+                error('Version missing.');
+            elseif obj.version == 1
+                self = ScanGroup.load_v1(obj);
+            elseif obj.version == 0
+                self = ScanGroup.load_v0(obj);
+            else
+                error('Wrong object version: %d', obj.version);
+            end
+            validate(self);
         end
     end
     % Put this function at the end so that it doesn't mess up the indent of the whole file...

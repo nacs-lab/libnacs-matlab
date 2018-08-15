@@ -134,7 +134,11 @@ classdef DynProps < handle
                             end
                         end
                         % Assign default value
-                        self.V = subsasgn(self.V, S(1:j - 1), def);
+                        if j == 1
+                            self.V = def;
+                        else
+                            self.V = subsasgn(self.V, S(1:j - 1), def);
+                        end
                         if strcmp(S(j).type, '{}')
                             def = SubProps(self, S(1:j - 1));
                         end
@@ -157,7 +161,11 @@ classdef DynProps < handle
                             if isstruct(v) & isstruct(def)
                                 [v, changed] = DynProps.merge_struct(v, def, false, true);
                                 if changed
-                                    self.V = subsasgn(self.V, S(1:i - 1), v);
+                                    if i == 1
+                                        self.V = v;
+                                    else
+                                        self.V = subsasgn(self.V, S(1:i - 1), v);
+                                    end
                                 end
                             end
                         end

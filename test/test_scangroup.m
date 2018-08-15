@@ -111,3 +111,13 @@ g.runp().a = 3;
 rp.b = 2;
 assert(g.runp().a == 3);
 assert(g.runp().b == 2);
+
+clear p0;
+
+p0.A = 1;
+p0.B = linspace(1, 10, 10);
+
+p0(2).A = 2;
+
+g4 = ScanGroup.load(struct('version', 0, 'p', p0, 'scan', struct()));
+assert(g4.nseq() == 20);
