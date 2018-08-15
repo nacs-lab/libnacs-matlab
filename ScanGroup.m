@@ -116,7 +116,8 @@
 % can be added without breaking the loading of the old code.
 classdef ScanGroup < handle
     properties(Constant, Access=?ScanParam)
-        DEF_SCAN = struct('params', struct(), 'vars', struct('size', {}, 'params', {}));
+        DEF_SCAN = struct('baseidx', 0, 'params', struct(), ...
+                          'vars', struct('size', {}, 'params', {}));
         DEF_VARS = struct('size', 0, 'params', struct());
         DEF_SCANCACHE = struct('dirty', true, 'params', struct(), 'vars', struct());
     end
@@ -204,10 +205,10 @@ classdef ScanGroup < handle
             end
         end
         function res=scansize(self, idx)
-            scan = getfullscan(sefl, idx);
+            scan = getfullscan(self, idx);
             res = 1;
             for i = 1:length(scan.vars)
-                sz1d = vars(i).size;
+                sz1d = scan.vars(i).size;
                 if sz1d ~= 0
                     res = res * sz1d;
                 end
@@ -295,14 +296,14 @@ classdef ScanGroup < handle
                 else
                     error('Too many scan index');
                 end
-                grp = ScanParam(self, idx);
+                scan = ScanParam(self, idx);
                 if nS > 1
-                    [varargout{1:nargout}] = subsref(grp, S(2:end));
+                    [varargout{1:nargout}] = subsref(scan, S(2:end));
                 else
                     % At most one return value in this branch.
                     % Throw and error if we got more than that.
                     nargoutchk(0, 1);
-                    varargout{1} = grp;
+                    varargout{1} = scan;
                 end
                 return;
             end
@@ -333,8 +334,8 @@ classdef ScanGroup < handle
                 A = self;
                 if nS > 1
                     % Assignment to the `ScanParam`, pass that on.
-                    grp = ScanParam(self, idx);
-                    grp = subsasgn(grp, S(2:end), B);
+                    scan = ScanParam(self, idx);
+                    scan = subsasgn(scan, S(2:end), B);
                     return;
                 end
                 if isa(B, 'ScanParam')
@@ -346,24 +347,22 @@ classdef ScanGroup < handle
                         return;
                     end
                     if B.idx == 0
-                        rgrp = self.base;
+                        rscan = self.base;
                         rbase = 0; % base index
                     else
-                        rgrp = self.scans(B.idx);
+                        rscan = self.scans(B.idx);
                         rbase = self.getbaseidx(B.idx); % base index
                     end
                     if idx == 0
-                        self.base.params = rgrp.params;
-                        self.base.vars = rgrp.vars;
-                        for i = 1:length(self.scanscache)
-                            self.scanscache(i).dirty = true;
-                        end
+                        self.base.params = rscan.params;
+                        self.base.vars = rscan.vars;
+                        set_dirty_all(self);
                     else
                         % Call the setter function to check for loop.
-                        % This also makes sure the
+                        % This also makes sure the scans and scanscache are initialized.
                         setbase(self, idx, rbase);
-                        self.scans(idx).params = rgrp.params;
-                        self.scans(idx).vars = rgrp.vars;
+                        self.scans(idx).params = rscan.params;
+                        self.scans(idx).vars = rscan.vars;
                         self.scanscache(idx).dirty = true;
                     end
                     return;
@@ -373,9 +372,7 @@ classdef ScanGroup < handle
                 if idx == 0
                     self.base.params = B;
                     self.base.vars = struct('size', {}, 'params', {});
-                    for i = 1:length(self.scanscache)
-                        self.scanscache(i).dirty = true;
-                    end
+                    set_dirty_all(self);
                 else
                     self.scans(length(self.scans) + 1:idx) = self.DEF_SCAN;
                     self.scans(idx).params = B;
@@ -391,10 +388,15 @@ classdef ScanGroup < handle
     end
     methods(Access=?ScanParam)
         function base=getbaseidx(self, idx)
-            scan = self.scans(grp);
+            scan = self.scans(idx);
             base = scan.baseidx;
             if isempty(base)
                 base = 0;
+            end
+        end
+        function res=set_dirty_all(self)
+            for i = 1:length(self.scanscache)
+                self.scanscache(i).dirty = true;
             end
         end
         function res=check_dirty(self, idx)
@@ -449,8 +451,8 @@ classdef ScanGroup < handle
             end
             for scanid = 1:length(scan.vars)
                 scansize = 0;
-                ScanGroup.foreach_nonstruct(@count_vars, base.vars(scanid).params);
-                base.vars(scanid).size = scansize;
+                ScanGroup.foreach_nonstruct(@count_vars, scan.vars(scanid).params);
+                scan.vars(scanid).size = scansize;
             end
             self.scanscache(idx).params = scan.params;
             self.scanscache(idx).vars = scan.vars;
@@ -464,6 +466,7 @@ classdef ScanGroup < handle
             elseif length(self.scans) < idx
                 % Initialize the scans, no need to check for conflict yet since it's empty.
                 self.scans(length(self.scans) + 1:idx) = self.DEF_SCAN;
+                self.scanscache(length(self.scanscache) + 1:idx) = self.DEF_SCANCACHE;
                 return;
             else
                 scan = self.scans(idx);
@@ -490,8 +493,10 @@ classdef ScanGroup < handle
             check_noconflict(self, idx, S, 0);
             if idx == 0
                 self.base.params = subsasgn(self.base.params, S, val);
+                set_dirty_all(self);
             else
                 self.scans(idx).params = subsasgn(self.scans(idx).params, S, val);
+                self.scanscache(idx).dirty = true;
             end
         end
         function addscan(self, idx, S, dim, vals)
@@ -513,6 +518,7 @@ classdef ScanGroup < handle
                     error('Scan parameter size does not match');
                 end
                 self.base.vars(dim).params = subsasgn(self.base.vars(dim).params, S, vals);
+                set_dirty_all(self);
             else
                 self.scans(idx).vars(length(self.scans(idx).vars) + 1:dim) = self.DEF_VARS;
                 sz = self.scans(idx).vars(dim).size;
@@ -523,6 +529,7 @@ classdef ScanGroup < handle
                 end
                 self.scans(idx).vars(dim).params = subsasgn(self.scans(idx).vars(dim).params, ...
                                                             S, vals);
+                self.scanscache(idx).dirty = true;
             end
         end
     end
@@ -655,7 +662,7 @@ classdef ScanGroup < handle
             self.scans = obj.scans;
             self.base = obj.base;
             self.runparam(obj.runparam);
-            self.scandirty = false(length(self.scans), 1);
+            self.scanscache(1:length(self.scans)) = self.DEF_SCANCACHE;
             % TODO: validate
         end
     end
