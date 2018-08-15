@@ -387,6 +387,12 @@ classdef ScanGroup < handle
                     self.scanscache(idx).dirty = true;
                 end
                 return;
+            elseif (nS > 2 && strcmp(S(1).type, '.') && strcmp(S(1).subs, 'runp') && ...
+                    strcmp(S(2).type, '()') && isempty(S(2).subs))
+                % Hack to make `grp.runp() ... = ...` working
+                A = builtin('subsasgn', runp(self), S(3:end), B);
+                A = self;
+                return;
             end
             A = builtin('subsasgn', self, S, B);
         end
