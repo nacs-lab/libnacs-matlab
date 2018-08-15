@@ -678,4 +678,11 @@ classdef ScanGroup < handle
             % TODO: validate
         end
     end
+    % Put this function at the end so that it doesn't mess up the indent of the whole file...
+    methods
+        function res=end(self, a, b)
+        assert(a == 1 && b == 1);
+        res = length(self.scans);
+    end
+end
 end
