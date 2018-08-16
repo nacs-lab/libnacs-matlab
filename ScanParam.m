@@ -59,37 +59,46 @@ classdef ScanParam < handle
             nS = length(S);
             for i = 1:nS
                 typ = S(i).type;
-                if ~strcmp(typ, '.')
-                    error('Invalid parameter access syntax.');
+                if strcmp(typ, '.')
+                    continue;
                 end
-                if strcmp(S(i).subs, 'scan') && i < nS && strcmp(S(i + 1).type, '()')
-                    if i == 1
+                if i > 1 && strcmp(S(i).type, '()') && isempty(S(i).subs)
+                    if i < nS
+                        error('Invalid parameter access syntax.');
+                    end
+                    nargoutchk(0, 2);
+                    [val, dim] = try_getfield(self.group, self.idx, S(1:i - 1), 1);
+                    if dim < 0
+                        error('Parameter does not exist yet.');
+                    end
+                    varargout{1} = val;
+                    varargout{2} = dim;
+                    return;
+                end
+                if i > 1 && strcmp(S(i - 1).subs, 'scan') && strcmp(S(i).type, '()')
+                    if i == 2
                         error('Must specify parameter to scan.');
-                    elseif i + 1 < nS
+                    elseif i < nS
                         error('Invalid scan() syntax after scan.');
                     end
                     nargoutchk(0, 0);
-                    subs = S(i + 1).subs;
+                    subs = S(i).subs;
                     switch length(subs)
                         case 0
                             error('Too few arguments for scan()');
                         case 1
-                            addscan(self.group, self.idx, S(1:i - 1), 1, subs{1});
+                            addscan(self.group, self.idx, S(1:i - 2), 1, subs{1});
                         case 2
-                            addscan(self.group, self.idx, S(1:i - 1), subs{1}, subs{2});
+                            addscan(self.group, self.idx, S(1:i - 2), subs{1}, subs{2});
                         otherwise
                             error('Too many arguments for scan()');
                     end
                     return;
                 end
+                error('Invalid parameter access syntax.');
             end
             nargoutchk(0, 1);
-            [val, dim] = try_getfield(self.group, self.idx, S, 0);
-            if dim >= 0
-                varargout{1} = val;
-            else
-                varargout{1} = SubProps(self, S);
-            end
+            varargout{1} = SubProps(self, S);
         end
         function self = subsasgn(self, S, B)
             nS = length(S);

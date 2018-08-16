@@ -99,11 +99,11 @@ assert(g3.nseq() == 3);
 assert(isequaln(g3.getseq(1), struct('c', 3, 'a', 1, 'b', 2, 'd', 1)));
 assert(isequaln(g3.getseq(2), struct('c', 3, 'a', 1, 'b', 2, 'd', 2)));
 assert(isequaln(g3.getseq(3), struct('d', 0, 'k', kstruct, 'c', 3, 'a', 1, 'b', 2)));
-assert(g3().a == 1);
-assert(g3().b == 2);
-assert(g3(1).c == 3);
-assert(g3(2).d == 0);
-assert(g3(2).k.a.b.c == 2);
+assert(g3().a() == 1);
+assert(g3().b() == 2);
+assert(g3(1).c() == 3);
+assert(g3(2).d() == 0);
+assert(g3(2).k.a.b.c() == 2);
 g3(3) = g3(1);
 assert(g3.nseq() == 5);
 for i = 1:2
