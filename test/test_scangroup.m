@@ -25,7 +25,7 @@ assert(g.nseq() == 3);
 g(1).c = 3;
 assert(g.nseq() == 1);
 
-b.d.scan(2, [1, 2]);
+b.d.scan(2) = [1, 2];
 assert(g.nseq() == 2);
 
 s2 = g(2);

@@ -22,7 +22,8 @@
 % * (nested) field assignment (i.e. `param.a.b.c.d = x`):
 %     This always represent a single parameter. Never a scan.
 %     Throws an error if the field is already set as a scan.
-% * (nested) field scan (i.e. `param.a.b.c.d.scan([nd, ]array)`):
+% * (nested) field scan (i.e. `param.a.b.c.d.scan([nd, ]array)` or
+%                        `param.a.b.c.d.scan([nd]) = array`):
 %     `nd` is the dimension of the scan. Default to 1.
 %     If `array` is a scalar or single element cell array,
 %     this is equivalent to `param.a.b.c.d = x` (or `param.a.b.c.d = x{1}` for cell array).
@@ -94,9 +95,27 @@ classdef ScanParam < handle
             nS = length(S);
             for i = 1:nS
                 typ = S(i).type;
-                if ~strcmp(typ, '.')
-                    error('Invalid parameter access syntax.');
+                if strcmp(typ, '.')
+                    continue;
                 end
+                if (strcmp(typ, '()') && i > 1 && strcmp(S(i - 1).subs, 'scan'))
+                    if i == 2
+                        error('Must specify parameter to scan.');
+                    elseif i ~= nS
+                        error('Invalid scan() syntax after scan.');
+                    end
+                    subs = S(i).subs;
+                    switch length(subs)
+                        case 0
+                            addscan(self.group, self.idx, S(1:i - 2), 1, B);
+                        case 1
+                            addscan(self.group, self.idx, S(1:i - 2), subs{1}, B);
+                        otherwise
+                            error('Too many arguments for scan()');
+                    end
+                    return;
+                end
+                error('Invalid parameter access syntax.');
             end
             addparam(self.group, self.idx, S, B);
         end
