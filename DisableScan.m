@@ -13,9 +13,9 @@
 
 classdef DisableScan < FacyOnCleanup
     methods
-        function self=DisableScan(cleanup)
+        function self=DisableScan()
             function cb(old)
-                DisableScan.set(0);
+                DisableScan.set(old);
             end
             self = self@FacyOnCleanup(@cb, DisableScan.check());
             DisableScan.set(1);
