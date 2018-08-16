@@ -325,7 +325,9 @@ classdef ScanGroup < handle
             end
             scan = getfullscan(self, idx);
             if scan.vars(dim).size == 0
-                error('Non-existing dimension');
+                params = scan.params;
+            else
+                params = scan.vars(dim).params;
             end
             function check_path_idx(v, p)
                 field = field - 1;
@@ -344,15 +346,14 @@ classdef ScanGroup < handle
                 val = v;
                 path = p;
             end
-            var = scan.vars(dim);
             if isnumeric(field)
-                ScanGroup.foreach_nonstruct(@check_path_idx, var.params)
+                ScanGroup.foreach_nonstruct(@check_path_idx, params)
                 if field > 0
                     error('Cannot find scan field');
                 end
             else
                 found = false;
-                ScanGroup.foreach_nonstruct(@check_path_str, var.params)
+                ScanGroup.foreach_nonstruct(@check_path_str, params)
                 if ~found
                     error('Cannot find scan field');
                 end
