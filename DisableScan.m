@@ -14,10 +14,10 @@
 classdef DisableScan < FacyOnCleanup
     methods
         function self=DisableScan(cleanup)
-            function cb()
+            function cb(old)
                 DisableScan.set(0);
             end
-            self = self@FacyOnCleanup(@cb);
+            self = self@FacyOnCleanup(@cb, DisableScan.check());
             DisableScan.set(1);
         end
     end
