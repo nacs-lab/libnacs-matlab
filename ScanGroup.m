@@ -163,6 +163,8 @@ classdef ScanGroup < handle
         % The `dirty` flag marks whether this is invalid due to modification since last cache.
         % This should always be as long as `scans`.
         scanscache = ScanGroup.DEF_SCANCACHE;
+
+        new_empty_called = false;
     end
     methods
         function self=ScanGroup()
@@ -338,6 +340,17 @@ classdef ScanGroup < handle
             if fieldidx > 0
                 error('Cannot find scan field');
             end
+        end
+        function idx = new_empty(self)
+            if (~new_empty_called && length(self.scans) == 1 && ...
+                isequaln(self.scans(1), ScanGroup.DEF_SCAN))
+                idx = 1;
+                new_empty_called = true;
+                return;
+            end
+            idx = length(self.scans) + 1;
+            self.scans(idx) = ScanGroup.DEF_SCAN;
+            self.scanscache(idx) = ScanGroup.DEF_SCANCACHE;
         end
 
         function varargout = subsref(self, S)
