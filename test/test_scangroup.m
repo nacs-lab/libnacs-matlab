@@ -19,7 +19,7 @@ b = g();
 b.b = 2;
 assert(g.nseq() == 1);
 
-b.c.scan([1, 2, 3]);
+b.c.scan(1) = [1, 2, 3];
 assert(g.nseq() == 3);
 
 g(1).c = 3;

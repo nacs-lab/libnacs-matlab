@@ -35,7 +35,7 @@
 %%
 % This class represents a group of scans. Supported API:
 % For sequence building:
-% * grp() / grp() = ...:
+% * grp([:]) / grp([:]) = ...:
 %   grp(n) / grp(n) = ...:
 %     Access the group's fallback parameter (`grp()`) or
 %     the parameter for the n-th scan (`grp(n)`).
@@ -419,7 +419,9 @@ classdef ScanGroup < handle
                 elseif length(S(1).subs) == 1
                     % grp(n): Real scan
                     idx = S(1).subs{1};
-                    if ~(idx > 0)
+                    if isequal(idx, ':')
+                        idx = 0;
+                    elseif ~(idx > 0)
                         % Don't allow implicitly address fallback with 0.
                         error('Scan index must be positive');
                     end

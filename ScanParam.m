@@ -23,7 +23,7 @@
 %     This always represent a single parameter. Never a scan.
 %     Throws an error if the field is already set as a scan.
 % * (nested) field scan (i.e. `param.a.b.c.d.scan([nd, ]array)` or
-%                        `param.a.b.c.d.scan([nd]) = array`):
+%                        `param.a.b.c.d.scan(nd) = array`):
 %     `nd` is the dimension of the scan. Default to 1.
 %     If `array` is a scalar or single element cell array,
 %     this is equivalent to `param.a.b.c.d = x` (or `param.a.b.c.d = x{1}` for cell array).
