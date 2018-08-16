@@ -316,9 +316,9 @@ classdef ScanGroup < handle
             end
             res = ScanInfo(self, idx);
         end
-        function [val, path] = guess_scanaxis(self, idx, dim, fieldidx)
-            if ~exist('fieldidx', 'var')
-                fieldidx = 1;
+        function [val, path] = get_scanaxis(self, idx, dim, field)
+            if ~exist('field', 'var')
+                field = 1;
             end
             if idx == 0
                 error('Out of bound scan index.');
@@ -327,18 +327,35 @@ classdef ScanGroup < handle
             if scan.vars(dim).size == 0
                 error('Non-existing dimension');
             end
-            function check_path(v, p)
-                fieldidx = fieldidx - 1;
-                if fieldidx ~= 0
+            function check_path_idx(v, p)
+                field = field - 1;
+                if field ~= 0
                     return;
                 end
                 val = v;
                 path = p;
             end
+            function check_path_str(v, p)
+                sp = strjoin({p.subs}, '.');
+                if ~strcmp(sp, field)
+                    return;
+                end
+                found = true;
+                val = v;
+                path = p;
+            end
             var = scan.vars(dim);
-            ScanGroup.foreach_nonstruct(@check_path, var.params)
-            if fieldidx > 0
-                error('Cannot find scan field');
+            if isnumeric(field)
+                ScanGroup.foreach_nonstruct(@check_path_idx, var.params)
+                if field > 0
+                    error('Cannot find scan field');
+                end
+            else
+                found = false;
+                ScanGroup.foreach_nonstruct(@check_path_str, var.params)
+                if ~found
+                    error('Cannot find scan field');
+                end
             end
         end
         function idx = new_empty(self)
