@@ -145,10 +145,7 @@ classdef DynProps < handle
                             break;
                         end
                         if ~found
-                            % This throws the error similar to
-                            % when access a undefined field in matlab
-                            B = v.(name);
-                            %% unreachable
+                            B = SubProps(self, S);
                             return;
                         end
                         if isempty(S(j).subs)
