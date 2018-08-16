@@ -342,10 +342,10 @@ classdef ScanGroup < handle
             end
         end
         function idx = new_empty(self)
-            if (~new_empty_called && length(self.scans) == 1 && ...
+            if (~self.new_empty_called && length(self.scans) == 1 && ...
                 isequaln(self.scans(1), ScanGroup.DEF_SCAN))
                 idx = 1;
-                new_empty_called = true;
+                self.new_empty_called = true;
                 return;
             end
             idx = length(self.scans) + 1;
