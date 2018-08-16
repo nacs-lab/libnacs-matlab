@@ -42,19 +42,19 @@ classdef ScanInfo < handle
         idx;
     end
     methods(Access=?ScanGroup)
-        function self=ScanInfo(group, idx)
+        function self = ScanInfo(group, idx)
             self.group = group;
             self.idx = idx;
         end
     end
     methods
-        function [res, dim]=subsref(self, S)
+        function [res, dim] = subsref(self, S)
             [res, dim] = info_subsref(self.group, self.idx, self, S);
         end
-        function res=fieldnames(self)
+        function res = fieldnames(self)
             res = info_fieldnames(self.group, self.idx, self, struct('type', {}, 'subs', {}));
         end
-        function res=subfieldnames(self, S)
+        function res = subfieldnames(self, S)
             res = info_fieldnames(self.group, self.idx, self, S);
         end
     end

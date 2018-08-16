@@ -167,19 +167,19 @@ classdef ScanGroup < handle
         new_empty_called = false;
     end
     methods
-        function self=ScanGroup()
+        function self = ScanGroup()
             self.runparam = DynProps();
         end
-        function res=runp(self)
+        function res = runp(self)
             res = self.runparam;
         end
-        function obj=dump(self)
+        function obj = dump(self)
             obj.version = 1;
             obj.scans = self.scans;
             obj.base = self.base;
             obj.runparam = self.runparam();
         end
-        function seq=getseq(self, n)
+        function seq = getseq(self, n)
             for scani = 1:groupsize(self)
                 ss = scansize(self, scani);
                 if n <= ss
@@ -190,14 +190,14 @@ classdef ScanGroup < handle
             end
             error('Sequence index out of bound.');
         end
-        function seq=getseq_in_scan(self, scanidx, seqidx)
+        function seq = getseq_in_scan(self, scanidx, seqidx)
             scan = getfullscan(self, scanidx);
             seq = scan.params;
             seqidx = seqidx - 1; % 0-based index from now on.
             function setparam_cb(v, path)
                 seq = subsasgn(seq, path, v(subidx + 1));
             end
-            for i=1:length(scan.vars)
+            for i = 1:length(scan.vars)
                 var = scan.vars(i);
                 if var.size == 0
                     continue;
@@ -207,13 +207,13 @@ classdef ScanGroup < handle
                 ScanGroup.foreach_nonstruct(@setparam_cb, var.params);
             end
         end
-        function res=nseq(self)
+        function res = nseq(self)
             res = 0;
-            for i=1:groupsize(self)
+            for i = 1:groupsize(self)
                 res = res + scansize(self, i);
             end
         end
-        function res=scansize(self, idx)
+        function res = scansize(self, idx)
             scan = getfullscan(self, idx);
             res = 1;
             for i = 1:length(scan.vars)
@@ -223,11 +223,11 @@ classdef ScanGroup < handle
                 end
             end
         end
-        function res=scandim(self, idx)
+        function res = scandim(self, idx)
             scan = getfullscan(self, idx);
             res = length(scan.vars);
         end
-        function res=groupsize(self)
+        function res = groupsize(self)
             res = length(self.scans);
         end
         function setbase(self, idx, base)
@@ -272,7 +272,7 @@ classdef ScanGroup < handle
             self.scans(idx).baseidx = newbase;
             self.scanscache(idx).dirty = true;
         end
-        function res=horzcat(varargin)
+        function res = horzcat(varargin)
             res = ScanGroup();
             res.scans(end) = [];
             for i = 1:nargin
@@ -290,14 +290,14 @@ classdef ScanGroup < handle
             res.scanscache(1:length(res.scans)) = ScanGroup.DEF_SCANCACHE;
             res.runparam(self.runparam());
         end
-        function res=get_fixed(self, idx)
+        function res = get_fixed(self, idx)
             if idx == 0
                 error('Out of bound scan index.');
             end
             scan = getfullscan(self, idx);
             res = scan.params;
         end
-        function res=get_vars(self, idx, dim)
+        function res = get_vars(self, idx, dim)
             if idx == 0
                 error('Out of bound scan index.');
             end
@@ -310,13 +310,13 @@ classdef ScanGroup < handle
             end
             res = scan.vars(dim).params;
         end
-        function res=get_scan(self, idx)
+        function res = get_scan(self, idx)
             if idx == 0
                 error('Out of bound scan index.');
             end
             res = ScanInfo(self, idx);
         end
-        function [val, path]=guess_scanaxis(self, idx, dim, fieldidx)
+        function [val, path] = guess_scanaxis(self, idx, dim, fieldidx)
             if ~exist('fieldidx', 'var')
                 fieldidx = 1;
             end
@@ -472,7 +472,7 @@ classdef ScanGroup < handle
         end
     end
     methods(Access=?ScanInfo)
-        function [res, dim]=info_subsref(self, idx, info, S)
+        function [res, dim] = info_subsref(self, idx, info, S)
             nS = length(S);
             for i = 1:nS
                 if strcmp(S(i).type, '.')
@@ -499,11 +499,11 @@ classdef ScanGroup < handle
                 res = SubProps(info, S);
             end
         end
-        function res=info_fieldnames(self, idx, info, S)
+        function res = info_fieldnames(self, idx, info, S)
             res = {};
             function add_fieldnames(params)
                 % Only handles `.` reference
-                for i=1:length(S)
+                for i = 1:length(S)
                     if ~ScanGroup.isscalarstruct(params)
                         error('Parameter parent overwriten');
                     end
@@ -517,7 +517,7 @@ classdef ScanGroup < handle
                     return;
                 end
                 fields = fieldnames(params);
-                for i=1:length(fields)
+                for i = 1:length(fields)
                     name = fields{i};
                     if any(strcmp(res, name))
                         continue;
@@ -527,25 +527,25 @@ classdef ScanGroup < handle
             end
             scan = getfullscan(self, idx);
             add_fieldnames(scan.params);
-            for j=1:length(scan.vars)
+            for j = 1:length(scan.vars)
                 add_fieldnames(scan.vars(j).params);
             end
         end
     end
     methods(Access=?ScanParam)
-        function base=getbaseidx(self, idx)
+        function base = getbaseidx(self, idx)
             scan = self.scans(idx);
             base = scan.baseidx;
             if isempty(base)
                 base = 0;
             end
         end
-        function res=set_dirty_all(self)
+        function res = set_dirty_all(self)
             for i = 1:length(self.scanscache)
                 self.scanscache(i).dirty = true;
             end
         end
-        function res=check_dirty(self, idx)
+        function res = check_dirty(self, idx)
             while idx ~= 0
                 if self.scanscache(idx).dirty
                     res = true;
@@ -555,7 +555,7 @@ classdef ScanGroup < handle
             end
             res = false;
         end
-        function scan=getfullscan(self, idx)
+        function scan = getfullscan(self, idx)
             if idx == 0
                 scan = self.base;
                 return;
@@ -745,14 +745,14 @@ classdef ScanGroup < handle
                 return;
             end
             fns = fieldnames(obj);
-            for i=1:length(fns)
+            for i = 1:length(fns)
                 if ScanGroup.isarray(obj.(fns{i}))
                     res = true;
                     return;
                 end
             end
         end
-        function res=isscalarstruct(obj)
+        function res = isscalarstruct(obj)
             if ~isstruct(obj)
                 res = false;
             elseif ~isscalar(obj)
@@ -764,7 +764,7 @@ classdef ScanGroup < handle
         % Check if the struct field reference path is overwritten in `obj`.
         % Overwrite happens if the field itself exists or a parent of the field
         % is overwritten to something that's not scalar struct.
-        function res=check_field(obj, path)
+        function res = check_field(obj, path)
             % Only handles `.` reference
             for i = 1:length(path)
                 if ~ScanGroup.isscalarstruct(obj)
@@ -784,7 +784,7 @@ classdef ScanGroup < handle
         end
         % Check if the field is a leaf field within the parameter tree.
         % Throw an error if the field's parent is set to non-scalar struct.
-        function [val, res]=get_leaffield(obj, path)
+        function [val, res] = get_leaffield(obj, path)
             % Only handles `.` reference
             val = [];
             for i = 1:length(path)
@@ -805,7 +805,7 @@ classdef ScanGroup < handle
         end
         % Find the scan dimention for the field referenced in `path`.
         % Return `0` for fixed parameter, `-1` for not found in any scan.
-        function res=find_scan_dim(scan, path)
+        function res = find_scan_dim(scan, path)
             if ScanGroup.check_field(scan.params, path)
                 res = 0;
                 return;
@@ -861,23 +861,23 @@ classdef ScanGroup < handle
                 path(end).subs = fields{state(end)};
             end
         end
-        function self=load_v1(obj)
+        function self = load_v1(obj)
             self = ScanGroup();
             self.scans = obj.scans;
             self.base = obj.base;
             self.runparam(obj.runparam);
             self.scanscache(1:length(self.scans)) = ScanGroup.DEF_SCANCACHE;
         end
-        function self=load_v0(obj)
+        function self = load_v0(obj)
             % Loading the old style scan seq
             self = ScanGroup();
             self.runparam(obj.scan);
             p = obj.p;
             fields = fieldnames(p);
-            for i=1:length(p)
+            for i = 1:length(p)
                 scan = ScanGroup.DEF_SCAN;
                 vars = ScanGroup.DEF_VARS;
-                for j=1:length(fields)
+                for j = 1:length(fields)
                     name = fields{j};
                     val = p(i).(name);
                     if isempty(val)
@@ -904,7 +904,7 @@ classdef ScanGroup < handle
         end
     end
     methods(Static)
-        function self=load(obj)
+        function self = load(obj)
             if isa(obj, 'ScanSeq')
                 scanp = obj.scanp();
                 self = ScanGroup.load_v0(struct('p', obj.p, 'scan', scanp()));
@@ -922,7 +922,7 @@ classdef ScanGroup < handle
     end
     % Put this function at the end so that it doesn't mess up the indent of the whole file...
     methods
-        function res=end(self, a, b)
+        function res = end(self, a, b)
         assert(a == 1 && b == 1);
         res = length(self.scans);
     end

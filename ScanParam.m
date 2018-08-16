@@ -42,14 +42,14 @@ classdef ScanParam < handle
         idx;
     end
     methods(Access=?ScanGroup)
-        function self=ScanParam(group, idx)
+        function self = ScanParam(group, idx)
             self.group = group;
             self.idx = idx;
         end
-        function group=getgroup(self)
+        function group = getgroup(self)
             group = self.group;
         end
-        function idx=getidx(self)
+        function idx = getidx(self)
             idx = self.idx;
         end
     end

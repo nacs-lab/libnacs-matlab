@@ -50,7 +50,7 @@ assert(isequaln(x, [1, 2, 3]) && y == 1);
 
 g2 = [g, g];
 assert(g2.nseq() == 10);
-for i=1:5
+for i = 1:5
     assert(isequaln(g.getseq(i), g2.getseq(i)));
     assert(isequaln(g.getseq(i), g2.getseq(i + 5)));
 end
@@ -106,15 +106,15 @@ assert(g3(2).d == 0);
 assert(g3(2).k.a.b.c == 2);
 g3(3) = g3(1);
 assert(g3.nseq() == 5);
-for i=1:2
+for i = 1:2
     assert(isequaln(g3.getseq(i), g3.getseq(3 + i)));
 end
 g3(5) = g3(2);
 assert(g3.nseq() == 12);
 assert(isequaln(g3.getseq(12), g3.getseq(3)));
 i = 1;
-for d=1:2
-    for c=1:3
+for d = 1:2
+    for c = 1:3
         assert(isequaln(g3.getseq(5 + i), struct('a', 1, 'b', 2, 'c', c, 'd', d)));
         i = i + 1;
     end
