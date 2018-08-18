@@ -1,5 +1,5 @@
-function [CurrentDate, CurrentTime] = RunScans(scangroup, seq)
-% RunScan(scangroup)
+function varargout = RunScans(scangroup, seq)
+% RunScans(scangroup)
 % Run a scan over parameters.  This function is designed to be run in one
 % MATLAB instance, while MonitorAndSaveAndorScans is running in another
 % instance.
@@ -13,9 +13,11 @@ function [CurrentDate, CurrentTime] = RunScans(scangroup, seq)
 % acquiring images on separate MATLAB instances" for details.   Nick
 % Hutzler, 2 April 2015.
 
+nargoutchk(0, 2);
+
 if DisableScan.check()
-    CurrentDate = '';
-    CurrentTime = '';
+    varargout{1} = '';
+    varargout{2} = '';
     return;
 end
 
@@ -126,6 +128,13 @@ m.Data(1).NumPerGroup = Scan.NumPerGroup;
 [fname, CurrentDate, CurrentTime] = DateTimeStampFilename;
 m.Data(1).TimeStamp = str2num(CurrentTime);
 m.Data(1).DateStamp = str2num(CurrentDate);
+file_id = [CurrentDate '_' CurrentTime];
+if nargout == 2
+    varargout{1} = CurrentDate;
+    varargout{2} = CurrentTime;
+else
+    varargout{1} = file_id;
+end
 
 if exist(fname, 'file')
     error('Filename already exists!')
