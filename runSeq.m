@@ -63,8 +63,6 @@ arglist = {{}};
 
 argidx = 1;
 arglist_set = false;
-is_scanseq = false;
-scanseq = [];
 is_scangroup = false;
 scangroup = [];
 
@@ -118,15 +116,9 @@ while argidx < nargin
         arglist = {varargin{argidx:end}};
         arglist_set = true;
         break;
-    elseif isa(arg, 'ScanSeq')
-        if is_scangroup
-            error('Cannot specify ScanSeq and ScanGroup at the same time.');
-        end
-        scanseq = arg;
-        is_scanseq = true;
     elseif isa(arg, 'ScanGroup')
-        if is_scanseq
-            error('Cannot specify ScanSeq and ScanGroup at the same time.');
+        if is_scangroup
+            error('Multiple ScanGroup specified.');
         end
         scangroup = arg;
         is_scangroup = true;
@@ -157,10 +149,6 @@ seqlist = cell(1, nseq);
         nacsExpSeqDisableRunHack = 1;
         if is_scangroup
           s = ExpSeq(getseq(scangroup, arglist{idx}{:}));
-          func(s);
-          seqlist{idx} = s;
-        elseif is_scanseq
-          s = ExpSeq(getSingle(scanseq, arglist{idx}{:}));
           func(s);
           seqlist{idx} = s;
         else

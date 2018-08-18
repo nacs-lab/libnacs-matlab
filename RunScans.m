@@ -23,15 +23,9 @@ end
 
 resetGlobal;
 
-if isa(scangroup, 'ScanSeq')
-    p = DynProps(scangroup.p(1));
-    scanp = scangroup.scanp();
-    nseqs = scangroup.scanLengthTot;
-else
-    p = DynProps(scangroup.getseq(1));
-    scanp = scangroup.runp();
-    nseqs = scangroup.nseq();
-end
+p = DynProps(scangroup.getseq(1));
+scanp = scangroup.runp();
+nseqs = scangroup.nseq();
 
 fprintf('Total scan points = %f\n', nseqs);
 
@@ -46,11 +40,7 @@ Scan.ParamName = p.ParamName('');
 Scan.ParamUnits = p.ParamUnits('');
 % x-axis scale for plots.  Enter 1e-6 for micro, 1e3 for kilo, etc.
 Scan.PlotScale = p.PlotScale(1);
-if isa(scangroup, 'ScanSeq')
-    Scan.ScanSeq = scangroup;
-else
-    Scan.ScanGroup = scangroup.dump();
-end
+Scan.ScanGroup = scangroup.dump();
 % Parameter values to scan over.  Some helpful custom functions might be
 % stack, scramble, QuasirandomList.  Parameter values are in the units used
 % in the sequence.
