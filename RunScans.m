@@ -116,7 +116,6 @@ if m.Data(1).AndorConfigured
     error('MonitorAndSaveAndorScans is in the middle of running, or was aborted.  Abort it, and run ResetMemoryMap.')
 end
 
-% m.Data(1).Cutoff = Scan.Cutoff;
 m.Data(1).ScanParamsSet = 0;
 m.Data(1).NumImages = Scan.NumImages;
 m.Data(1).ScanComplete = 0;
@@ -127,8 +126,6 @@ m.Data(1).NumPerGroup = Scan.NumPerGroup;
 [fname, CurrentDate, CurrentTime] = DateTimeStampFilename;
 m.Data(1).TimeStamp = str2num(CurrentTime);
 m.Data(1).DateStamp = str2num(CurrentDate);
-Scan.IDString = [CurrentDate '-' CurrentTime];
-Scan.startTime = clock;
 
 if exist(fname, 'file')
     error('Filename already exists!')
@@ -165,7 +162,7 @@ end
 % Set back to 0 in case we have to abort sequence.
 
 m.Data(1).ScanParamsSet = 0;
-disp(['Andor is configured and acquiring.  Starting scan ' CurrentDate '-' CurrentTime])
+disp(['Andor is configured and acquiring.  Starting scan ' CurrentDate '_' CurrentTime])
 
 pause(0.1);
 
@@ -176,8 +173,7 @@ runSeq(seq, 0, scangroup, Scan.Params, ['email:' Email]);
 % Scan is now finished.
 m.Data(1).ScanComplete = 1;
 m.Data(1).NumPerGroup = 0;
-disp(['Finished scan ' CurrentDate '-' CurrentTime]);
-%copyFigures(); % Copy figures before starting again.
+disp(['Finished scan ' CurrentDate '_' CurrentTime]);
 beep
 
 end
