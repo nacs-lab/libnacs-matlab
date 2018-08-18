@@ -49,6 +49,26 @@ classdef DynProps < handle
             end
             res = isnan(obj);
         end
+        function res=construct_struct(varargin)
+            res = struct();
+            i = 1;
+            while i <= nargin
+                v = varargin{i};
+                if ~isstruct(v)
+                    i = i + 1;
+                    v = struct(v, varargin{i});
+                end
+                fns = fieldnames(v);
+                for j = 1:length(fns)
+                    name = fns{j};
+                    if isfield(res, name)
+                        error('Conflicting default values');
+                    end
+                    res.(name) = v.(name);
+                end
+                i = i + 1;
+            end
+        end
     end
     methods
         function self = DynProps(V)
@@ -151,7 +171,7 @@ classdef DynProps < handle
                         if isempty(S(j).subs)
                             error('No default value given');
                         elseif length(S(j).subs) ~= 1
-                            def = struct(S(j).subs{:});
+                            def = DynProps.construct_struct(S(j).subs{:});
                         else
                             def = S(j).subs{1};
                             if DynProps.isnanobj(def)
@@ -176,7 +196,7 @@ classdef DynProps < handle
                     case {'()', '{}'}
                         if ~isempty(S(i).subs)
                             if length(S(i).subs) ~= 1
-                                def = struct(S(i).subs{:});
+                                def = DynProps.construct_struct(S(i).subs{:});
                             else
                                 def = S(i).subs{1};
                                 if DynProps.isnanobj(def)

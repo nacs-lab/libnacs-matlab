@@ -102,4 +102,15 @@ function test_dynprops()
     assert(c0.A(1) == 1);
     assert(c0.A() == 1);
     assert(c0.A == 1);
+
+    dp2 = DynProps();
+    dp2.C.A = 2;
+    c = dp2.C{struct('A', 4, 'B', 3), 'C', 1};
+    assert(isequaln(c(), struct('A', 2, 'B', 3, 'C', 1)));
+    assert(isequaln(dp2.C(), struct('A', 2, 'B', 3, 'C', 1)));
+
+    dp2 = DynProps();
+    dp2.C.A = 2;
+    assert(isequaln(dp2.C(struct('A', 4, 'B', 3), 'C', 1), ...
+                    struct('A', 2, 'B', 3, 'C', 1)));
 end
