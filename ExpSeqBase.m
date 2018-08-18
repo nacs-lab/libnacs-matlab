@@ -57,7 +57,7 @@ classdef ExpSeqBase < TimeSeq
                 parent_or_C.subSeqs{ns} = self;
                 return;
             end
-            self.config = SeqConfig.get();
+            self.config = SeqConfig.get(1);
             self.topLevel = self;
             C = struct();
             consts = self.config.consts;

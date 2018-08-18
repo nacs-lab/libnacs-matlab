@@ -38,7 +38,10 @@ classdef SeqConfig < handle
 
     methods
         %%
-        function self = SeqConfig()
+        function self = SeqConfig(is_seq)
+            if ~exist('is_seq', 'var')
+                is_seq = 0;
+            end
             self.name_map = containers.Map();
             % Create empty maps
             fpgaUrls = containers.Map();
@@ -104,7 +107,7 @@ classdef SeqConfig < handle
                 name = translateChannel(self, key);
                 self.disabledChannels(name) = 0;
             end
-            if ~isempty(self.disabledChannels)
+            if is_seq && ~isempty(self.disabledChannels)
                 warning('%d channel disabled globally.', ...
                         length(self.disabledChannels));
             end
@@ -167,21 +170,27 @@ classdef SeqConfig < handle
         end
     end
     methods(Static)
-        function config = get()
+        function config = get(is_seq)
             global nacsSeqConfigCache;
+            if ~exist('is_seq', 'var')
+                is_seq = 0;
+            end
             if ~isempty(nacsSeqConfigCache)
                 config = nacsSeqConfigCache;
             else
-                config = SeqConfig();
+                config = SeqConfig(is_seq);
             end
         end
         function reset()
             global nacsSeqConfigCache;
             nacsSeqConfigCache = [];
         end
-        function cache()
+        function cache(is_seq)
+            if ~exist('is_seq', 'var')
+                is_seq = 0;
+            end
             global nacsSeqConfigCache;
-            nacsSeqConfigCache = SeqConfig();
+            nacsSeqConfigCache = SeqConfig(is_seq);
         end
     end
 end
