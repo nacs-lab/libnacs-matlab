@@ -58,14 +58,7 @@ classdef DynProps < handle
                     i = i + 1;
                     v = struct(v, varargin{i});
                 end
-                fns = fieldnames(v);
-                for j = 1:length(fns)
-                    name = fns{j};
-                    if isfield(res, name)
-                        error('Conflicting default values');
-                    end
-                    res.(name) = v.(name);
-                end
+                res = DynProps.merge_struct(res, v, 0, 1);
                 i = i + 1;
             end
         end
