@@ -324,7 +324,7 @@ classdef ScanGroup < handle
                 error('Out of bound scan index.');
             end
             scan = getfullscan(self, idx);
-            if scan.vars(dim).size == 0
+            if numel(scan.vars) < dim || scan.vars(dim).size == 0
                 params = scan.params;
             else
                 params = scan.vars(dim).params;
