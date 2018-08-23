@@ -15,7 +15,7 @@ function varargout = RunScans(scangroup, seq)
 
 nargoutchk(0, 2);
 
-if DisableScan.check()
+if ~EnableScan.check()
     varargout{1} = '';
     varargout{2} = '';
     return;

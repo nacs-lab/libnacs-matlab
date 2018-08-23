@@ -11,28 +11,28 @@
 % You should have received a copy of the GNU Lesser General Public
 % License along with this library.
 
-classdef DisableScan < FacyOnCleanup
+classdef EnableScan < FacyOnCleanup
     methods
-        function self=DisableScan()
+        function self=EnableScan(enable)
             function cb(old)
-                DisableScan.set(old);
+                EnableScan.set(old);
             end
-            self = self@FacyOnCleanup(@cb, DisableScan.check());
-            DisableScan.set(1);
+            self = self@FacyOnCleanup(@cb, EnableScan.check());
+            EnableScan.set(enable);
         end
     end
     methods(Static)
         function res=check()
-            global nacsDisableScan;
-            if isempty(nacsDisableScan)
-                res = 0;
+            global nacsEnableScan;
+            if isempty(nacsEnableScan)
+                res = 1;
             else
-                res = nacsDisableScan;
+                res = nacsEnableScan;
             end
         end
-        function set(disable)
-            global nacsDisableScan;
-            nacsDisableScan = disable;
+        function set(enable)
+            global nacsEnableScan;
+            nacsEnableScan = enable;
         end
     end
 end
