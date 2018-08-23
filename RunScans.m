@@ -115,7 +115,7 @@ m.Data(1).NumPerParamAvg = Scan.NumPerParamAvg;
 m.Data(1).CurrentSeqNum = 0;
 m.Data(1).NumPerGroup = Scan.NumPerGroup;
 
-[fname, CurrentDate, CurrentTime] = DateTimeStampFilename;
+[fname, CurrentDate, CurrentTime] = DateTimeStampFilename();
 m.Data(1).TimeStamp = str2num(CurrentTime);
 m.Data(1).DateStamp = str2num(CurrentDate);
 file_id = [CurrentDate '_' CurrentTime];
