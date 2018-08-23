@@ -19,10 +19,10 @@
 
 function [fname, stamp] = FindDataFile(id)
     PathPrefix = Consts().PathPrefix;
-    if ischar(id) || isstring(id)
+    if ischar(id) || (isstring(id) && numel(id) == 1)
         id = char(id);
         if ~endsWith(id, '.mat')
-            id = [id '.mat']
+            id = [id '.mat'];
         end
         [path, name, ext] = fileparts(id);
         if startsWith(name, 'data_')
@@ -30,7 +30,7 @@ function [fname, stamp] = FindDataFile(id)
         else
             stamp = name;
         end
-        if isfile(id)
+        if exist(id, 'file')
             fname = id;
             return;
         end
@@ -43,7 +43,7 @@ function [fname, stamp] = FindDataFile(id)
                 error('Cannot parse file name: %s', name);
             end
             name = ['data_' stamp];
-            path = fullfile(PathPrefix, char(parts(1)));
+            path = fullfile(PathPrefix, 'Data', char(parts(1)));
         else
             path = fullfile(PathPrefix, path);
         end
@@ -55,14 +55,20 @@ function [fname, stamp] = FindDataFile(id)
         date = to_char('%08d', id(1));
         time = to_char('%06d', id(2));
         stamp = [date, '_', time];
-        fname = fullfile(PathPrefix, date, ['data_', stamp, '.mat']);
+        fname = fullfile(PathPrefix, 'Data', date, ['data_', stamp, '.mat']);
     end
-    if ~isfile(fname)
+    if ~exist(fname, 'file')
         error('Cannot find file: %s', id);
     end
 end
 
 function s = to_char(fmt, i)
+    if iscell(i)
+        if numel(i) ~= 1
+            error('Invalid input');
+        end
+        i = i{1};
+    end
     if ischar(i)
         s = i;
     elseif isstring(i)
