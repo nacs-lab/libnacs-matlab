@@ -153,8 +153,8 @@ while m.Data(1).AndorConfigured == 0
         beep
         m.Data(1).ScanParamsSet = 0;
         warning('StartScan is aborting due to timeout.  Check that MonitorAndSaveAndorScan is running.')
-        CurrentDate = [];
-        CurrentTime = [];
+        varargout{1} = '';
+        varargout{2} = '';
         return
     end
 end
