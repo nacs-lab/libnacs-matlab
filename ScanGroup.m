@@ -925,10 +925,7 @@ classdef ScanGroup < handle
     end
     methods(Static)
         function self = load(obj)
-            if isa(obj, 'ScanSeq')
-                scanp = obj.scanp();
-                self = ScanGroup.load_v0(struct('p', obj.p, 'scan', scanp()));
-            elseif ~isfield(obj, 'version')
+            if ~isfield(obj, 'version')
                 error('Version missing.');
             elseif obj.version == 1
                 self = ScanGroup.load_v1(obj);
