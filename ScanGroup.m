@@ -33,6 +33,8 @@
 %     There can be only one per group.
 
 %%
+% Note: [] is used to indicate optional parameter.
+%
 % This class represents a group of scans. Supported API:
 % For sequence building:
 % * grp([:]) / grp([:]) = ...:
@@ -46,14 +48,17 @@
 %
 %     Read access returns a `ScanParam`.
 %     Write access constructs a `ScanParam` to **replace** the existing one.
-%     The RHS must be another `ScanParam` from the same `ScanGroup` or a `struct`.
+%     The (right hand side) RHS must be another `ScanParam` from the same
+%     `ScanGroup` or a `struct`.
 %
 %     For `ScanParam` RHS, everything is copied. Fallback values are not applied.
-%     If the LHS is `grp()`, base index of the RHS is ignored (otherwise, it is copied).
+%     If the LHS is `grp([:])`, base index of the RHS is ignored (otherwise, it is copied).
 %     For `struct` RHS, all fields are treated as non-scanning parameters.
 %     Non-string array field will cause an error.
 %     This (`struct` RHS) will also clear the scan and set the base index to `0` (default)
-%     (base index ignored when LHS is `grp()`).
+%     (base index ignored when LHS is `grp([:])`).
+%
+%     The index (`n`) can use `end`, which is the number of scans.
 %
 % * [grp1 grp2 ...] / [grp1, grp2, ...] / horzcat(grp1, grp2, ...):
 %     Create a new `ScanGroup` that runs the individual all input scans
@@ -69,6 +74,24 @@
 %     Set the base index of the `scan` to `base`. A `0` `base` means the default base.
 %     Throws an error if this would create a loop.
 %
+% * new_empty(grp) / grp.new_empty():
+%     Create a new empty scan in the group.
+%     The scan doesn't have any new parameters or scans set and has the base set to default.
+%     The index of the new scan is returned.
+%     If the first scan (which always exist after construction) is the only scan and
+%     it does not yet have any parameters set **and** this function has not been called,
+%     this function will not add a new scan and `1` is returned
+%     (i.e. as if the first scan didn't exist before).
+%
+%     Together with the end index, this allow adding scans in a group in the pattern,
+%
+%         grp.new_empty();
+%         grp(end). .... = ...;
+%         grp(end). .... = ...;
+%         grp(end). .... = ...;
+%
+%     which can be commented out as a whole easily.
+%
 % All mutation on a scan (assignment and `setbase`) will make sure the scan being mutated
 % is created if it didn't exist.
 %
@@ -79,6 +102,9 @@
 %
 % * scansize(grp, idx) / grp.scansize(idx):
 %     Number of sequences in the specific (N-dimensional) scan.
+%
+% * scandim(grp, idx) / grp.scandim(idx):
+%     Dimension of the scan. This includes dummy dimensions.
 %
 % * nseq(grp) / grp.nseq():
 %     Number of sequences in the group. This is the sum of `scansize` over all scans.
@@ -100,6 +126,31 @@
 % * ScanGroup.load(obj):
 %     This is the reverse of `dump`. Returns a `ScanGroup` that is identical to the
 %     one that generates the representation with `dump`.
+%
+% * get_fixed(grp, idx) / grp.get_fixed(idx):
+%     Get the fixed (non-scan) parameters for a particular scan as a (nested) struct.
+%
+% * get_vars(grp, idx, dim) / grp.get_vars(idx, dim):
+%     Get the variable (scan) parameters for a particular scan along the scan dimension
+%     as a struct. Each non-scalar-struct field should be an array of the same length.
+%     The second return value is the size along the dimension, 0 size represents a
+%     dummy dimension that should be ignored.
+%
+% * get_scan(grp, idx) / grp.get_scan(idx):
+%     Returns a `ScanInfo` representing the scan.
+%     The `ScanInfo` is read only and provides a similar API as `DynProps`.
+%     See `ScanInfo` document for more info.
+%
+% * get_scanaxis(grp, idx, dim[, field]) / grp.get_scanaxis(idx, dim[, field]):
+%     Get the scan axis (value(s) and path) for the `idx`th scan along the `dim`ension.
+%     The optional parameter `field` specifies the scan parameter, either as an index
+%     or as a name (dot separated field names).
+%     The order of the scan parameter is stable but is an implementation detail that
+%     should be relied on as little as possible. Currently, the parameters in the base scan
+%     is ordered after all the scan parameters directly set in the scan.
+%     If the scan dimension is dummy or doesn't exist,
+%     the fixed parameter will be used for lookup.
+%     An error is thrown if the parameter cannot be found.
 %
 %
 % For both:
@@ -297,7 +348,7 @@ classdef ScanGroup < handle
             scan = getfullscan(self, idx);
             res = scan.params;
         end
-        function res = get_vars(self, idx, dim)
+        function [res, sz] = get_vars(self, idx, dim)
             if idx == 0
                 error('Out of bound scan index.');
             end
@@ -305,9 +356,7 @@ classdef ScanGroup < handle
                 dim = 1;
             end
             scan = getfullscan(self, idx);
-            if scan.vars(dim).size == 0
-                error('Non-existing dimension');
-            end
+            sz = scan.vars(dim).size;
             res = scan.vars(dim).params;
         end
         function res = get_scan(self, idx)
