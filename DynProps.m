@@ -11,6 +11,9 @@
 % You should have received a copy of the GNU Lesser General Public
 % License along with this library.
 
+%%
+% This is a class that provides an flexible API to access a nested struct with support
+% of default values.
 classdef DynProps < handle
     properties(Hidden)
         V;
@@ -27,7 +30,7 @@ classdef DynProps < handle
                     continue;
                 end
                 defv = a.(name);
-                if ~isstruct(defv) || ~isstruct(newv)
+                if ~DynProps.isscalarstruct(defv) || ~DynProps.isscalarstruct(newv)
                     continue;
                 end
                 [a.(name), changed] = DynProps.merge_struct(defv, newv, changed, undefnan);
@@ -54,12 +57,23 @@ classdef DynProps < handle
             i = 1;
             while i <= nargin
                 v = varargin{i};
-                if ~isstruct(v)
+                if ~DynProps.isscalarstruct(v)
                     i = i + 1;
                     v = struct(v, varargin{i});
                 end
                 res = DynProps.merge_struct(res, v, 0, 1);
                 i = i + 1;
+            end
+        end
+    end
+    methods(Static)
+        function res = isscalarstruct(obj)
+            if ~isstruct(obj)
+                res = false;
+            elseif ~isscalar(obj)
+                res = false;
+            else
+                res = true;
             end
         end
     end
@@ -75,7 +89,7 @@ classdef DynProps < handle
             if isempty(varargin)
                 return;
             end
-            if isstruct(varargin{1})
+            if DynProps.isscalarstruct(varargin{1})
                 res = varargin{1};
                 args = varargin{2:end};
             else
@@ -196,7 +210,7 @@ classdef DynProps < handle
                                     error('Default value cannot be NaN.');
                                 end
                             end
-                            if isstruct(v) & isstruct(def)
+                            if DynProps.isscalarstruct(v) & DynProps.isscalarstruct(def)
                                 [v, changed] = DynProps.merge_struct(v, def, false, true);
                                 if changed
                                     if i == 1
@@ -221,7 +235,7 @@ classdef DynProps < handle
                         return;
                 end
             end
-            if isstruct(v)
+            if DynProps.isscalarstruct(v)
                 B = SubProps(self, S);
             else
                 B = v;

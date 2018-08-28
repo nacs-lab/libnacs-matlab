@@ -573,7 +573,7 @@ classdef ScanGroup < handle
             function add_fieldnames(params)
                 % Only handles `.` reference
                 for i = 1:length(S)
-                    if ~ScanGroup.isscalarstruct(params)
+                    if ~DynProps.isscalarstruct(params)
                         error('Parameter parent overwriten');
                     end
                     name = S(i).subs;
@@ -582,7 +582,7 @@ classdef ScanGroup < handle
                     end
                     params = params.(name);
                 end
-                if ~ScanGroup.isscalarstruct(params)
+                if ~DynProps.isscalarstruct(params)
                     return;
                 end
                 fields = fieldnames(params);
@@ -821,22 +821,13 @@ classdef ScanGroup < handle
                 end
             end
         end
-        function res = isscalarstruct(obj)
-            if ~isstruct(obj)
-                res = false;
-            elseif ~isscalar(obj)
-                res = false;
-            else
-                res = true;
-            end
-        end
         % Check if the struct field reference path is overwritten in `obj`.
         % Overwrite happens if the field itself exists or a parent of the field
         % is overwritten to something that's not scalar struct.
         function res = check_field(obj, path)
             % Only handles `.` reference
             for i = 1:length(path)
-                if ~ScanGroup.isscalarstruct(obj)
+                if ~DynProps.isscalarstruct(obj)
                     % Non scalar struct in the path counts as existing override.
                     % shouldn't really happen though...
                     res = true;
@@ -857,7 +848,7 @@ classdef ScanGroup < handle
             % Only handles `.` reference
             val = [];
             for i = 1:length(path)
-                if ~ScanGroup.isscalarstruct(obj)
+                if ~DynProps.isscalarstruct(obj)
                     error('Parameter parent overwriten');
                 end
                 name = path(i).subs;
@@ -867,7 +858,7 @@ classdef ScanGroup < handle
                 end
                 obj = obj.(name);
             end
-            res = ~ScanGroup.isscalarstruct(obj);
+            res = ~DynProps.isscalarstruct(obj);
             if res
                 val = obj;
             end
@@ -891,7 +882,7 @@ classdef ScanGroup < handle
         % It's not very efficient in MATLAB but
         % I really don't want to write this multiple times.
         function foreach_nonstruct(cb, obj)
-            if ~ScanGroup.isscalarstruct(obj)
+            if ~DynProps.isscalarstruct(obj)
                 error('Object is not a struct.');
             end
             topfields = fieldnames(obj);
@@ -904,7 +895,7 @@ classdef ScanGroup < handle
             state = [1];
             while true
                 v = subsref(obj, path);
-                if ScanGroup.isscalarstruct(v)
+                if DynProps.isscalarstruct(v)
                     fields = fieldnames(v);
                     if ~isempty(fields)
                         cached_fields{end + 1} = fields;
