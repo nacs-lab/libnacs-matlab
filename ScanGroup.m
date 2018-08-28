@@ -145,6 +145,8 @@
 %     Get the scan axis (value(s) and path) for the `idx`th scan along the `dim`ension.
 %     The optional parameter `field` specifies the scan parameter, either as an index
 %     or as a name (dot separated field names).
+%     The path returned is string with dot separated field names.
+%
 %     The order of the scan parameter is stable but is an implementation detail that
 %     should be relied on as little as possible. Currently, the parameters in the base scan
 %     is ordered after all the scan parameters directly set in the scan.
@@ -384,7 +386,7 @@ classdef ScanGroup < handle
                     return;
                 end
                 val = v;
-                path = p;
+                path = strjoin({p.subs}, '.');
             end
             function check_path_str(v, p)
                 sp = strjoin({p.subs}, '.');
@@ -393,7 +395,7 @@ classdef ScanGroup < handle
                 end
                 found = true;
                 val = v;
-                path = p;
+                path = sp;
             end
             if isnumeric(field)
                 ScanGroup.foreach_nonstruct(@check_path_idx, params)
@@ -881,6 +883,8 @@ classdef ScanGroup < handle
         % Helper to iterate through nested structure.
         % It's not very efficient in MATLAB but
         % I really don't want to write this multiple times.
+        % The callback (`cb`) will be called with the value and the path to the object.
+        % The path is given as a struct array in the format used by `subsref` and `subsasgn`.
         function foreach_nonstruct(cb, obj)
             if ~DynProps.isscalarstruct(obj)
                 error('Object is not a struct.');
