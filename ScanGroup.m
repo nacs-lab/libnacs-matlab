@@ -300,7 +300,7 @@ classdef ScanGroup < handle
                 return;
             end
             % Fast pass to avoid invalidating anything
-            if self.getbaseidx(idx) == base
+            if getbaseidx(self, idx) == base
                 return;
             end
             if base == 0
@@ -318,7 +318,7 @@ classdef ScanGroup < handle
                     error('Base index loop detected.');
                 end
                 visited(base) = true;
-                base = self.getbaseidx(base);
+                base = getbaseidx(self, base);
                 if base == 0
                     break;
                 end
@@ -502,7 +502,7 @@ classdef ScanGroup < handle
                         rbase = 0; % base index
                     else
                         rscan = self.scans(Bidx);
-                        rbase = self.getbaseidx(Bidx); % base index
+                        rbase = getbaseidx(self, Bidx); % base index
                     end
                     if idx == 0
                         self.base.params = rscan.params;
@@ -610,11 +610,7 @@ classdef ScanGroup < handle
     end
     methods(Access=?ScanParam)
         function base = getbaseidx(self, idx)
-            scan = self.scans(idx);
-            base = scan.baseidx;
-            if isempty(base)
-                base = 0;
-            end
+            base = self.scans(idx).baseidx;
         end
         function res = set_dirty_all(self)
             for i = 1:length(self.scanscache)
