@@ -38,7 +38,7 @@
 %     instead.
 
 classdef ScanParam < handle
-    properties(Access=?ScanGroup)
+    properties(Access=private)
         group;
         idx;
     end
@@ -56,77 +56,10 @@ classdef ScanParam < handle
     end
     methods
         function varargout = subsref(self, S)
-            nS = length(S);
-            for i = 1:nS
-                typ = S(i).type;
-                if strcmp(typ, '.')
-                    continue;
-                end
-                if i > 1 && strcmp(S(i).type, '()') && isempty(S(i).subs)
-                    if i < nS
-                        error('Invalid parameter access syntax.');
-                    end
-                    nargoutchk(0, 2);
-                    [val, dim] = try_getfield(self.group, self.idx, S(1:i - 1), 1);
-                    if dim < 0
-                        error('Parameter does not exist yet.');
-                    end
-                    varargout{1} = val;
-                    varargout{2} = dim;
-                    return;
-                end
-                if i > 1 && strcmp(S(i - 1).subs, 'scan') && strcmp(S(i).type, '()')
-                    if i == 2
-                        error('Must specify parameter to scan.');
-                    elseif i < nS
-                        error('Invalid scan() syntax after scan.');
-                    end
-                    nargoutchk(0, 0);
-                    subs = S(i).subs;
-                    switch length(subs)
-                        case 0
-                            error('Too few arguments for scan()');
-                        case 1
-                            addscan(self.group, self.idx, S(1:i - 2), 1, subs{1});
-                        case 2
-                            addscan(self.group, self.idx, S(1:i - 2), subs{1}, subs{2});
-                        otherwise
-                            error('Too many arguments for scan()');
-                    end
-                    return;
-                end
-                error('Invalid parameter access syntax.');
-            end
-            nargoutchk(0, 1);
-            varargout{1} = SubProps(self, S);
+            [varargout{1:nargout}] = param_subsref(self.group, self.idx, self, S);
         end
         function self = subsasgn(self, S, B)
-            nS = length(S);
-            for i = 1:nS
-                typ = S(i).type;
-                if strcmp(typ, '.')
-                    continue;
-                end
-                if (strcmp(typ, '()') && i > 1 && strcmp(S(i - 1).subs, 'scan'))
-                    if i == 2
-                        error('Must specify parameter to scan.');
-                    elseif i ~= nS
-                        error('Invalid scan() syntax after scan.');
-                    end
-                    subs = S(i).subs;
-                    switch length(subs)
-                        case 0
-                            addscan(self.group, self.idx, S(1:i - 2), 1, B);
-                        case 1
-                            addscan(self.group, self.idx, S(1:i - 2), subs{1}, B);
-                        otherwise
-                            error('Too many arguments for scan()');
-                    end
-                    return;
-                end
-                error('Invalid parameter access syntax.');
-            end
-            addparam(self.group, self.idx, S, B);
+            param_subsasgn(self.group, self.idx, self, S, B);
         end
     end
 end

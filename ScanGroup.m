@@ -172,14 +172,14 @@
 % Ideally, this information should also be versioned so that future improvements
 % can be added without breaking the loading of the old code.
 classdef ScanGroup < handle
-    properties(Constant, Access=?ScanParam)
+    properties(Constant, Access=private)
         % These constants are to make sure that the array elements are always initialized.
         DEF_SCAN = struct('baseidx', 0, 'params', struct(), ...
                           'vars', struct('size', {}, 'params', {}));
         DEF_VARS = struct('size', 0, 'params', struct());
         DEF_SCANCACHE = struct('dirty', true, 'params', struct(), 'vars', struct());
     end
-    properties(Access=?ScanParam)
+    properties(Access=private)
         %% we don't use class here since
         % 1. it's annoy to use for simple stuff in MATLAB.
         % 2. it's harder to save (which I guess is also kind of annoy...)
@@ -548,6 +548,7 @@ classdef ScanGroup < handle
         % internals so it's easier to just move the implementation here.
         % This will also avoid having to go though the custimized
         % `subsref` for `ScanGroup` everytime.
+        % Same with the implementations for `ScanParam` below.
         function [res, dim] = info_subsref(self, idx, info, S)
             nS = length(S);
             for i = 1:nS
@@ -609,6 +610,81 @@ classdef ScanGroup < handle
         end
     end
     methods(Access=?ScanParam)
+        function varargout = param_subsref(self, idx, param, S)
+            nS = length(S);
+            for i = 1:nS
+                typ = S(i).type;
+                if strcmp(typ, '.')
+                    continue;
+                end
+                if i > 1 && strcmp(S(i).type, '()') && isempty(S(i).subs)
+                    if i < nS
+                        error('Invalid parameter access syntax.');
+                    end
+                    nargoutchk(0, 2);
+                    [val, dim] = try_getfield(self, idx, S(1:i - 1), 1);
+                    if dim < 0
+                        error('Parameter does not exist yet.');
+                    end
+                    varargout{1} = val;
+                    varargout{2} = dim;
+                    return;
+                end
+                if i > 1 && strcmp(S(i - 1).subs, 'scan') && strcmp(S(i).type, '()')
+                    if i == 2
+                        error('Must specify parameter to scan.');
+                    elseif i < nS
+                        error('Invalid scan() syntax after scan.');
+                    end
+                    nargoutchk(0, 0);
+                    subs = S(i).subs;
+                    switch length(subs)
+                        case 0
+                            error('Too few arguments for scan()');
+                        case 1
+                            addscan(self, idx, S(1:i - 2), 1, subs{1});
+                        case 2
+                            addscan(self, idx, S(1:i - 2), subs{1}, subs{2});
+                        otherwise
+                            error('Too many arguments for scan()');
+                    end
+                    return;
+                end
+                error('Invalid parameter access syntax.');
+            end
+            nargoutchk(0, 1);
+            varargout{1} = SubProps(param, S);
+        end
+        function param_subsasgn(self, idx, param, S, B)
+            nS = length(S);
+            for i = 1:nS
+                typ = S(i).type;
+                if strcmp(typ, '.')
+                    continue;
+                end
+                if (strcmp(typ, '()') && i > 1 && strcmp(S(i - 1).subs, 'scan'))
+                    if i == 2
+                        error('Must specify parameter to scan.');
+                    elseif i ~= nS
+                        error('Invalid scan() syntax after scan.');
+                    end
+                    subs = S(i).subs;
+                    switch length(subs)
+                        case 0
+                            addscan(self, idx, S(1:i - 2), 1, B);
+                        case 1
+                            addscan(self, idx, S(1:i - 2), subs{1}, B);
+                        otherwise
+                            error('Too many arguments for scan()');
+                    end
+                    return;
+                end
+                error('Invalid parameter access syntax.');
+            end
+            addparam(self, idx, S, B);
+        end
+    end
+    methods(Access=private)
         function base = getbaseidx(self, idx)
             base = self.scans(idx).baseidx;
         end
@@ -792,7 +868,7 @@ classdef ScanGroup < handle
             % consistent scan size
         end
     end
-    methods(Static, Access=?ScanParam)
+    methods(Static, Access=private)
         %% Check if the object is an array for scan parameter.
         % Rules are:
         % 1. All scalar are not array
