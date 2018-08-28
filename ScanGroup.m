@@ -173,6 +173,7 @@
 % can be added without breaking the loading of the old code.
 classdef ScanGroup < handle
     properties(Constant, Access=?ScanParam)
+        % These constants are to make sure that the array elements are always initialized.
         DEF_SCAN = struct('baseidx', 0, 'params', struct(), ...
                           'vars', struct('size', {}, 'params', {}));
         DEF_VARS = struct('size', 0, 'params', struct());
@@ -543,6 +544,10 @@ classdef ScanGroup < handle
         end
     end
     methods(Access=?ScanInfo)
+        %% Implementations of `ScanInfo` API. We need to access a lot of `ScanGroup`
+        % internals so it's easier to just move the implementation here.
+        % This will also avoid having to go though the custimized
+        % `subsref` for `ScanGroup` everytime.
         function [res, dim] = info_subsref(self, idx, info, S)
             nS = length(S);
             for i = 1:nS
