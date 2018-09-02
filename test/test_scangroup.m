@@ -56,6 +56,12 @@ function test_scangroup()
         assert(isequaln(g.getseq(i), g2.getseq(i + 5)));
     end
 
+    g3 = [g2(1), g2(2:end)];
+    assert(g3.nseq() == 10);
+    for i = 1:10
+        assert(isequaln(g2.getseq(i), g3.getseq(i)));
+    end
+
     g.setbase(2, 1);
     assert(g.groupsize() == 2);
     assert(g.scansize(1) == 2);

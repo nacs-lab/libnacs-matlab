@@ -60,9 +60,11 @@
 %
 %     The index (`n`) can use `end`, which is the number of scans.
 %
-% * [grp1 grp2 ...] / [grp1, grp2, ...] / horzcat(grp1, grp2, ...):
+% * [scans1 scans2 ...] / [scans1, scans2, ...] / horzcat(scans1, scans2, ...):
 %     Create a new `ScanGroup` that runs the individual all input scans
 %     in the order they are listed.
+%     Input could be either `ScanGroup` or `ScanParam` created by indexing `ScanGroup`.
+%     `ScanParam` created with array indexing is supported in this case.
 %     The new group will **NOT** be affected if the inputs are mutated later.
 %     The scans will all have their respected fallback parameters merged into them
 %     and the base index reset to `0`.
@@ -327,22 +329,7 @@ classdef ScanGroup < handle
             self.scanscache(idx).dirty = true;
         end
         function res = horzcat(varargin)
-            res = ScanGroup();
-            res.scans(end) = [];
-            for i = 1:nargin
-                grp = varargin{i};
-                if ~isa(grp, 'ScanGroup')
-                    error('Only ScanGroup allowed in concatenation.');
-                end
-                for j = 1:groupsize(grp)
-                    scan = getfullscan(grp, j);
-                    scan.baseidx = 0;
-                    res.scans(end + 1) = scan;
-                end
-            end
-            self = varargin{1};
-            res.scanscache(1:length(res.scans)) = ScanGroup.DEF_SCANCACHE;
-            res.runparam(self.runparam());
+            res = ScanGroup.cat_scans(varargin{:});
         end
         function res = get_fixed(self, idx)
             if idx == 0
@@ -435,7 +422,7 @@ classdef ScanGroup < handle
                 elseif length(S(1).subs) == 1
                     % grp(n): Real scan
                     idx = S(1).subs{1};
-                    if ~(idx > 0)
+                    if ~all(idx > 0)
                         % Don't allow implicitly addressing the fallback with `0`
                         % Also use the negative check to handle wierd thing like NaN...
                         error('Scan index must be positive');
@@ -866,6 +853,34 @@ classdef ScanGroup < handle
             % parameter conflict between scans
             % scan size ~= 1
             % consistent scan size
+        end
+    end
+    methods(Static, Access=?ScanParam)
+        function res = cat_scans(varargin)
+            res = ScanGroup();
+            res.scans(end) = [];
+            for i = 1:nargin
+                grp = varargin{i};
+                if isa(grp, 'ScanGroup')
+                    idx = 1:groupsize(grp);
+                elseif isa(grp, 'ScanParam')
+                    idx = getidx(grp);
+                    grp = getgroup(grp);
+                else
+                    error('Only ScanGroup allowed in concatenation.');
+                end
+                for j = idx
+                    scan = getfullscan(grp, j);
+                    scan.baseidx = 0;
+                    res.scans(end + 1) = scan;
+                end
+            end
+            self = varargin{1};
+            if isa(self, 'ScanParam')
+                self = getgroup(self);
+            end
+            res.scanscache(1:length(res.scans)) = ScanGroup.DEF_SCANCACHE;
+            res.runparam(self.runparam());
         end
     end
     methods(Static, Access=private)

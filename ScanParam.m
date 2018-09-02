@@ -61,5 +61,8 @@ classdef ScanParam < handle
         function self = subsasgn(self, S, B)
             param_subsasgn(self.group, self.idx, self, S, B);
         end
+        function res = horzcat(varargin)
+            res = ScanGroup.cat_scans(varargin{:});
+        end
     end
 end
