@@ -64,5 +64,8 @@ classdef ScanParam < handle
         function res = horzcat(varargin)
             res = ScanGroup.cat_scans(varargin{:});
         end
+        function res = toscan(self)
+            res = ScanGroup.cat_scans(self);
+        end
     end
 end
