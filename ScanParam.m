@@ -36,6 +36,8 @@
 %     meaning a string literal will be treated as scalar. To scan over characters/strings,
 %     use use vertical array of string (e.g. `('123')'` or `['1'; '2'; '3']`) or cell array
 %     instead.
+% * toscan(param)
+%     Convert the `ScanParam` to a scan.
 
 classdef ScanParam < handle
     properties(Access=private)
