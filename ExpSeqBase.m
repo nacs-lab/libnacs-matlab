@@ -227,7 +227,12 @@ classdef ExpSeqBase < TimeSeq
             self.curTime = old_time;
         end
 
-        function res=alignEnd(self, seq1, seq2, offset)
+        function res = addAt(self, tp, first_arg, vararg)
+            step = addFloating(self, first_arg, varargin{:});
+            step.setTime(tp);
+        end
+
+        function res = alignEnd(self, seq1, seq2, offset)
             if ~exist('offset', 'var')
                 offset = 0;
             end
