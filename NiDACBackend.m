@@ -246,6 +246,12 @@ classdef NiDACBackend < PulseBackend
                     last_vidx = cld(pulse_t + pulse_len, clk_period) - idx_offset;
                     idxs = vidx:last_vidx;
                     ts = (idxs + idx_offset) * clk_period - pulse_t;
+                    if ts(end) > pulse_len
+                        % The last time point is guaranteed to be not before
+                        % the end of the pulse so we'll need to fix the
+                        % last time point in order to not overshoot.
+                        ts(end) = pulse_len;
+                    end
                     data(idxs, i) = calcValue(pulse_obj, ts, pulse_len, cur_value);
                     cur_value = calcValue(pulse_obj, pulse_len, pulse_len, cur_value);
                     pidx = pidx + 1;
