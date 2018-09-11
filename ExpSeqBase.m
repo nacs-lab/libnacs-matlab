@@ -227,7 +227,7 @@ classdef ExpSeqBase < TimeSeq
             self.curTime = old_time;
         end
 
-        function res = addAt(self, tp, first_arg, vararg)
+        function res = addAt(self, tp, first_arg, varargin)
             step = addFloating(self, first_arg, varargin{:});
             step.setTime(tp);
         end
