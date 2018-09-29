@@ -116,7 +116,7 @@ classdef IRFunc < handle
                 if ~isscalar(node)
                     error('Non scalar constant');
                 end
-                id = -self.addConst(node) - 2;
+                id = -addConst(self, node) - 2;
                 return;
             end
             if ~isa(node, 'IRNode')
@@ -142,22 +142,30 @@ classdef IRFunc < handle
                 code(3) = callee;
                 code(4) = nargs;
                 for i = 1:nargs
-                    code(4 + i) = self.addNode(args{1 + i});
+                    code(4 + i) = addNode(self, args{1 + i});
                 end
             elseif head == IRNode.HInterp
                 code = zeros(1, 7, 'int32');
                 code(1) = IRNode.OPInterp;
                 id = self.addVal();
                 code(2) = id;
-                code(3) = self.addNode(args{1});
-                code(4) = self.addNode(args{2});
-                code(5) = self.addNode(args{3});
+                code(3) = addNode(self, args{1});
+                code(4) = addNode(self, args{2});
+                code(5) = addNode(self, args{3});
                 oldlen = length(self.float_table);
                 vals = args{4};
                 vlen = length(vals);
                 code(6) = oldlen;
                 code(7) = vlen;
                 self.float_table(oldlen + 1:oldlen + vlen) = vals;
+            elseif head == IRNode.HSelect
+                code = zeros(1, 5, 'int32');
+                code(1) = IRNode.OPSelect;
+                id = self.addVal();
+                code(2) = id;
+                code(3) = addNode(self, args{1});
+                code(4) = addNode(self, args{2});
+                code(5) = addNode(self, args{3});
             else
                 if head == IRNode.HAdd
                     opcode = IRNode.OPAdd;
@@ -174,8 +182,8 @@ classdef IRFunc < handle
                 code(1) = opcode;
                 id = self.addVal();
                 code(2) = id;
-                code(3) = self.addNode(args{1});
-                code(4) = self.addNode(args{2});
+                code(3) = addNode(self, args{1});
+                code(4) = addNode(self, args{2});
             end
             self.code = [self.code, {code}];
         end

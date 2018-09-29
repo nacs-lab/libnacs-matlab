@@ -24,7 +24,9 @@ classdef IRNode < handle
         OPPhi = 8;
         OPCall = 9;
         OPInterp = 10;
-        OPMax = 11;
+        OPConvert = 11;
+        OPSelect = 12;
+        OPMax = 13;
 
         TyMin = 0;
         TyBool = 1;
@@ -102,6 +104,7 @@ classdef IRNode < handle
         HCall = 4;
         HArg = 5;
         HInterp = 6;
+        HSelect = 7;
     end
 
     properties
@@ -231,6 +234,9 @@ classdef IRNode < handle
         end
         function res=interpolate(x, x0, x1, vals)
             res = IRNode(IRNode.HInterp, {x, x0, x1 - x0, vals});
+        end
+        function res=ifelse(cond, v1, v2)
+            res = IRNode(IRNode.HSelect, {cond, v1, v2});
         end
     end
 
