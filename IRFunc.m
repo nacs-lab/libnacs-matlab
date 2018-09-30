@@ -175,6 +175,14 @@ classdef IRFunc < handle
                 code(3) = addNode(self, args{1});
                 code(4) = addNode(self, args{2});
                 code(5) = addNode(self, args{3});
+            elseif head == IRNode.HCmp
+                code = zeros(1, 5, 'int32');
+                code(1) = IRNode.OPCmp;
+                id = self.addVal(IRNode.TyBool);
+                code(2) = id;
+                code(3) = args{1};
+                code(4) = addNode(self, args{2});
+                code(5) = addNode(self, args{3});
             else
                 if head == IRNode.HAdd
                     opcode = IRNode.OPAdd;

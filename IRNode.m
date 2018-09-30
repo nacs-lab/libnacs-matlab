@@ -101,10 +101,20 @@ classdef IRNode < handle
         HSub = 1;
         HMul = 2;
         HFDiv = 3;
-        HCall = 4;
-        HArg = 5;
-        HInterp = 6;
-        HSelect = 7;
+        HCmp = 4;
+        HCall = 5;
+        HArg = 6;
+        HInterp = 7;
+        HSelect = 8;
+    end
+
+    properties(Constant)
+        Cmp_eq = 0;
+        Cmp_gt = 1;
+        Cmp_ge = 2;
+        Cmp_lt = 3;
+        Cmp_le = 4;
+        Cmp_ne = 5;
     end
 
     properties
@@ -138,6 +148,24 @@ classdef IRNode < handle
         end
         function res=ldivide(b, a)
             res = IRNode(IRNode.HFDiv, {a, b});
+        end
+        function res=lt(a, b)
+            res = IRNode(IRNode.HCmp, {IRNode.Cmp_lt, a, b});
+        end
+        function res=gt(a, b)
+            res = IRNode(IRNode.HCmp, {IRNode.Cmp_gt, a, b});
+        end
+        function res=le(a, b)
+            res = IRNode(IRNode.HCmp, {IRNode.Cmp_le, a, b});
+        end
+        function res=ge(a, b)
+            res = IRNode(IRNode.HCmp, {IRNode.Cmp_ge, a, b});
+        end
+        function res=ne(a, b)
+            res = IRNode(IRNode.HCmp, {IRNode.Cmp_ne, a, b});
+        end
+        function res=eq(a, b)
+            res = IRNode(IRNode.HCmp, {IRNode.Cmp_eq, a, b});
         end
         function res=abs(a)
             res = IRNode(IRNode.HCall, {IRNode.FNabs, a});
