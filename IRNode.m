@@ -97,15 +97,8 @@ classdef IRNode < handle
     end
 
     properties(Constant)
-        HAdd = 0;
-        HSub = 1;
-        HMul = 2;
-        HFDiv = 3;
-        HCmp = 4;
-        HCall = 5;
-        HArg = 6;
-        HInterp = 7;
-        HSelect = 8;
+        % Use a value that does not conflict with the opcode
+        HArg = -1;
     end
 
     properties(Constant)
@@ -129,13 +122,13 @@ classdef IRNode < handle
             self.args = args;
         end
         function res=plus(a, b)
-            res = IRNode(IRNode.HAdd, {a, b});
+            res = IRNode(IRNode.OPAdd, {a, b});
         end
         function res=minus(a, b)
-            res = IRNode(IRNode.HSub, {a, b});
+            res = IRNode(IRNode.OPSub, {a, b});
         end
         function res=times(a, b)
-            res = IRNode(IRNode.HMul, {a, b});
+            res = IRNode(IRNode.OPMul, {a, b});
         end
         function res=uplus(a)
             res = a;
@@ -144,127 +137,127 @@ classdef IRNode < handle
             res = -1 * a;
         end
         function res=rdivide(a, b)
-            res = IRNode(IRNode.HFDiv, {a, b});
+            res = IRNode(IRNode.OPFDiv, {a, b});
         end
         function res=ldivide(b, a)
-            res = IRNode(IRNode.HFDiv, {a, b});
+            res = IRNode(IRNode.OPFDiv, {a, b});
         end
         function res=lt(a, b)
-            res = IRNode(IRNode.HCmp, {IRNode.Cmp_lt, a, b});
+            res = IRNode(IRNode.OPCmp, {IRNode.Cmp_lt, a, b});
         end
         function res=gt(a, b)
-            res = IRNode(IRNode.HCmp, {IRNode.Cmp_gt, a, b});
+            res = IRNode(IRNode.OPCmp, {IRNode.Cmp_gt, a, b});
         end
         function res=le(a, b)
-            res = IRNode(IRNode.HCmp, {IRNode.Cmp_le, a, b});
+            res = IRNode(IRNode.OPCmp, {IRNode.Cmp_le, a, b});
         end
         function res=ge(a, b)
-            res = IRNode(IRNode.HCmp, {IRNode.Cmp_ge, a, b});
+            res = IRNode(IRNode.OPCmp, {IRNode.Cmp_ge, a, b});
         end
         function res=ne(a, b)
-            res = IRNode(IRNode.HCmp, {IRNode.Cmp_ne, a, b});
+            res = IRNode(IRNode.OPCmp, {IRNode.Cmp_ne, a, b});
         end
         function res=eq(a, b)
-            res = IRNode(IRNode.HCmp, {IRNode.Cmp_eq, a, b});
+            res = IRNode(IRNode.OPCmp, {IRNode.Cmp_eq, a, b});
         end
         function res=abs(a)
-            res = IRNode(IRNode.HCall, {IRNode.FNabs, a});
+            res = IRNode(IRNode.OPCall, {IRNode.FNabs, a});
         end
         function res=exp(a)
-            res = IRNode(IRNode.HCall, {IRNode.FNexp, a});
+            res = IRNode(IRNode.OPCall, {IRNode.FNexp, a});
         end
         function res=expm1(a)
-            res = IRNode(IRNode.HCall, {IRNode.FNexpm1, a});
+            res = IRNode(IRNode.OPCall, {IRNode.FNexpm1, a});
         end
         function res=log(a)
-            res = IRNode(IRNode.HCall, {IRNode.FNlog, a});
+            res = IRNode(IRNode.OPCall, {IRNode.FNlog, a});
         end
         function res=log1p(a)
-            res = IRNode(IRNode.HCall, {IRNode.FNlog1p, a});
+            res = IRNode(IRNode.OPCall, {IRNode.FNlog1p, a});
         end
         function res=log2(a)
-            res = IRNode(IRNode.HCall, {IRNode.FNlog2, a});
+            res = IRNode(IRNode.OPCall, {IRNode.FNlog2, a});
         end
         function res=log10(a)
-            res = IRNode(IRNode.HCall, {IRNode.FNlog10, a});
+            res = IRNode(IRNode.OPCall, {IRNode.FNlog10, a});
         end
         function res=power(a, b)
-            res = IRNode(IRNode.HCall, {IRNode.FNpow, a, b});
+            res = IRNode(IRNode.OPCall, {IRNode.FNpow, a, b});
         end
         function res=sqrt(a)
-            res = IRNode(IRNode.HCall, {IRNode.FNsqrt, a});
+            res = IRNode(IRNode.OPCall, {IRNode.FNsqrt, a});
         end
         function res=asin(a)
-            res = IRNode(IRNode.HCall, {IRNode.FNasin, a});
+            res = IRNode(IRNode.OPCall, {IRNode.FNasin, a});
         end
         function res=acos(a)
-            res = IRNode(IRNode.HCall, {IRNode.FNacos, a});
+            res = IRNode(IRNode.OPCall, {IRNode.FNacos, a});
         end
         function res=atan(a)
-            res = IRNode(IRNode.HCall, {IRNode.FNatan, a});
+            res = IRNode(IRNode.OPCall, {IRNode.FNatan, a});
         end
         function res=atan2(a, b)
-            res = IRNode(IRNode.HCall, {IRNode.FNatan2, a, b});
+            res = IRNode(IRNode.OPCall, {IRNode.FNatan2, a, b});
         end
         function res=asinh(a)
-            res = IRNode(IRNode.HCall, {IRNode.FNasinh, a});
+            res = IRNode(IRNode.OPCall, {IRNode.FNasinh, a});
         end
         function res=acosh(a)
-            res = IRNode(IRNode.HCall, {IRNode.FNacosh, a});
+            res = IRNode(IRNode.OPCall, {IRNode.FNacosh, a});
         end
         function res=atanh(a)
-            res = IRNode(IRNode.HCall, {IRNode.FNatanh, a});
+            res = IRNode(IRNode.OPCall, {IRNode.FNatanh, a});
         end
         function res=sin(a)
-            res = IRNode(IRNode.HCall, {IRNode.FNsin, a});
+            res = IRNode(IRNode.OPCall, {IRNode.FNsin, a});
         end
         function res=cos(a)
-            res = IRNode(IRNode.HCall, {IRNode.FNcos, a});
+            res = IRNode(IRNode.OPCall, {IRNode.FNcos, a});
         end
         function res=tan(a)
-            res = IRNode(IRNode.HCall, {IRNode.FNtan, a});
+            res = IRNode(IRNode.OPCall, {IRNode.FNtan, a});
         end
         function res=sinh(a)
-            res = IRNode(IRNode.HCall, {IRNode.FNsinh, a});
+            res = IRNode(IRNode.OPCall, {IRNode.FNsinh, a});
         end
         function res=cosh(a)
-            res = IRNode(IRNode.HCall, {IRNode.FNcosh, a});
+            res = IRNode(IRNode.OPCall, {IRNode.FNcosh, a});
         end
         function res=tanh(a)
-            res = IRNode(IRNode.HCall, {IRNode.FNtanh, a});
+            res = IRNode(IRNode.OPCall, {IRNode.FNtanh, a});
         end
         function res=hypot(a)
-            res = IRNode(IRNode.HCall, {IRNode.FNhypot, a});
+            res = IRNode(IRNode.OPCall, {IRNode.FNhypot, a});
         end
         function res=erf(a)
-            res = IRNode(IRNode.HCall, {IRNode.FNerf, a});
+            res = IRNode(IRNode.OPCall, {IRNode.FNerf, a});
         end
         function res=erfc(a)
-            res = IRNode(IRNode.HCall, {IRNode.FNerfc, a});
+            res = IRNode(IRNode.OPCall, {IRNode.FNerfc, a});
         end
         function res=gamma(a)
-            res = IRNode(IRNode.HCall, {IRNode.FNgamma, a});
+            res = IRNode(IRNode.OPCall, {IRNode.FNgamma, a});
         end
         function res=gammaln(a)
-            res = IRNode(IRNode.HCall, {IRNode.FNlgamma, a});
+            res = IRNode(IRNode.OPCall, {IRNode.FNlgamma, a});
         end
         function res=besselj0(a)
-            res = IRNode(IRNode.HCall, {IRNode.FNj0, a});
+            res = IRNode(IRNode.OPCall, {IRNode.FNj0, a});
         end
         function res=besselj1(a)
-            res = IRNode(IRNode.HCall, {IRNode.FNj1, a});
+            res = IRNode(IRNode.OPCall, {IRNode.FNj1, a});
         end
         function res=bessely0(a)
-            res = IRNode(IRNode.HCall, {IRNode.FNy0, a});
+            res = IRNode(IRNode.OPCall, {IRNode.FNy0, a});
         end
         function res=bessely1(a)
-            res = IRNode(IRNode.HCall, {IRNode.FNy1, a});
+            res = IRNode(IRNode.OPCall, {IRNode.FNy1, a});
         end
         function res=interpolate(x, x0, x1, vals)
-            res = IRNode(IRNode.HInterp, {x, x0, x1 - x0, vals});
+            res = IRNode(IRNode.OPInterp, {x, x0, x1 - x0, vals});
         end
         function res=ifelse(cond, v1, v2)
-            res = IRNode(IRNode.HSelect, {cond, v1, v2});
+            res = IRNode(IRNode.OPSelect, {cond, v1, v2});
         end
     end
 

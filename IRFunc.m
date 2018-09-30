@@ -141,7 +141,7 @@ classdef IRFunc < handle
                 id = argnum - 1;
                 return;
             end
-            if head == IRNode.HCall
+            if head == IRNode.OPCall
                 callee = args{1};
                 nargs = length(args) - 1;
                 code = zeros(1, nargs + 4, 'int32');
@@ -153,7 +153,7 @@ classdef IRFunc < handle
                 for i = 1:nargs
                     code(4 + i) = addNode(self, args{1 + i});
                 end
-            elseif head == IRNode.HInterp
+            elseif head == IRNode.OPInterp
                 code = zeros(1, 7, 'int32');
                 code(1) = IRNode.OPInterp;
                 id = self.addVal();
@@ -167,7 +167,7 @@ classdef IRFunc < handle
                 code(6) = oldlen;
                 code(7) = vlen;
                 self.float_table(oldlen + 1:oldlen + vlen) = vals;
-            elseif head == IRNode.HSelect
+            elseif head == IRNode.OPSelect
                 code = zeros(1, 5, 'int32');
                 code(1) = IRNode.OPSelect;
                 id = self.addVal();
@@ -175,7 +175,7 @@ classdef IRFunc < handle
                 code(3) = addNode(self, args{1});
                 code(4) = addNode(self, args{2});
                 code(5) = addNode(self, args{3});
-            elseif head == IRNode.HCmp
+            elseif head == IRNode.OPCmp
                 code = zeros(1, 5, 'int32');
                 code(1) = IRNode.OPCmp;
                 id = self.addVal(IRNode.TyBool);
@@ -184,13 +184,13 @@ classdef IRFunc < handle
                 code(4) = addNode(self, args{2});
                 code(5) = addNode(self, args{3});
             else
-                if head == IRNode.HAdd
+                if head == IRNode.OPAdd
                     opcode = IRNode.OPAdd;
-                elseif head == IRNode.HSub
+                elseif head == IRNode.OPSub
                     opcode = IRNode.OPSub;
-                elseif head == IRNode.HMul
+                elseif head == IRNode.OPMul
                     opcode = IRNode.OPMul;
-                elseif head == IRNode.HFDiv
+                elseif head == IRNode.OPFDiv
                     opcode = IRNode.OPFDiv;
                 else
                     error('Unknown head')
