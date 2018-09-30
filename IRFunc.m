@@ -17,6 +17,7 @@ classdef IRFunc < handle
         nargs;
         % Assume all variables are Float64
         nvals;
+        valtypes = int8([]);
         % Assume there's only one BB
         code;
         byte_code;
@@ -29,9 +30,14 @@ classdef IRFunc < handle
 
     methods
         %%
-        function self=IRFunc(nargs)
+        function self=IRFunc(nargs, argtypes)
             self.nargs = nargs;
             self.nvals = nargs;
+            if exist('valtypes', 'var')
+                self.valtypes(1:nargs) = argtypes;
+            else
+                self.valtypes(1:nargs) = IRNode.TyFloat64;
+            end
             self.code = {};
             self.consts = [];
             self.const_map = containers.Map('KeyType', 'double', ...
@@ -55,13 +61,12 @@ classdef IRFunc < handle
             data(1) = IRNode.TyFloat64;
             data(2) = self.nargs;
             data(3) = self.nvals;
-            for i = 1:ceil(self.nvals / 4)
-                data(3 + i) = typecast([int8(IRNode.TyFloat64), ...
-                                        int8(IRNode.TyFloat64), ...
-                                        int8(IRNode.TyFloat64), ...
-                                        int8(IRNode.TyFloat64)], 'int32');
+            if mod(self.nvals, 4) ~= 0
+                % Pad the valtypes array to be convertable to a `int32` array.
+                self.valtypes(ceil(self.nvals / 4) * 4) = IRNode.TyFloat64;
             end
             offset = 3 + ceil(self.nvals / 4);
+            data(4:offset) = typecast(self.valtypes, 'int32');
             data(offset + 1) = length(self.consts);
             offset = offset + 1;
             for i = 1:length(self.consts)
@@ -105,9 +110,13 @@ classdef IRFunc < handle
         end
 
         %%
-        function id=addVal(self)
+        function id=addVal(self, typ)
+            if ~exist('typ', 'var')
+                typ = IRNode.TyFloat64;
+            end
             id = self.nvals;
             self.nvals = id + 1;
+            self.valtypes(id + 1) = typ;
         end
 
         %%
