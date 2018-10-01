@@ -33,7 +33,7 @@ classdef IRFunc < handle
 
     methods
         %%
-        function self=IRFunc(ret_type, argtypes)
+        function self = IRFunc(ret_type, argtypes)
             self.ret_type = ret_type;
             nargs = length(argtypes);
             self.nargs = nargs;
@@ -56,7 +56,7 @@ classdef IRFunc < handle
         end
 
         %%
-        function data=serialize(self)
+        function data = serialize(self)
             sz = serializeSize(self);
             data = zeros(1, sz, 'int32');
             data(1) = self.ret_type;
@@ -89,17 +89,19 @@ classdef IRFunc < handle
         end
     end
 
-    methods
-        %%
-        function sz=serializeSize(self)
+    methods(Access=private)
+        function sz = serializeSize(self)
+            %% Size (in 4bytes) of the serialized data to minimize the reallocation
+            % in serialization.
             sz = 1 + 1 + 1 + ceil(self.nvals / 4); % [ret][nargs][nvals][vals x nvals]
             sz = sz + 1 + length(self.consts) * 3; % [nconsts][consts x nconsts]
             sz = sz + 1 + 1 + length(self.byte_code); % [nbb][nword][code x nword]
             sz = sz + 1 + length(self.float_table) * 2; % [nfloat][float x nfloat]
         end
 
-        %%
-        function id=addConst(self, v)
+        function id = addConst(self, v)
+            %% Add a constant to the constant table.
+            % use a cache to avoid duplicate.
             v = double(v);
             if isKey(self.const_map, v)
                 id = self.const_map(v);
@@ -110,8 +112,8 @@ classdef IRFunc < handle
             end
         end
 
-        %%
-        function id=addVal(self, typ)
+        function id = addVal(self, typ)
+            %% Create a slot of type `typ` (default Float64)
             if ~exist('typ', 'var')
                 typ = IRNode.TyFloat64;
             end
@@ -120,8 +122,9 @@ classdef IRFunc < handle
             self.valtypes(id + 1) = typ;
         end
 
-        %%
-        function id=addNode(self, node)
+        function id = addNode(self, node)
+            %% Add an value (either an `IRNode` or a constant)
+            % and return the ID
             if isnumeric(node) || islogical(node)
                 if ~isscalar(node)
                     error('Non scalar constant');
