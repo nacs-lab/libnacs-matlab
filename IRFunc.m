@@ -30,14 +30,11 @@ classdef IRFunc < handle
 
     methods
         %%
-        function self=IRFunc(nargs, argtypes)
+        function self=IRFunc(argtypes)
+            nargs = length(argtypes);
             self.nargs = nargs;
             self.nvals = nargs;
-            if exist('valtypes', 'var')
-                self.valtypes(1:nargs) = argtypes;
-            else
-                self.valtypes(1:nargs) = IRNode.TyFloat64;
-            end
+            self.valtypes(1:nargs) = argtypes;
             self.code = {};
             self.consts = [];
             self.const_map = containers.Map('KeyType', 'double', ...

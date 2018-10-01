@@ -191,7 +191,7 @@ classdef FPGABackend < PulseBackend
                         if chn_type == TTL_CHN
                             error('Function pulse not allowed on TTL channel');
                         end
-                        func = IRFunc(2);
+                        func = IRFunc([IRNode.TyFloat64, IRNode.TyFloat64]);
                         func.setCode(val);
                         ser = func.serialize();
                         ir = [length(ser), ser];
