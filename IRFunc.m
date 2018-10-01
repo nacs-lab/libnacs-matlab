@@ -13,10 +13,13 @@
 
 classdef IRFunc < handle
     properties
-        % return_type: Float64
+        % return_type
+        ret_type;
+        % number of arguments
         nargs;
-        % Assume all variables are Float64
+        % number of slots
         nvals;
+        % slot types
         valtypes = int8([]);
         % Assume there's only one BB
         code;
@@ -30,7 +33,8 @@ classdef IRFunc < handle
 
     methods
         %%
-        function self=IRFunc(argtypes)
+        function self=IRFunc(ret_type, argtypes)
+            self.ret_type = ret_type;
             nargs = length(argtypes);
             self.nargs = nargs;
             self.nvals = nargs;
@@ -55,12 +59,12 @@ classdef IRFunc < handle
         function data=serialize(self)
             sz = serializeSize(self);
             data = zeros(1, sz, 'int32');
-            data(1) = IRNode.TyFloat64;
+            data(1) = self.ret_type;
             data(2) = self.nargs;
             data(3) = self.nvals;
             if mod(self.nvals, 4) ~= 0
                 % Pad the valtypes array to be convertable to a `int32` array.
-                self.valtypes(ceil(self.nvals / 4) * 4) = IRNode.TyFloat64;
+                self.valtypes(ceil(self.nvals / 4) * 4) = 0;
             end
             offset = 3 + ceil(self.nvals / 4);
             data(4:offset) = typecast(self.valtypes, 'int32');

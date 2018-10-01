@@ -145,7 +145,7 @@ classdef USRPBackend < PulseBackend
                     if isnumeric(val) || islogical(val)
                         code = [code, 0, typecast(double(val), 'int32')];
                     else
-                        func = IRFunc([IRNode.TyFloat64, IRNode.TyFloat64]);
+                        func = IRFunc(IRNode.TyFloat64, [IRNode.TyFloat64, IRNode.TyFloat64]);
                         func.setCode(val);
                         ser = func.serialize();
                         ir = [length(ser), ser];
