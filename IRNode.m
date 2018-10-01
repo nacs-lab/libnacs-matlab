@@ -33,6 +33,9 @@ classdef IRNode < handle
         TyInt32 = 2;
         TyFloat64 = 3;
         TyMax = 4;
+
+        ConstFalse = -1;
+        ConstTrue = -2;
     end
 
     properties(Constant, Hidden)

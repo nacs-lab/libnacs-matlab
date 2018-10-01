@@ -24,9 +24,9 @@ classdef IRFunc < handle
         % Assume there's only one BB
         code;
         byte_code;
-        % Assume all constants are also Float64
         consts;
-        const_map;
+        const_f64_map;
+        const_i32_map;
 
         float_table;
     end
@@ -40,9 +40,11 @@ classdef IRFunc < handle
             self.nvals = nargs;
             self.valtypes(1:nargs) = argtypes;
             self.code = {};
-            self.consts = [];
-            self.const_map = containers.Map('KeyType', 'double', ...
-                                            'ValueType', 'double');
+            self.consts = int32([]);
+            self.const_f64_map = containers.Map('KeyType', 'double', ...
+                                                'ValueType', 'double');
+            self.const_i32_map = containers.Map('KeyType', 'int32', ...
+                                                'ValueType', 'double');
             self.float_table = [];
         end
 
@@ -68,14 +70,10 @@ classdef IRFunc < handle
             end
             offset = 3 + ceil(self.nvals / 4);
             data(4:offset) = typecast(self.valtypes, 'int32');
-            data(offset + 1) = length(self.consts);
+            data(offset + 1) = length(self.consts) / 3;
             offset = offset + 1;
-            for i = 1:length(self.consts)
-                new_offs = offset + (i - 1) * 3;
-                data(new_offs + 1) = IRNode.TyFloat64;
-                data(new_offs + 2:new_offs + 3) = typecast(self.consts(i), 'int32');
-            end
-            offset = offset + length(self.consts) * 3;
+            data(offset + 1:offset + length(self.consts)) = self.consts;
+            offset = offset + length(self.consts);
             data(offset + 1) = 1;
             data(offset + 2) = length(self.byte_code);
             offset = offset + 2;
@@ -94,42 +92,65 @@ classdef IRFunc < handle
             %% Size (in 4bytes) of the serialized data to minimize the reallocation
             % in serialization.
             sz = 1 + 1 + 1 + ceil(self.nvals / 4); % [ret][nargs][nvals][vals x nvals]
-            sz = sz + 1 + length(self.consts) * 3; % [nconsts][consts x nconsts]
+            sz = sz + 1 + length(self.consts); % [nconsts][consts x nconsts]
             sz = sz + 1 + 1 + length(self.byte_code); % [nbb][nword][code x nword]
             sz = sz + 1 + length(self.float_table) * 2; % [nfloat][float x nfloat]
         end
 
-        function id = addConst(self, v)
+        function [id, typ] = addConst(self, v)
             %% Add a constant to the constant table.
             % use a cache to avoid duplicate.
-            v = double(v);
-            if isKey(self.const_map, v)
-                id = self.const_map(v);
+            if isinteger(v)
+                typ = IRNode.TyInt32;
+                v = int32(v);
+                map = self.const_i32_map;
             else
-                self.consts = [self.consts, v];
-                id = length(self.consts);
-                self.const_map(v) = id;
+                typ = IRNode.TyFloat64;
+                v = double(v);
+                map = self.const_f64_map;
+            end
+            if isKey(map, v)
+                id = map(v);
+            else
+                if typ == IRNode.TyFloat64
+                    self.consts(end + 2:end + 3) = typecast(v, 'int32');
+                else
+                    self.consts(end + 3) = 0;
+                    self.consts(end - 1) = v;
+                end
+                self.consts(end - 2) = typ;
+                id = length(self.consts) / 3;
+                map(v) = id;
             end
         end
 
         function id = addVal(self, typ)
-            %% Create a slot of type `typ` (default Float64)
-            if ~exist('typ', 'var')
-                typ = IRNode.TyFloat64;
-            end
+            %% Create a slot of type `typ`
             id = self.nvals;
             self.nvals = id + 1;
             self.valtypes(id + 1) = typ;
         end
 
-        function id = addNode(self, node)
+        function [id, typ] = addNode(self, node)
             %% Add an value (either an `IRNode` or a constant)
             % and return the ID
-            if isnumeric(node) || islogical(node)
+            if islogical(node)
+                typ = IRNode.TyBool;
                 if ~isscalar(node)
                     error('Non scalar constant');
                 end
-                id = -addConst(self, node) - 2;
+                if node
+                    id = IRNode.ConstTrue;
+                else
+                    id = IRNode.ConstFalse;
+                end
+                return;
+            elseif isnumeric(node)
+                if ~isscalar(node)
+                    error('Non scalar constant');
+                end
+                [id, typ] = addConst(self, node);
+                id = -id - 2;
                 return;
             end
             if ~isa(node, 'IRNode')
@@ -143,6 +164,7 @@ classdef IRFunc < handle
                     error('Argument ID out of range')
                 end
                 id = argnum - 1;
+                typ = self.valtypes(argnum);
                 return;
             end
             if head == IRNode.OPCall
@@ -150,18 +172,17 @@ classdef IRFunc < handle
                 nargs = length(args) - 1;
                 code = zeros(1, nargs + 4, 'int32');
                 code(1) = IRNode.OPCall;
-                id = addVal(self);
-                code(2) = id;
                 code(3) = callee;
                 code(4) = nargs;
                 for i = 1:nargs
                     code(4 + i) = addNode(self, args{1 + i});
                 end
+                id = addVal(self, IRNode.TyFloat64);
+                code(2) = id;
+                typ = IRNode.TyFloat64;
             elseif head == IRNode.OPInterp
                 code = zeros(1, 7, 'int32');
                 code(1) = IRNode.OPInterp;
-                id = addVal(self);
-                code(2) = id;
                 code(3) = addNode(self, args{1});
                 code(4) = addNode(self, args{2});
                 code(5) = addNode(self, args{3});
@@ -171,22 +192,27 @@ classdef IRFunc < handle
                 code(6) = oldlen;
                 code(7) = vlen;
                 self.float_table(oldlen + 1:oldlen + vlen) = vals;
+                id = addVal(self, IRNode.TyFloat64);
+                code(2) = id;
+                typ = IRNode.TyFloat64;
             elseif head == IRNode.OPSelect
                 code = zeros(1, 5, 'int32');
                 code(1) = IRNode.OPSelect;
-                id = addVal(self);
-                code(2) = id;
                 code(3) = addNode(self, args{1});
-                code(4) = addNode(self, args{2});
-                code(5) = addNode(self, args{3});
+                [code(4), ty1] = addNode(self, args{2});
+                [code(5), ty2] = addNode(self, args{3});
+                typ = max(ty1, ty2);
+                id = addVal(self, typ);
+                code(2) = id;
             elseif head == IRNode.OPCmp
                 code = zeros(1, 5, 'int32');
                 code(1) = IRNode.OPCmp;
-                id = addVal(self, IRNode.TyBool);
-                code(2) = id;
                 code(3) = args{1};
                 code(4) = addNode(self, args{2});
                 code(5) = addNode(self, args{3});
+                id = addVal(self, IRNode.TyBool);
+                code(2) = id;
+                typ = IRNode.TyBool;
             else
                 if head == IRNode.OPAdd
                     opcode = IRNode.OPAdd;
@@ -201,10 +227,16 @@ classdef IRFunc < handle
                 end
                 code = zeros(1, 4, 'int32');
                 code(1) = opcode;
-                id = addVal(self);
+                [code(3), ty1] = addNode(self, args{1});
+                [code(4), ty2] = addNode(self, args{2});
+                if head == IRNode.OPFDiv
+                    typ = IRNode.TyFloat64;
+                else
+                    typ = max(ty1, ty2);
+                    typ = max(typ, IRNode.TyInt32);
+                end
+                id = addVal(self, typ);
                 code(2) = id;
-                code(3) = addNode(self, args{1});
-                code(4) = addNode(self, args{2});
             end
             self.code = [self.code, {code}];
         end
