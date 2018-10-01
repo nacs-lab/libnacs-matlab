@@ -53,7 +53,7 @@ classdef IRFunc < handle
 
         %%
         function data=serialize(self)
-            sz = self.serializeSize();
+            sz = serializeSize(self);
             data = zeros(1, sz, 'int32');
             data(1) = IRNode.TyFloat64;
             data(2) = self.nargs;
@@ -143,7 +143,7 @@ classdef IRFunc < handle
                 nargs = length(args) - 1;
                 code = zeros(1, nargs + 4, 'int32');
                 code(1) = IRNode.OPCall;
-                id = self.addVal();
+                id = addVal(self);
                 code(2) = id;
                 code(3) = callee;
                 code(4) = nargs;
@@ -153,7 +153,7 @@ classdef IRFunc < handle
             elseif head == IRNode.OPInterp
                 code = zeros(1, 7, 'int32');
                 code(1) = IRNode.OPInterp;
-                id = self.addVal();
+                id = addVal(self);
                 code(2) = id;
                 code(3) = addNode(self, args{1});
                 code(4) = addNode(self, args{2});
@@ -167,7 +167,7 @@ classdef IRFunc < handle
             elseif head == IRNode.OPSelect
                 code = zeros(1, 5, 'int32');
                 code(1) = IRNode.OPSelect;
-                id = self.addVal();
+                id = addVal(self);
                 code(2) = id;
                 code(3) = addNode(self, args{1});
                 code(4) = addNode(self, args{2});
@@ -175,7 +175,7 @@ classdef IRFunc < handle
             elseif head == IRNode.OPCmp
                 code = zeros(1, 5, 'int32');
                 code(1) = IRNode.OPCmp;
-                id = self.addVal(IRNode.TyBool);
+                id = addVal(self, IRNode.TyBool);
                 code(2) = id;
                 code(3) = args{1};
                 code(4) = addNode(self, args{2});
@@ -194,7 +194,7 @@ classdef IRFunc < handle
                 end
                 code = zeros(1, 4, 'int32');
                 code(1) = opcode;
-                id = self.addVal();
+                id = addVal(self);
                 code(2) = id;
                 code(3) = addNode(self, args{1});
                 code(4) = addNode(self, args{2});
