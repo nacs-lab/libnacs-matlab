@@ -213,6 +213,37 @@ classdef IRFunc < handle
                 id = addVal(self, IRNode.TyBool);
                 code(2) = id;
                 typ = IRNode.TyBool;
+            elseif head == IRNode.OPAnd
+                code = zeros(1, 4, 'int32');
+                code(1) = IRNode.OPAnd;
+                code(3) = addNode(self, args{1});
+                code(4) = addNode(self, args{2});
+                id = addVal(self, IRNode.TyBool);
+                code(2) = id;
+                typ = IRNode.TyBool;
+            elseif head == IRNode.OPOr
+                code = zeros(1, 4, 'int32');
+                code(1) = IRNode.OPOr;
+                code(3) = addNode(self, args{1});
+                code(4) = addNode(self, args{2});
+                id = addVal(self, IRNode.TyBool);
+                code(2) = id;
+                typ = IRNode.TyBool;
+            elseif head == IRNode.OPXor
+                code = zeros(1, 4, 'int32');
+                code(1) = IRNode.OPXor;
+                code(3) = addNode(self, args{1});
+                code(4) = addNode(self, args{2});
+                id = addVal(self, IRNode.TyBool);
+                code(2) = id;
+                typ = IRNode.TyBool;
+            elseif head == IRNode.OPNot
+                code = zeros(1, 3, 'int32');
+                code(1) = IRNode.OPNot;
+                code(3) = addNode(self, args{1});
+                id = addVal(self, IRNode.TyBool);
+                code(2) = id;
+                typ = IRNode.TyBool;
             else
                 if head == IRNode.OPAdd
                     opcode = IRNode.OPAdd;

@@ -13,7 +13,7 @@
 
 classdef IRNode < handle
     properties(Constant, Hidden)
-        OPMin = 0;
+        OP_Min = 0;
         OPRet = 1;
         OPBr = 2;
         OPAdd = 3;
@@ -26,7 +26,11 @@ classdef IRNode < handle
         OPInterp = 10;
         OPConvert = 11;
         OPSelect = 12;
-        OPMax = 13;
+        OPAnd = 13;
+        OPOr = 14;
+        OPXor = 15;
+        OPNot = 16;
+        OP_Max = 17;
 
         TyMin = 0;
         TyBool = 1;
@@ -162,6 +166,66 @@ classdef IRNode < handle
         end
         function res=eq(a, b)
             res = IRNode(IRNode.OPCmp, {IRNode.Cmp_eq, a, b});
+        end
+        function res=and(a, b)
+            if ~isa(a, 'IRNode')
+                if a
+                    res = b;
+                else
+                    res = false;
+                end
+                return;
+            end
+            if ~isa(b, 'IRNode')
+                if b
+                    res = a;
+                else
+                    res = false;
+                end
+                return;
+            end
+            res = IRNode(IRNode.OPAnd, {a, b});
+        end
+        function res=or(a, b)
+            if ~isa(a, 'IRNode')
+                if a
+                    res = true;
+                else
+                    res = b;
+                end
+                return;
+            end
+            if ~isa(b, 'IRNode')
+                if b
+                    res = true;
+                else
+                    res = a;
+                end
+                return;
+            end
+            res = IRNode(IRNode.OPOr, {a, b});
+        end
+        function res=xor(a, b)
+            if ~isa(a, 'IRNode')
+                if a
+                    res = b;
+                else
+                    res = not(b);
+                end
+                return;
+            end
+            if ~isa(b, 'IRNode')
+                if b
+                    res = a;
+                else
+                    res = not(a);
+                end
+                return;
+            end
+            res = IRNode(IRNode.OPXor, {a, b});
+        end
+        function res=not(a)
+            res = IRNode(IRNode.OPNot, {a});
         end
         function res=abs(a)
             res = IRNode(IRNode.OPCall, {IRNode.FNabs, a});
