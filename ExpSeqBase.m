@@ -12,28 +12,29 @@
 % License along with this library.
 
 classdef ExpSeqBase < TimeSeq
-    % ExpSeqBase is the parent class of ExpSeq.
-    % Its role is to store other ExpSeqBase objects.
-    % The methods of ExpSeqBase are used to add ExpSeqBase's and
-    % pulses to the experiment.
+    % `ExpSeqBase` are generally non-leaf node in the experiment sequence (tree/DAG).
+    % See `TimeSeq` for the general structure of the sequence.
 
-    % All Methods:
-    % self = ExpSeqBase(varargin)
-    % res = wait(self, t)
-    % res = waitAll(self)
-    % res = waitBackground(self)
-    % step = add(self, name, pulse, len)
-    % step = addBackground(self, varargin)
-    % step = addStep(self, varargin)
-    % Private:
-    % step = addStepReal(self, curtime, is_background, first_arg, varargin)
-    % step = addTimeStep(self, len, offset)
-    % step = addCustomStep(self, start_time, cls, varargin)
+    % Other than the fields to keep track of the tree structure,
+    % this also keeps track of a current time which makes it easier to construct a
+    % step-by-step sequence in most cases.
+    %
+    % The most basic timing API: `addStep` automatically forward the current time
+    % so that the next step/subsequence will be added after the previous one finishes.
+    % Other API's allow adding steps or subsequences with more flexible timing.
+    % (`addBackground`, `addFloating`, `addAt`).
+    %
+    % All of the API's ensure that the current time can only be forwarded.
+    % This makes it easy to infer the timing of the sequence when reading the code.
+
     properties
+        % This is length of the current (sub)sequence (not including background sequences)
+        % and is also where sub sequences and time steps are added to by default.
         curTime = 0;
     end
-    properties (Hidden)
-        %curTime = 0;
+    properties(Hidden)
+        % Subnodes in the tree. Only non-empty ones matters.
+        % The preallocation here makes constructing a normal sequence slightly faster.
         subSeqs = {[], [], [], [], [], []};
         nSubSeqs = 0;
     end
@@ -279,7 +280,6 @@ classdef ExpSeqBase < TimeSeq
     end
 
     methods(Access=private)
-        %%
         function step = addStepReal(self, curtime, is_background, first_arg, varargin)
             % step = addStepReal(self, curtime, is_background [logic], first_arg, varargin)
             %     addStepReal is called by shortcut methods addStep  (is_background=false) and addBackground (is_background=true).
