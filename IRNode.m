@@ -103,12 +103,12 @@ classdef IRNode < handle
         FNyn = 48;
     end
 
-    properties(Constant)
+    properties(Constant, Hidden)
         % Use a value that does not conflict with the opcode
         HArg = -1;
     end
 
-    properties(Constant)
+    properties(Constant, Hidden)
         Cmp_eq = 0;
         Cmp_gt = 1;
         Cmp_ge = 2;
@@ -141,7 +141,7 @@ classdef IRNode < handle
             res = a;
         end
         function res=uminus(a)
-            res = -1 * a;
+            res = int32(-1) .* a;
         end
         function res=rdivide(a, b)
             res = IRNode(IRNode.OPFDiv, {a, b});
