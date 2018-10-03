@@ -80,7 +80,7 @@ tstartwait = 0;
 %%
 while argidx < nargin
     arg = varargin{argidx};
-    if isnumeric(arg)
+    if isnumeric(arg) || islogical(arg)
         if has_rep || length(arg) > 1
             if arglist_set
                 error('Argument list can only be specified once');
