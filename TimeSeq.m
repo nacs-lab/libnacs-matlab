@@ -37,6 +37,9 @@ classdef TimeSeq < handle
         % Points to parent node, or `0` for root node.
         parent = 0;
         % The time offset of this node within the parent node.
+        % After the whole sequence is constructed, all of the time offsets must be finite.
+        % A `nan` time offset is allowed during the construction representing a
+        % floating step/subsequence that can be positioned later.
         tOffset = 0;
         % The root node (the toplevel sequence).
         topLevel;

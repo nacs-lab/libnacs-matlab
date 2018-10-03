@@ -84,21 +84,21 @@ classdef ExpSeqBase < TimeSeq
             self.C = DynProps(C);
         end
 
-        %%
         function res = wait(self, t)
-            % Just steps the curTime of 'self' forward by t, and returns 'self'
+            %% Just steps the curTime of 'self' forward by t, and returns 'self'
             self.curTime = self.curTime + t;
             res = self;
         end
 
-        %%
         function res = waitAll(self)
-            % Wait for everything that have been currently added to finish.
+            %% Wait for everything that have been currently added to finish.
             self.curTime = length(self);
             res = self;
         end
 
         function res = waitFor(self, steps, offset)
+            %% Wait for all the steps or subsequences within `steps`
+            % with an offset.
             if ~exist('offset', 'var')
                 offset = 0;
             end
