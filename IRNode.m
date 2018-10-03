@@ -50,15 +50,15 @@ classdef IRNode < handle
         FNasinh = 3;
         FNatan = 4;
         FNatanh = 5;
-        FNcbrt = 6;
+        FNcbrt = 6; % unused
         FNceil = 7;
         FNcos = 8;
         FNcosh = 9;
         FNerf = 10;
         FNerfc = 11;
         FNexp = 12;
-        FNexp10 = 13;
-        FNexp2 = 14;
+        FNexp10 = 13; % unused
+        FNexp2 = 14; % unused
         FNexpm1 = 15;
         FNabs = 16;
         FNfloor = 17;
@@ -70,9 +70,9 @@ classdef IRNode < handle
         FNlog10 = 23;
         FNlog1p = 24;
         FNlog2 = 25;
-        FNpow10 = 26;
-        FNrint = 27;
-        FNround = 28;
+        % FNpow10 = 26; % deprecated, same as exp10
+        FNrint = 27; % unused
+        FNround = 28; % TODO?
         FNsin = 29;
         FNsinh = 30;
         FNsqrt = 31;
@@ -83,20 +83,20 @@ classdef IRNode < handle
 
         %% f(f, f)
         FNatan2 = 36;
-        FNcopysign = 37;
-        FNfdim = 38;
+        FNcopysign = 37; % unused
+        FNfdim = 38; % unused
         FNmax = 39;
         FNmin = 40;
         FNmod = 41;
         FNhypot = 42;
         FNpow = 43;
-        FNremainder = 44;
+        FNremainder = 44; % unused
 
         % f(f, f, f)
-        FNfma = 45;
+        FNfma = 45; % unused
 
         % f(f, i)
-        FNldexp = 46;
+        FNldexp = 46; % unused
 
         % f(i, f)
         FNjn = 47;
@@ -230,11 +230,17 @@ classdef IRNode < handle
         function res=abs(a)
             res = IRNode(IRNode.OPCall, {IRNode.FNabs, a});
         end
+        function res=ceil(a)
+            res = IRNode(IRNode.OPCall, {IRNode.FNceil, a});
+        end
         function res=exp(a)
             res = IRNode(IRNode.OPCall, {IRNode.FNexp, a});
         end
         function res=expm1(a)
             res = IRNode(IRNode.OPCall, {IRNode.FNexpm1, a});
+        end
+        function res=floor(a)
+            res = IRNode(IRNode.OPCall, {IRNode.FNfloor, a});
         end
         function res=log(a)
             res = IRNode(IRNode.OPCall, {IRNode.FNlog, a});
@@ -314,11 +320,30 @@ classdef IRNode < handle
         function res=besselj1(a)
             res = IRNode(IRNode.OPCall, {IRNode.FNj1, a});
         end
+        function res=besselj(a, b)
+            res = IRNode(IRNode.OPCall, {IRNode.FNjn, a, b});
+        end
         function res=bessely0(a)
             res = IRNode(IRNode.OPCall, {IRNode.FNy0, a});
         end
         function res=bessely1(a)
             res = IRNode(IRNode.OPCall, {IRNode.FNy1, a});
+        end
+        function res=bessely(a, b)
+            res = IRNode(IRNode.OPCall, {IRNode.FNyn, a, b});
+        end
+        function res=max(a, b)
+            % Note: this version returns a double for integer/logical input
+            %       which is different from the MATLAB behavior
+            res = IRNode(IRNode.OPCall, {IRNode.FNmax, a, b});
+        end
+        function res=min(a, b)
+            % Note: this version returns a double for integer/logical input
+            %       which is different from the MATLAB behavior
+            res = IRNode(IRNode.OPCall, {IRNode.FNmin, a, b});
+        end
+        function res=rem(a, b)
+            res = IRNode(IRNode.OPCall, {IRNode.FNmod, a, b});
         end
         function res=interpolate(x, x0, x1, vals)
             res = IRNode(IRNode.OPInterp, {x, x0, x1 - x0, vals});
