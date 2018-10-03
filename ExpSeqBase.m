@@ -39,17 +39,22 @@ classdef ExpSeqBase < TimeSeq
         nSubSeqs = 0;
     end
     properties(SetAccess = private, Hidden)
-        C;
+        % This is the nested struct (`DynProp`) that contains global constant
+        % and scan parameters. See `ScanGroup` for more detail.
+        C; % ::DynProp
     end
 
     methods
         function self = ExpSeqBase(parent_or_C, toffset)
             if exist('toffset', 'var')
+                % As sub sequence: set offset and cache some shared properties
+                % from its parent for fast lookup.
                 self.parent = parent_or_C;
                 self.tOffset = toffset;
                 self.config = parent_or_C.config;
                 self.topLevel = parent_or_C.topLevel;
                 self.C = parent_or_C.C;
+                % Add to parent
                 ns = parent_or_C.nSubSeqs + 1;
                 parent_or_C.nSubSeqs = ns;
                 if ns > length(parent_or_C.subSeqs)
@@ -58,6 +63,7 @@ classdef ExpSeqBase < TimeSeq
                 parent_or_C.subSeqs{ns} = self;
                 return;
             end
+            % As top-level `ExpSeq`.
             self.config = SeqConfig.get(1);
             self.topLevel = self;
             C = struct();
