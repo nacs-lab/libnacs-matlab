@@ -19,7 +19,7 @@ classdef DynProps < handle
         V;
     end
     methods(Static, Access=private)
-        function [a, changed]=merge_struct(a, b, changed, undefnan)
+        function [a, changed] = merge_struct(a, b, changed, undefnan)
             fns = fieldnames(b);
             for i = 1:length(fns)
                 name = fns{i};
@@ -36,7 +36,7 @@ classdef DynProps < handle
                 [a.(name), changed] = DynProps.merge_struct(defv, newv, changed, undefnan);
             end
         end
-        function res=isfield_def(a, name, undefnan)
+        function res = isfield_def(a, name, undefnan)
             if ~isfield(a, name)
                 res = false;
             elseif ~undefnan
@@ -45,14 +45,14 @@ classdef DynProps < handle
                 res = ~DynProps.isnanobj(a.(name));
             end
         end
-        function res=isnanobj(obj)
+        function res = isnanobj(obj)
             if ~isnumeric(obj)
                 res = false;
                 return;
             end
             res = isnan(obj);
         end
-        function res=construct_struct(varargin)
+        function res = construct_struct(varargin)
             res = struct();
             i = 1;
             while i <= nargin

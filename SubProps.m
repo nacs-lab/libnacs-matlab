@@ -29,7 +29,7 @@ classdef SubProps < handle
       A = self;
       subsasgn(self.parent, [self.path, S], B);
     end
-    function res=fieldnames(self)
+    function res = fieldnames(self)
         res = subfieldnames(self.parent, self.path);
     end
   end

@@ -528,7 +528,7 @@ classdef ExpSeq < ExpSeqBase
     end
 
     methods(Access=protected)
-        function t=globalPath(self)
+        function t = globalPath(self)
             t = {};
         end
     end

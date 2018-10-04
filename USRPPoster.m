@@ -53,7 +53,7 @@ classdef USRPPoster < handle
         function recreate_socket(self)
             self.poster.recreate_sock();
         end
-        function cleanup=register_cleanup(self)
+        function cleanup = register_cleanup(self)
             cleanup = FacyOnCleanup(@recreate_socket, self);
         end
     end

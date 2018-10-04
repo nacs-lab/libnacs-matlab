@@ -11,7 +11,7 @@
 % You should have received a copy of the GNU Lesser General Public
 % License along with this library.
 
-function y=interpolate(x, x0, x1, vals)
+function y = interpolate(x, x0, x1, vals)
     dx = x1 - x0;
     x = x - x0;
     y = zeros(size(x));

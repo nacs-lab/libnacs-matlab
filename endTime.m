@@ -12,9 +12,9 @@
 % License along with this library.
 
 % Convinient wrapper of TimePoint
-function point=endTime(seq, offset)
-  if ~exist('offset', 'var')
-    offset = 0;
-  end
-  point = TimePoint(seq, 1, offset);
+function point = endTime(seq, offset)
+    if ~exist('offset', 'var')
+        offset = 0;
+    end
+    point = TimePoint(seq, 1, offset);
 end

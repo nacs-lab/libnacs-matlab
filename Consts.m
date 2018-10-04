@@ -12,6 +12,7 @@
 % License along with this library.
 
 classdef Consts < DynProps
+    %% Wrapper of the consts defined in `expConfig`.
     methods
         function self = Consts()
             conf = SeqConfig.get();

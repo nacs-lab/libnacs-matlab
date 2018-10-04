@@ -69,7 +69,7 @@ classdef WavemeterClient < handle
             end
         end
 
-        function res=poll(self)
+        function res = poll(self)
             % Wait for requests for 1s.
             res = self.sock.poll(1000) ~= 0;
         end

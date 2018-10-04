@@ -19,7 +19,7 @@ classdef FacyOnCleanup < handle
         enable = 1;
     end
     methods
-        function self=FacyOnCleanup(cb, varargin)
+        function self = FacyOnCleanup(cb, varargin)
             self.cb = cb;
             self.args = varargin;
         end

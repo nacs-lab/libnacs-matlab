@@ -44,13 +44,13 @@ classdef FPGAPoster < handle
       cleanup.disable();
     end
 
-    function msg=prepare_msg(self, tlen, code)
+    function msg = prepare_msg(self, tlen, code)
       msg = self.poster.prepare_msg(tlen, code);
     end
     function recreate_socket(self)
         self.poster.recreate_sock();
     end
-    function cleanup=register_cleanup(self)
+    function cleanup = register_cleanup(self)
        cleanup = FacyOnCleanup(@recreate_socket, self);
     end
   end

@@ -19,7 +19,7 @@ classdef TimePoint
     end
 
     methods
-        function self=TimePoint(seq, anchor, offset)
+        function self = TimePoint(seq, anchor, offset)
             self.seq = seq;
             self.anchor = anchor;
             if exist('offset', 'var')

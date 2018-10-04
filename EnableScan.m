@@ -13,7 +13,7 @@
 
 classdef EnableScan < FacyOnCleanup
     methods
-        function self=EnableScan(enable)
+        function self = EnableScan(enable)
             function cb(old)
                 EnableScan.set(old);
             end
@@ -22,7 +22,7 @@ classdef EnableScan < FacyOnCleanup
         end
     end
     methods(Static)
-        function res=check()
+        function res = check()
             global nacsEnableScan;
             if isempty(nacsEnableScan)
                 res = 1;

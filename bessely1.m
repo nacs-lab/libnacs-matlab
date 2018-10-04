@@ -11,6 +11,6 @@
 % You should have received a copy of the GNU Lesser General Public
 % License along with this library.
 
-function res=bessely1(a)
+function res = bessely1(a)
     res = bessely(1, a);
 end

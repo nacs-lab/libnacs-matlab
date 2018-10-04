@@ -162,7 +162,7 @@ classdef SeqConfig < handle
         end
     end
     methods(Static, Access=private)
-        function func=getDisableChannelSetter(m_disabledChannels)
+        function func = getDisableChannelSetter(m_disabledChannels)
             function disableChannel(chn)
                 m_disabledChannels(chn) = 0;
             end

@@ -58,7 +58,7 @@ classdef WavemeterServer < handle
         ferr = [];
         Vlist = [];
         figure(10); clf;
-        i=1;
+        i = 1;
         numInBoundIdx = 1;
         while 1
             % Read wavemeter
@@ -112,7 +112,7 @@ classdef WavemeterServer < handle
             ylabel('VPATemp (V)');
             subplot(1,2,2);
 
-            i=i+1;
+            i = i + 1;
         end
 
 
@@ -156,7 +156,7 @@ classdef WavemeterServer < handle
         end
     end
 
-    function res=poll(self)
+    function res = poll(self)
         % Wait for requests for 1s.
         res = self.sock.poll(1000) ~= 0;
     end

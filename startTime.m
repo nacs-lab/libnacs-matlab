@@ -12,7 +12,7 @@
 % License along with this library.
 
 % Convinient wrapper of TimePoint
-function point=startTime(seq, offset)
+function point = startTime(seq, offset)
     if ~exist('offset', 'var')
         offset = 0;
     end

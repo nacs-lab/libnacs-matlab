@@ -11,6 +11,6 @@
 % You should have received a copy of the GNU Lesser General Public
 % License along with this library.
 
-function res=besselj1(a)
+function res = besselj1(a)
     res = besselj(1, a);
 end
