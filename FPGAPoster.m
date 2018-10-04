@@ -12,66 +12,66 @@
 % License along with this library.
 
 classdef FPGAPoster < handle
-  properties
-    poster;
-  end
-
-  methods(Access = private)
-    function self = FPGAPoster(url)
-      [path, ~, ~] = fileparts(mfilename('fullpath'));
-      pyglob = py.dict(pyargs('mat_srcpath', path, 'url', url));
-      try
-        py.exec('from FPGAPoster import FPGAPoster', pyglob);
-      catch
-        py.exec('import sys; sys.path.append(mat_srcpath)', pyglob);
-        py.exec('from FPGAPoster import FPGAPoster', pyglob);
-      end
-      self.poster = py.eval('FPGAPoster(url)', pyglob);
-    end
-  end
-
-  methods
-    function post(self, data)
-      cleanup = register_cleanup(self);
-      self.poster.post(data);
-      cleanup.disable();
+    properties
+        poster;
     end
 
-    function wait(self)
-      cleanup = register_cleanup(self);
-      while ~self.poster.post_reply()
-      end
-      cleanup.disable();
+    methods(Access = private)
+        function self = FPGAPoster(url)
+            [path, ~, ~] = fileparts(mfilename('fullpath'));
+            pyglob = py.dict(pyargs('mat_srcpath', path, 'url', url));
+            try
+                py.exec('from FPGAPoster import FPGAPoster', pyglob);
+            catch
+                py.exec('import sys; sys.path.append(mat_srcpath)', pyglob);
+                py.exec('from FPGAPoster import FPGAPoster', pyglob);
+            end
+            self.poster = py.eval('FPGAPoster(url)', pyglob);
+        end
     end
 
-    function msg = prepare_msg(self, tlen, code)
-      msg = self.poster.prepare_msg(tlen, code);
-    end
-    function recreate_socket(self)
-        self.poster.recreate_sock();
-    end
-    function cleanup = register_cleanup(self)
-       cleanup = FacyOnCleanup(@recreate_socket, self);
-    end
-  end
+    methods
+        function post(self, data)
+            cleanup = register_cleanup(self);
+            self.poster.post(data);
+            cleanup.disable();
+        end
 
-  methods(Static)
-    function dropAll()
-      global nacsFPGAPosterCache
-      nacsFPGAPosterCache = [];
+        function wait(self)
+            cleanup = register_cleanup(self);
+            while ~self.poster.post_reply()
+            end
+            cleanup.disable();
+        end
+
+        function msg = prepare_msg(self, tlen, code)
+            msg = self.poster.prepare_msg(tlen, code);
+        end
+        function recreate_socket(self)
+            self.poster.recreate_sock();
+        end
+        function cleanup = register_cleanup(self)
+            cleanup = FacyOnCleanup(@recreate_socket, self);
+        end
     end
-    function res = get(url)
-      global nacsFPGAPosterCache
-      if isempty(nacsFPGAPosterCache)
-        nacsFPGAPosterCache = containers.Map();
-      end
-      cache = nacsFPGAPosterCache;
-      if isKey(cache, url)
-        res = cache(url);
-        return;
-      end
-      res = FPGAPoster(url);
-      cache(url) = res;
+
+    methods(Static)
+        function dropAll()
+            global nacsFPGAPosterCache
+            nacsFPGAPosterCache = [];
+        end
+        function res = get(url)
+            global nacsFPGAPosterCache
+            if isempty(nacsFPGAPosterCache)
+                nacsFPGAPosterCache = containers.Map();
+            end
+            cache = nacsFPGAPosterCache;
+            if isKey(cache, url)
+                res = cache(url);
+                return;
+            end
+            res = FPGAPoster(url);
+            cache(url) = res;
+        end
     end
-  end
 end

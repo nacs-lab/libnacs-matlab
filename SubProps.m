@@ -12,25 +12,25 @@
 % License along with this library.
 
 classdef SubProps < handle
-  % This is a delayed set/get operation on a parent class with a path prefix.
-  properties(Hidden)
-    parent;
-    path;
-  end
-  methods
-    function self = SubProps(parent, path)
-      self.parent = parent;
-      self.path = path;
+    % This is a delayed set/get operation on a parent class with a path prefix.
+    properties(Hidden)
+        parent;
+        path;
     end
-    function B = subsref(self, S)
-      B = subsref(self.parent, [self.path, S]);
+    methods
+        function self = SubProps(parent, path)
+            self.parent = parent;
+            self.path = path;
+        end
+        function B = subsref(self, S)
+            B = subsref(self.parent, [self.path, S]);
+        end
+        function A = subsasgn(self, S, B)
+            A = self;
+            subsasgn(self.parent, [self.path, S], B);
+        end
+        function res = fieldnames(self)
+            res = subfieldnames(self.parent, self.path);
+        end
     end
-    function A = subsasgn(self, S, B)
-      A = self;
-      subsasgn(self.parent, [self.path, S], B);
-    end
-    function res = fieldnames(self)
-        res = subfieldnames(self.parent, self.path);
-    end
-  end
 end
