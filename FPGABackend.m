@@ -12,9 +12,9 @@
 % License along with this library.
 
 classdef FPGABackend < PulseBackend
-    %Contains everything related to the FPGA.
+    % Contains everything related to the FPGA.
     properties(Hidden)
-        %PulseBackend properties: seq
+        % PulseBackend properties: seq
         clock_div = 0;
         poster = [];
         req = [];
@@ -59,7 +59,7 @@ classdef FPGABackend < PulseBackend
                 error('Unknown channel name "%s"', name);
             end
             name = name(7:end);
-            [chn_type, chn_num] = self.parseCId(name);
+            [chn_type, chn_num] = parseCId(self, name);
             self.type_cache(cid) = chn_type;
             self.num_cache(cid) = chn_num;
         end

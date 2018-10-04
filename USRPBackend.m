@@ -50,7 +50,7 @@ classdef USRPBackend < PulseBackend
                 error('Unknown channel name "%s"', name);
             end
             name = name(7:end);
-            [chn_type, chn_num] = self.parseCId(name);
+            [chn_type, chn_num] = parseCId(self, name);
             self.type_cache(cid) = chn_type;
             self.num_cache(cid) = chn_num;
         end
@@ -61,7 +61,7 @@ classdef USRPBackend < PulseBackend
 
         function prepare(self, ~)
             %% This should enable the FPGA backend and therefore the start trigger
-            self.seq.findDriver('FPGABackend');
+            findDriver(self.seq, 'FPGABackend');
         end
 
         function generate(self, cids)
@@ -83,7 +83,7 @@ classdef USRPBackend < PulseBackend
 
             for i = 1:nchn
                 cid = cids(i);
-                pulses = self.seq.getPulses(cid);
+                pulses = getPulses(self.seq, cid);
                 all_pulses{i} = pulses;
                 np = size(pulses, 1);
                 if np == 0

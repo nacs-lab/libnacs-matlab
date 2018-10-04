@@ -149,8 +149,8 @@ classdef NiDACBackend < PulseBackend
                 end
             end
             self.active_times = active_times;
-            fpgadriver = seq.findDriver('FPGABackend');
-            fpgadriver.enableClockOut(self.CLOCK_DIVIDER, active_times(1:2, :));
+            fpgadriver = findDriver(seq, 'FPGABackend');
+            enableClockOut(fpgadriver, self.CLOCK_DIVIDER, active_times(1:2, :));
         end
 
         function generate(self, cids0)
@@ -317,9 +317,9 @@ classdef NiDACBackend < PulseBackend
             if (~isempty(nacsNiDACBackendSessionUsing) && ...
                 nacsNiDACBackendSessionUsing == 1) || ...
                isempty(nacsNiDACBackendSession) || ...
-               ~self.checkSession(nacsNiDACBackendSession)
+               ~checkSession(self, nacsNiDACBackendSession)
                 delete(nacsNiDACBackendSession);
-                nacsNiDACBackendSession = self.createNewSession();
+                nacsNiDACBackendSession = createNewSession(self);
             end
             nacsNiDACBackendSessionUsing = 1;
             self.session = nacsNiDACBackendSession;
