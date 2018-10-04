@@ -92,21 +92,17 @@ classdef ExpSeqBase < TimeSeq
             % on the length of the added step.
             % The length for this purpose is the length for `TimeStep` and
             % `curTime` for `ExpSeqBase`.
-            step = addStepReal(self, self.curTime, false, first_arg, varargin{:});
+            [step, self.curTime] = addStepReal(self, self.curTime, false, first_arg, varargin{:});
         end
 
         function step = addBackground(self, first_arg, varargin)
             %% Add a background step or subsequence
             % (same as `addStep` without forwarding current time).
-            old_time = self.curTime;
-            step = addStepReal(self, old_time, true, first_arg, varargin{:});
-            self.curTime = old_time;
+            step = addStepReal(self, self.curTime, true, first_arg, varargin{:});
         end
 
         function step = addFloating(self, first_arg, varargin)
-            old_time = self.curTime;
             step = addStepReal(self, nan, true, first_arg, varargin{:});
-            self.curTime = old_time;
         end
 
         function res = addAt(self, tp, first_arg, varargin)
@@ -313,7 +309,7 @@ classdef ExpSeqBase < TimeSeq
     end
 
     methods(Access=private)
-        function step = addStepReal(self, curtime, is_background, first_arg, varargin)
+        function [step, end_time] = addStepReal(self, curtime, is_background, first_arg, varargin)
             %     Case 1:  self.addStepReal(curtime, true/false, len>0)
             %          first_arg = len,  varargin is empty.  Only runs line with  % Case 1(labeled below).
             %          Case 1 calls step = self.addTimeStep( len , 0), which adds
@@ -326,7 +322,7 @@ classdef ExpSeqBase < TimeSeq
             if ~isnumeric(first_arg)
                 % If first arg is not a number, assume to be a custom step.
                 % What fall through should be (number, *arg)
-                step = self.addCustomStep(curtime, first_arg, varargin{:});   % Case 2
+                [step, end_time] = addCustomStep(self, curtime, first_arg, varargin{:});   % Case 2
             elseif isempty(varargin)
                 % If we only have one numerical argument it must be a simple time step.
                 % What fall through should be (number, at_least_another_arg, *arg)
@@ -344,7 +340,7 @@ classdef ExpSeqBase < TimeSeq
                     curtime = curtime + len;
                 end
                 step = TimeStep(self, start_time, len);
-                self.curTime = curtime;
+                end_time = curtime;
             elseif isnumeric(varargin{1})
                 % If we only have two numerical argument it must be a simple time step
                 % with custom offset.
@@ -362,18 +358,17 @@ classdef ExpSeqBase < TimeSeq
                     error('Length of time step must be positive.');
                 end
                 step = TimeStep(self, offset + curtime, first_arg);
-                self.curTime = end_offset + curtime;
+                end_time = end_offset + curtime;
             else
                 % The not_number must be a custom step. Do it.
                 if isnan(curtime)
                     error('Floating time step with time offset not allowed.');
                 end
-                step = self.addCustomStep(curtime + first_arg, varargin{:});
+                [step, end_time] = self.addCustomStep(curtime + first_arg, varargin{:});
             end
         end
 
-        %%
-        function step = addCustomStep(self, start_time, cls, varargin)
+        function [step, end_time] = addCustomStep(self, start_time, cls, varargin)
             % step [TimeStep] = addCustomStep(self, offset, cls, varargin)
             % Inserts a new ExpSeqBase in sub sequence list, then applies the
             % function handle cls to it. Advances self.curTime.
@@ -381,13 +376,10 @@ classdef ExpSeqBase < TimeSeq
             % TimeStep objects (which contain pulses).
             % All above methods eventually call one of these methods.
 
-            self.curTime = start_time; % advance current time
             step = ExpSeqBase(self, start_time);
-            % return proxy since I'm not sure there's a good way to forward
-            % return values in matlab, especially since the return value can
-            % depend on the number of return values.
-            cls(step, varargin{:}); % runs the function handle
-            self.curTime = self.curTime + step.curTime;
+            % Create the step
+            cls(step, varargin{:});
+            end_time = start_time + step.curTime;
         end
     end
 end
