@@ -86,23 +86,74 @@ classdef ExpSeqBase < TimeSeq
 
         %% API's to add steps and subsequences.
 
+        % These functions creates sub node in the sequence DAG
+        % which can be either a step (`TimeStep`) or a subsequence (`ExpSeqBase`).
+        % (For simplicity, we may call both of these steps below.)
+        %
+        % The steps are created relative to a certain reference point,
+        % which can be,
+        % 1. Unknown (to be fixed later): `addFloating`.
+        % 2. Known now. The known time could be,
+        %     A. Current time of this (sub)sequence,
+        %        in which case one decide whether the current time should be updated.
+        %         a. Yes: `addStep`
+        %
+        %             Note that the restriction that `curTime` cannot be decreased applies
+        %             so the end of the step added this way must not be before the
+        %             previous `curTime`. An error will be thrown if the time offset
+        %             specified is too negative and cause this to happen.
+        %             (The state of the sequence is unspecified after the error is thrown.)
+        %
+        %         b. No: `addBackground`
+        %     B. A specific `TimePoint`: `addAt`.
+        %
+        % All the functions use the same syntax to specify the type of
+        % the step to be added (`TimeStep` or `ExpSeqBase`),
+        % the parameter to construct the step (length for `TimeStep` or
+        % callback with arbitrary arguments for `ExpSeqBase`),
+        % and the offset relative to the reference point for each function.
+        % (The offset cannot be specified for `addFloating`)
+        % The allowed arguments conbinations are,
+        %
+        % 1. To construct a subsequence (`ExpSeqBase`), a callback is always required.
+        %    (The callback can be a function handle, a class, or any callable,
+        %    i.e. indexable non-numerical and non-logical object).
+        %    Therefore, to construct a subsequence the arguments are,
+        %    `([offset=0, ]callback, extra_arguments_for_callback...)`.
+        %    The sub sequence will be constructed at the specified time point
+        %    and passed to the `callback` (as first argument) followed by the extra
+        %    arguments to populate the subsequence.
+        % 2. To construct a `TimeStep`, one need to specify only the length.
+        %    Since the offset is rarely used, the arguments to construct a `TimeStep` is,
+        %    `(len[, offset=0])`. Since `len` in general must be positive, a special case
+        %    is when a single negative number is given. The `len` will then be interpreted
+        %    as the offset as well as the negative of the length
+        %    (e.g. `(-5)` represent a step of length `5` and offset `-5`).
+        %
+        % In both cases, the step constructed will be returned.
         function step = addStep(self, first_arg, varargin)
             %% The most basic timing API. Add a step (`TimeStep`) or
             % subsequence (`ExpSeqBase`) and forward the current time based
             % on the length of the added step.
             % The length for this purpose is the length for `TimeStep` and
-            % `curTime` for `ExpSeqBase`.
-            [step, self.curTime] = addStepReal(self, self.curTime, false, first_arg, varargin{:});
+            % `curTime` for `ExpSeqBase`. Same as the definition for `TimePoint`.
+            [step, end_time] = addStepReal(self, self.curTime, first_arg, varargin{:});
+            if end_time < self.curTime
+                error('Going back in time not allowed.');
+            end
+            self.curTime = end_time;
         end
 
         function step = addBackground(self, first_arg, varargin)
             %% Add a background step or subsequence
             % (same as `addStep` without forwarding current time).
-            step = addStepReal(self, self.curTime, true, first_arg, varargin{:});
+            step = addStepReal(self, self.curTime, first_arg, varargin{:});
         end
 
         function step = addFloating(self, first_arg, varargin)
-            step = addStepReal(self, nan, true, first_arg, varargin{:});
+            %% Add a floating step or subsequence
+            % The time is not fixed and will be determined later.
+            step = addStepReal(self, nan, first_arg, varargin{:});
         end
 
         function res = addAt(self, tp, first_arg, varargin)
@@ -309,12 +360,12 @@ classdef ExpSeqBase < TimeSeq
     end
 
     methods(Access=private)
-        function [step, end_time] = addStepReal(self, curtime, is_background, first_arg, varargin)
-            %     Case 1:  self.addStepReal(curtime, true/false, len>0)
+        function [step, end_time] = addStepReal(self, curtime, first_arg, varargin)
+            %     Case 1:  self.addStepReal(curtime, len>0)
             %          first_arg = len,  varargin is empty.  Only runs line with  % Case 1(labeled below).
             %          Case 1 calls step = self.addTimeStep( len , 0), which adds
             %          an empty TimeStep and advances self.curTime by len.
-            %     Case 2: s.addStepReal(curtime, true, function handle)
+            %     Case 2: s.addStepReal(curtime, function handle)
             %          first_arg = function handle, varargin empty.
             %          Only runs line % Case 2, which calls  s.addCustomStep(curtime, function_handle)
             %          This case is used by s.add('Channel',value).
@@ -322,7 +373,7 @@ classdef ExpSeqBase < TimeSeq
             if ~isnumeric(first_arg)
                 % If first arg is not a number, assume to be a custom step.
                 % What fall through should be (number, *arg)
-                [step, end_time] = addCustomStep(self, curtime, first_arg, varargin{:});   % Case 2
+                [step, end_time] = addCustomStep(self, curtime, first_arg, varargin{:});
             elseif isempty(varargin)
                 % If we only have one numerical argument it must be a simple time step.
                 % What fall through should be (number, at_least_another_arg, *arg)
@@ -346,15 +397,13 @@ classdef ExpSeqBase < TimeSeq
                 % with custom offset.
                 % What fall through should be (number, not_number, *arg)
                 if length(varargin) > 1
-                    error('addStep called with too many arguments.');
+                    error('Too many arguments to create a time step.');
                 elseif isnan(curtime)
                     error('Floating time step with time offset not allowed.');
                 end
                 offset = varargin{1};
                 end_offset = offset + first_arg;
-                if ~is_background && end_offset < 0
-                    error('Implicitly going back in time is not allowed.');
-                elseif first_arg <= 0
+                if first_arg <= 0
                     error('Length of time step must be positive.');
                 end
                 step = TimeStep(self, offset + curtime, first_arg);
