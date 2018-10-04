@@ -92,7 +92,8 @@ classdef WavemeterServer < handle
                 end
 
                 kyhdl.setVoltage(Vnew);
-                %SetVInnolume((Vnew - Vcenter) * 10 + 5); % Cannot use NIDAQ while experiment running
+                % Cannot use NIDAQ while experiment running
+                % SetVInnolume((Vnew - Vcenter) * 10 + 5);
                 disp(['Set new voltage: ' num2str(Vnew)]);
 
                 % Save to lists
@@ -102,7 +103,7 @@ classdef WavemeterServer < handle
 
                 % Plot
                 subplot(1,2,1);
-                %errorbar( 1:length(flist), flist, ferr, '.-');
+                % errorbar( 1:length(flist), flist, ferr, '.-');
                 plot( 1:length(flist), flist, '.-');
                 xlabel('Iteration');
                 ylabel('Freq (288XXX GHz)');

@@ -12,7 +12,8 @@
 % License along with this library.
 
 function params = runSeq(func, varargin)
-    % runSeq(func, [options], [{arguments}])
+    %% runSeq(func, [options], [{arguments}])
+    % Run the sequence constructed by func.
     %    @func: the function or otherwise callable object (or the name of it)
     %        to construct the sequence to run.
     %    @options (optional): parameter to define how the sequences are run.
@@ -33,8 +34,6 @@ function params = runSeq(func, varargin)
     %    @arguments (optional, multiple): cell arrays of the arguments to
     %        construct the sequence. Each argument will be used to construct
     %        a sequence.
-    %
-    %%    Run the sequence constructed by func.
     params = {};
     rep = 1;
     has_rep = false;
