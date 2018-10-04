@@ -235,13 +235,7 @@ classdef ExpSeq < ExpSeqBase
         end
 
         function run(self)
-            % run(self[ExpSeq])
-            % Used to run the experimental sequence. Calls the methods
-            % run_async() and waitFinish(), which are very similar codes.
-            % run_async() calls the prepare and generate methods on the
-            % drivers (using the generate() method),  and then applies the
-            % run method on the driver objects.  waitFinish() just applies the
-            % wait() method on the drivers.
+            %% Run the sequence (after generating) and wait for it to finish.
             % Do **NOT** put anything related to runSeq in this file!!!!!!!!!!
             % It messes up EVERYTHING!!!!!!!!!!!!!!!!!!!!!!
             % Also, this function has to be only run_async() and then
@@ -257,6 +251,7 @@ classdef ExpSeq < ExpSeqBase
         end
 
         function self = setDefault(self, name, val)
+            %% Override default value in the `expConfig`.
             if isnumeric(name)
                 cid = name;
             else
@@ -325,6 +320,7 @@ classdef ExpSeq < ExpSeqBase
 
             plotReal(self, cids, names);
         end
+
         function name = channelName(self, cid)
             name = self.chn_manager.channels{cid};
         end
@@ -474,13 +470,12 @@ classdef ExpSeq < ExpSeqBase
         end
 
         function res = getPulses(self, cid)
-            %% Return a array of tuples (toffset, length, pulse_obj)
-            %  the pulse_obj should be a number or have a method calcValue that take 3 parameters:
-            %      time_in_pulse, length, old_val_before_pulse
-            %  and should return the new value @time_in_pulse after the step_start.
-            %  The returned value should be sorted with toffset.
+            %% Return 3-row cell array with each column being `toffset, length, pulse_obj`.
+            % The `pulse_obj` should be a number or a `PulseBase` (see `PulseBase::calcValue`).
+            % See `ExpSeqBase::appendPulses`.
+            % The returned value should be sorted with toffset.
             %
-            %  This must be run after `populateMask`
+            % This must be run after `populateMask`
             if length(self.pulses_overwrite) >= cid && ~isempty(self.pulses_overwrite{cid})
                 res = self.pulses_overwrite{cid};
                 return;
@@ -507,11 +502,13 @@ classdef ExpSeq < ExpSeqBase
             end
         end
         function disableChannel(self, name)
+            %% Disable channels with the prefix `name` (so `$name/...` or `name` itself)
+            % Disabled channels are still added to the sequence but are hidden from the backend.
+            name = translateChannel(self.config, name);
             % This check is in principle O(M * N) in total
             % where M is No of disabled channel and N is No of used channel.
             % However, in practice the disable channel should only be called
             % at the beginning of the sequence so this shouldn't be too bad.
-            name = translateChannel(self.config, name);
             % `getChannelId` guarantees that all translated names used are in `cid_cache`
             for key = keys(self.cid_cache)
                 % This should not have false positive disabled channels

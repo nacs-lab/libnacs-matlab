@@ -328,7 +328,7 @@ classdef ExpSeqBase < TimeSeq
         function res = appendPulses(self, cid, res, toffset)
             %% Push pulse information (time, length, pulse function) within this subsequence
             % to `res` with a global time offset of `toffset` for the channel `cid`.
-            % The information is pushed to `res` as new 3-row columns (see below).x
+            % The information is pushed to `res` as new 3-row columns (see below).
             % `res` is passed in from the caller to minimize allocation.
             % Called by `ExpSeq::getPulse`.
             subSeqs = self.subSeqs;
