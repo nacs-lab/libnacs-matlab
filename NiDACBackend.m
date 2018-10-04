@@ -27,8 +27,8 @@ classdef NiDACBackend < PulseBackend
 
     properties(Hidden)
         session;
-        cid_map;
-        cids;           % list of channel ids, ie [5,6,7,8]
+        cid_map = {};
+        cids = [];      % list of channel ids, ie [5,6,7,8]
         data;           % matrix of values to be queued to board.
         all_pulses;
         active_times;
@@ -47,8 +47,6 @@ classdef NiDACBackend < PulseBackend
         %%
         function self = NiDACBackend(seq)
             self = self@PulseBackend(seq);
-            self.cid_map = {};
-            self.cids = [];
 
             self.clk_period_ns = 10 * self.CLOCK_DIVIDER * 2;
             self.clk_period = self.clk_period_ns * 1e-9;

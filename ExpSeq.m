@@ -34,11 +34,13 @@ classdef ExpSeq < ExpSeqBase
         % The channel name used when the channel is first added, indexed by channel ID.
         % Only used for plotting.
         orig_channel_names = {};
+        % The translated channel names.
+        % (This is unique for each channel independent of what the user uses and
+        % can be relied on by the backends. See `channelName`.)
+        channel_names = {};
         % Map from channel name to channel ID.
         % Include both translated name and untranslated ones as keys.
         cid_cache;
-        % Managing the mapping between channel name and channel ID
-        chn_manager;
 
         %% Output related:
         % Whether the default has been overwritten and the new default value.
@@ -69,7 +71,6 @@ classdef ExpSeq < ExpSeqBase
                 error('Constant input must be a struct.');
             end
             self = self@ExpSeqBase(varargin{:});
-            self.chn_manager = ChannelManager();
             self.drivers = containers.Map();
             self.driver_cids = containers.Map();
             self.cid_cache = containers.Map('KeyType', 'char', 'ValueType', 'double');
@@ -109,12 +110,6 @@ classdef ExpSeq < ExpSeqBase
             self.driver_cids(driver_name) = unique([cur_cids, cid]);
         end
 
-        function cid = findChannelId(self, name)
-            %% Similar to `translateChannel` but does not create new ID.
-            name = translateChannel(self.config, name);
-            cid = findId(self.chn_manager, name);
-        end
-
         function driver = findDriver(self, driver_name)
             %% Lazily create driver of the given name.
             try
@@ -141,7 +136,7 @@ classdef ExpSeq < ExpSeqBase
                           totalTime(self), self.config.maxLength);
                 end
                 fprintf('|');
-                populateChnMask(self, length(self.chn_manager.channels));
+                populateChnMask(self, length(self.channel_names));
                 for key = self.drivers.keys()
                     driver_name = key{:};
                     driver = self.drivers(driver_name);
@@ -167,8 +162,8 @@ classdef ExpSeq < ExpSeqBase
                     self.default_override = false(0);
                     self.default_override_val = [];
                     self.orig_channel_names = [];
+                    self.channel_names = [];
                     self.cid_cache = [];
-                    self.chn_manager = [];
                     self.output_manager = [];
                     self.pulses_overwrite = [];
                     % NiDAC backend currently need config
@@ -311,10 +306,12 @@ classdef ExpSeq < ExpSeqBase
                         end
                     end
                 else
-                    try
-                        cid = findChannelId(self, arg);
-                    catch
-                        error('Channel does not exist.');
+                    name = translateChannel(self.config, arg);
+                    if isKey(self.cid_cache, name)
+                        % Look up the name without creating an ID
+                        cid = self.cid_cache(name);
+                    else
+                        error('Channel %s does not exist.', arg);
                     end
                     cids(end + 1) = cid;
                     names{end + 1} = arg;
@@ -329,7 +326,7 @@ classdef ExpSeq < ExpSeqBase
         end
 
         function name = channelName(self, cid)
-            name = self.chn_manager.channels{cid};
+            name = self.channel_names{cid};
         end
 
         function vals = getValues(self, dt, varargin)
@@ -545,12 +542,13 @@ classdef ExpSeq < ExpSeqBase
             end
             orig_name = name;
             name = translateChannel(self.config, name);
-            cid = getId(self.chn_manager, name);
-            self.cid_cache(orig_name) = cid;
+            cid = length(self.channel_names) + 1;
+            self.channel_names{cid} = name;
+            % This makes sure that disableChannel
+            % could iterate over all the translated names.
+            self.cid_cache(name) = cid;
             if ~strcmp(name, orig_name)
-                % This makes sure that disableChannel
-                % could iterate over all the translated names.
-                self.cid_cache(name) = cid;
+                self.cid_cache(orig_name) = cid;
             end
 
             if (cid > length(self.orig_channel_names) || ...
