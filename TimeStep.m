@@ -12,26 +12,26 @@
 % License along with this library.
 
 classdef (Sealed) TimeStep < TimeSeq
-    % The 'pulses' property contains values for the channel and channel ids.
-    % The 'pulses' property contains a TimeStep.pulses{cid} = pulse_list, which is
-    % a cell-array of PulseBase ojbects, where cid is the channel id.
-    % A TimeStep object is only created in the addTimeStep and addCustomStep
-    % methods of the ExpSeqBase class.
-
-    % All Methods:
-    % self = TimeStep(varargin)
-    % ret = add(self, name, pulse)
+    %% `TimeStep`s are leaf nodes in the experiment sequence (tree/DAG).
+    % Since this cannot contain any subsequences or child steps, the only
+    % time step specific API provided is adding output to the step.
+    % See `TimeSeq` for the general structure of the sequence.
 
     properties
-        % contains numbers or PulseBase objects, which are children of the PulseBase class.
+        % Pulses indexed by the channel ID.
+        % Each pulse span the whole time of the time step.
+        % Pre-allocated to minimize resizing.
         pulses = {[], [], [], [], [], [], [], []};
+        % The length of the step
         len;
     end
 
     methods
-        %%
         function self = TimeStep(parent, start_time, len)
-            % Made only in the ExpSeqBase::addTimeStep.
+            % These fields are in `TimeSeq`.
+            % However, they are not initialized in `TimeSeq` constructor
+            % to isolate the handling of `ExpSeq` to `ExpSeqBase`
+            % and to reduce function call overhead...
             self.parent = parent;
             self.tOffset = start_time;
             self.config = parent.config;
@@ -46,6 +46,24 @@ classdef (Sealed) TimeStep < TimeSeq
         end
 
         function self = add(self, name, pulse)
+            %% Add a pulse on a channel to the step.
+            % The channel name can be provided as a string, which will be
+            % translated and converted to the channel ID, or it can be
+            % given as the channel ID (number) directly. (See `TimeSeq::translateChannel`)
+            % The pulse can be
+            %
+            % * A number
+            %
+            %     Output the value at the beginning of the step.
+            %
+            % * A subclass of `PulseBase`
+            %
+            %     The `calcValue` method will be used to compute the output value.
+            %
+            % * Or an arbitrary callable object/function handle.
+            %
+            %     Equivalent as a `FuncPulse`. The object will be called to
+            %     compute the output value.
             if isnumeric(name)
                 cid = name;
             else
@@ -57,10 +75,11 @@ classdef (Sealed) TimeStep < TimeSeq
                 end
                 pulse = double(pulse);
             elseif ~isa(pulse, 'PulseBase')
-                % Treat as function
+                % Treat as function/callable
                 pulse = FuncPulse(pulse);
             end
             if cid > length(self.pulses)
+                % Minimize resizing
                 self.pulses{cid + 5} = [];
             end
             self.pulses{cid} = pulse;
