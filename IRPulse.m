@@ -1,4 +1,4 @@
-%% Copyright (c) 2014-2018, Yichao Yu <yyc1992@gmail.com>
+%% Copyright (c) 2017-2018, Yichao Yu <yyc1992@gmail.com>
 %
 % This library is free software; you can redistribute it and/or
 % modify it under the terms of the GNU Lesser General Public
@@ -11,26 +11,16 @@
 % You should have received a copy of the GNU Lesser General Public
 % License along with this library.
 
-classdef FuncPulse < PulseBase
-  properties
-    func;
-    narg;
-  end
-
-  methods
-    function self = FuncPulse(func)
-      self.func = func;
-      self.narg = nargin(func);
+classdef IRPulse < PulseBase
+    %% Pulses that can be uniquely identified by the `id`.
+    % This can speed up IR generation since the caller can use the ID to cache
+    % the result for repeatedly used pulses.
+    properties
+        id;
     end
-
-    function val = calcValue(self, t, len, old_val)
-      if self.narg == 1
-        val = self.func(t);
-      elseif self.narg == 2
-        val = self.func(t, len);
-      else
-        val = self.func(t, len, old_val);
-      end
+    methods
+        function self = IRPulse(id)
+            self.id = id;
+        end
     end
-  end
 end
