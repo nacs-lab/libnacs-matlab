@@ -45,8 +45,7 @@ classdef (Sealed) TimeStep < TimeSeq
             parent.subSeqs{ns} = self;
         end
 
-        function ret = add(self, name, pulse)
-            ret = self;
+        function self = add(self, name, pulse)
             if isnumeric(name)
                 cid = name;
             else

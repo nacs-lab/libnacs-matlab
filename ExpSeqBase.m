@@ -235,7 +235,7 @@ classdef ExpSeqBase < TimeSeq
 
         %% Other helper functions.
 
-        function step = add(self, name, pulse, len)
+        function self = add(self, name, pulse, len)
             %% Convenient shortcut for adding a single pulse in a step.
             if isnumeric(pulse) || islogical(pulse)
                 % `0` length for setting values.
@@ -248,7 +248,6 @@ classdef ExpSeqBase < TimeSeq
             else
                 add(addStep(self, len), name, pulse);
             end
-            step = self;
         end
 
         function res = alignEnd(self, seq1, seq2, offset)

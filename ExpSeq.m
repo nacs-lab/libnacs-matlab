@@ -182,22 +182,20 @@ classdef ExpSeq < ExpSeqBase
             end
         end
 
-        function res=regBeforeStart(self, cb)
+        function self = regBeforeStart(self, cb)
             %% Register a callback function that will be executed before
             % the sequence run.
             % The callbacks will be called in the order they are registerred
             % without any arguments.
             self.before_start_cbs{end + 1} = cb;
-            res = self;
         end
 
-        function res=regAfterEnd(self, cb)
+        function self = regAfterEnd(self, cb)
             %% Register a callback function that will be executed after
             % the sequence ends.
             % The callbacks will be called in the order they are registerred
             % without any arguments.
             self.after_end_cbs{end + 1} = cb;
-            res = self;
         end
 
         function waitFinish(self)
@@ -240,8 +238,7 @@ classdef ExpSeq < ExpSeqBase
             self.waitFinish();
         end
 
-        function res = setDefault(self, name, val)
-            res = self;
+        function self = setDefault(self, name, val)
             if isnumeric(name)
                 cid = name;
             else
