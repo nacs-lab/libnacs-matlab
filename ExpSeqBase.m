@@ -157,9 +157,8 @@ classdef ExpSeqBase < TimeSeq
         end
 
         function res = addAt(self, tp, first_arg, varargin)
-            % TODO not using floating
-            step = addFloating(self, first_arg, varargin{:});
-            step.setTime(tp);
+            %% Add a step or subsequence at a specific time point.
+            step = addStepReal(self, getTimePointOffset(self, tp), first_arg, varargin{:});
         end
 
         %% Wait API's
@@ -293,6 +292,25 @@ classdef ExpSeqBase < TimeSeq
             if isnan(res)
                 error('Cannot get length with floating sub sequence.');
             end
+        end
+
+        function tdiff = getTimePointOffset(self, time)
+            % Compute the offset of a `TimePoint` relative to current sequence
+            if ~isa(time, 'TimePoint')
+                error('`TimePoint` expected.');
+            end
+            other = time.seq;
+            tdiff = offsetDiff(self, other);
+            offset = time.offset;
+            if time.anchor ~= 0
+                if ~isa(other, 'ExpSeqBase')
+                    len = other.len;
+                else
+                    len = other.curTime;
+                end
+                offset = offset + len * time.anchor;
+            end
+            tdiff = tdiff + offset;
         end
     end
 

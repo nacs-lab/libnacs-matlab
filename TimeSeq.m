@@ -86,22 +86,10 @@ classdef TimeSeq < handle
             if ~exist('offset', 'var')
                 offset = 0;
             end
-            if ~isa(time, 'TimePoint')
-                error('Time must be a `TimePoint`.');
-            elseif ~isnan(self.tOffset)
+            if ~isnan(self.tOffset)
                 error('Not a floating sequence.');
             end
-            other = time.seq;
-            tdiff = offsetDiff(self.parent, other);
-            if time.anchor ~= 0
-                if ~isa(other, 'ExpSeqBase')
-                    len = other.len;
-                else
-                    len = other.curTime;
-                end
-                tdiff = tdiff + len * time.anchor;
-            end
-            tdiff = tdiff + time.offset + offset;
+            tdiff = getTimePointOffset(self.parent, time) + offset;
             if anchor ~= 0
                 if ~isa(self, 'ExpSeqBase')
                     len = self.len;
