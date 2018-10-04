@@ -554,7 +554,7 @@ classdef ExpSeq < ExpSeqBase
         end
 
         function [driver, driver_name] = initDeviceDriver(self, did)
-            driver_name = pulseDrivers(self.config, did);
+            driver_name = self.config.pulseDrivers(did);
             driver = findDriver(self, driver_name);
             initDev(driver, did);
         end
