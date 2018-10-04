@@ -84,27 +84,31 @@ classdef ExpSeqBase < TimeSeq
             self.C = DynProps(C);
         end
 
-        function res = wait(self, t)
+        function self = wait(self, t)
             %% Just steps the curTime of 'self' forward by t, and returns 'self'
             self.curTime = self.curTime + t;
-            res = self;
         end
 
-        function res = waitAll(self)
+        function self = waitAll(self)
             %% Wait for everything that have been currently added to finish.
+            % This is the recursive version of `waitBackground`.
             self.curTime = length(self);
-            res = self;
         end
 
-        function res = waitFor(self, steps, offset)
+        function self = waitFor(self, steps, offset)
             %% Wait for all the steps or subsequences within `steps`
             % with an offset.
+            % It is allowed to wait for steps or subsequences that are not a child
+            % of `self`. It is also allowed to wait for floating sequence provided
+            % that all the floating part is shared (i.e. only the common parents are floating
+            % and the offset between `self` and the step to be waited for is well defined).
             if ~exist('offset', 'var')
                 offset = 0;
             end
             t = self.curTime;
             for step = steps
                 if iscell(step)
+                    % Deal with MATLAB cell array indexing weirdness....
                     real_step = step{:};
                 else
                     real_step = step;
@@ -125,64 +129,11 @@ classdef ExpSeqBase < TimeSeq
                 end
             end
             self.curTime = t;
-            res = self;
         end
 
-        function subSeqForeach(self, func)
-            for i = 1:self.nSubSeqs
-                func(self.subSeqs{i});
-            end
-        end
-
-        function res = appendPulses(self, cid, res, toffset)
-            % Called in getPulse method.
-            subSeqs = self.subSeqs;
-            for i = 1:self.nSubSeqs
-                sub_seq = subSeqs{i};
-                if ~sub_seq.chn_mask(cid)
-                    continue;
-                end
-                seq_toffset = sub_seq.tOffset + toffset;
-                % The following code is manually inlined for TimeStep.
-                % since function call is super slow...
-                if isa(sub_seq, 'TimeStep')
-                    res(1:3, end + 1) = {seq_toffset, sub_seq.len, sub_seq.pulses{cid}};
-                else
-                    res = appendPulses(sub_seq, cid, res, seq_toffset);
-                end
-            end
-        end
-
-        function res = populateChnMask(self, nchn)
-            res = false(1, nchn);
-            subSeqs = self.subSeqs;
-            for i = 1:self.nSubSeqs
-                sub_seq = subSeqs{i};
-                if isnan(sub_seq.tOffset)
-                    error('Sub sequence still floating');
-                end
-                % The following code is manually inlined for TimeStep.
-                % since function call is super slow...
-                if isa(sub_seq, 'TimeStep')
-                    subseq_pulses = sub_seq.pulses;
-                    sub_res = false(1, nchn);
-                    for j = 1:length(subseq_pulses)
-                        if ~isempty(subseq_pulses{j})
-                            sub_res(j) = true;
-                            res(j) = true;
-                        end
-                    end
-                    sub_seq.chn_mask = sub_res;
-                else
-                    res = res | populateChnMask(sub_seq, nchn);
-                end
-            end
-            self.chn_mask = res;
-        end
-
-        function res = waitBackground(self)
+        function self = waitBackground(self)
             %% Wait for background steps that are added directly to this sequence
-            % to finish
+            % to finish. See also `waitAll`.
             function checkBackgroundTime(sub_seq)
                 if ~isa(sub_seq, 'ExpSeqBase')
                     len = sub_seq.len;
@@ -198,7 +149,6 @@ classdef ExpSeqBase < TimeSeq
                 end
             end
             self.subSeqForeach(@checkBackgroundTime);
-            res = self;
         end
 
         function step = add(self, name, pulse, len)
@@ -214,7 +164,6 @@ classdef ExpSeqBase < TimeSeq
             step = self;
         end
 
-        %%
         function step = addBackground(self, first_arg, varargin)
             %% Shortcut for addStepReal with 'is_background' = true ,
             % and does not advanceself.curTime.  addStepReal usually advances curTime.
@@ -282,6 +231,69 @@ classdef ExpSeqBase < TimeSeq
             if isnan(res)
                 error('Cannot get length with floating sub sequence.');
             end
+        end
+    end
+
+    methods(Access=protected)
+        function subSeqForeach(self, func)
+            for i = 1:self.nSubSeqs
+                func(self.subSeqs{i});
+            end
+        end
+
+        function res = appendPulses(self, cid, res, toffset)
+            %% Push pulse information (time, length, pulse function) within this subsequence
+            % to `res` with a global time offset of `toffset` for the channel `cid`.
+            % The information is pushed to `res` as new 3-row columns (see below).x
+            % `res` is passed in from the caller to minimize allocation.
+            % Called by `ExpSeq::getPulse`.
+            subSeqs = self.subSeqs;
+            for i = 1:self.nSubSeqs
+                sub_seq = subSeqs{i};
+                if ~sub_seq.chn_mask(cid)
+                    % fast path
+                    continue;
+                end
+                seq_toffset = sub_seq.tOffset + toffset;
+                % The following code is manually inlined for TimeStep.
+                % since function call is super slow...
+                if isa(sub_seq, 'TimeStep')
+                    res(1:3, end + 1) = {seq_toffset, sub_seq.len, sub_seq.pulses{cid}};
+                else
+                    res = appendPulses(sub_seq, cid, res, seq_toffset);
+                end
+            end
+        end
+
+        function res = populateChnMask(self, nchn)
+            % Make sure `chn_mask` has enough elements (so no bounds checks needed later)
+            % and contains the correct mask for whether each channels are used in this
+            % subsequence. Called after construction and before generation to speed up
+            % the tree traversal during generation.
+            res = false(1, nchn);
+            subSeqs = self.subSeqs;
+            for i = 1:self.nSubSeqs
+                sub_seq = subSeqs{i};
+                if isnan(sub_seq.tOffset)
+                    error('Sub sequence still floating');
+                end
+                % The following code is manually inlined for TimeStep.
+                % since function call is super slow...
+                if isa(sub_seq, 'TimeStep')
+                    subseq_pulses = sub_seq.pulses;
+                    sub_res = false(1, nchn);
+                    for j = 1:length(subseq_pulses)
+                        if ~isempty(subseq_pulses{j})
+                            sub_res(j) = true;
+                            res(j) = true;
+                        end
+                    end
+                    sub_seq.chn_mask = sub_res;
+                else
+                    res = res | populateChnMask(sub_seq, nchn);
+                end
+            end
+            self.chn_mask = res;
         end
     end
 
