@@ -236,7 +236,7 @@ classdef ExpSeqBase < TimeSeq
         %% Other helper functions.
 
         function step = add(self, name, pulse, len)
-            % Convenient shortcut for adding a single pulse in a step.
+            %% Convenient shortcut for adding a single pulse in a step.
             if isnumeric(pulse) || islogical(pulse)
                 % `0` length for setting values.
                 if exist('len', 'var')
@@ -252,6 +252,9 @@ classdef ExpSeqBase < TimeSeq
         end
 
         function res = alignEnd(self, seq1, seq2, offset)
+            %% Make sure that `seq1` and `seq2` ends at the same time and the longer
+            % one of which started `offset` after the current time of this sequence.
+            % Return the input steps as a cell array.
             if ~exist('offset', 'var')
                 offset = 0;
             end
@@ -430,12 +433,12 @@ classdef ExpSeqBase < TimeSeq
             end
         end
 
-        function [step, end_time] = addCustomStep(self, start_time, cls, varargin)
+        function [step, end_time] = addCustomStep(self, start_time, cb, varargin)
             %% Add a subsequence by creating a child `ExpSeqBase` node and populating
             % it using the callback passed in.
             step = ExpSeqBase(self, start_time);
             % Create the step
-            cls(step, varargin{:});
+            cb(step, varargin{:});
             end_time = start_time + step.curTime;
         end
     end
