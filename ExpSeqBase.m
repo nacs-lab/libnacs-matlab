@@ -84,8 +84,43 @@ classdef ExpSeqBase < TimeSeq
             self.C = DynProps(C);
         end
 
+        %% API's to add steps and subsequences.
+
+        function step = addStep(self, first_arg, varargin)
+            %% The most basic timing API. Add a step (`TimeStep`) or
+            % subsequence (`ExpSeqBase`) and forward the current time based
+            % on the length of the added step.
+            % The length for this purpose is the length for `TimeStep` and
+            % `curTime` for `ExpSeqBase`.
+            step = addStepReal(self, self.curTime, false, first_arg, varargin{:});
+        end
+
+        function step = addBackground(self, first_arg, varargin)
+            %% Add a background step or subsequence
+            % (same as `addStep` without forwarding current time).
+            old_time = self.curTime;
+            step = addStepReal(self, old_time, true, first_arg, varargin{:});
+            self.curTime = old_time;
+        end
+
+        function step = addFloating(self, first_arg, varargin)
+            old_time = self.curTime;
+            step = addStepReal(self, nan, true, first_arg, varargin{:});
+            self.curTime = old_time;
+        end
+
+        function res = addAt(self, tp, first_arg, varargin)
+            % TODO not using floating
+            step = addFloating(self, first_arg, varargin{:});
+            step.setTime(tp);
+        end
+
+        %% Wait API's
+        % Allow waiting for time, background sequences, everything,
+        % or specific subsequences or steps.
+
         function self = wait(self, t)
-            %% Just steps the curTime of 'self' forward by t, and returns 'self'
+            %% Forward current time.
             self.curTime = self.curTime + t;
         end
 
@@ -96,8 +131,7 @@ classdef ExpSeqBase < TimeSeq
         end
 
         function self = waitFor(self, steps, offset)
-            %% Wait for all the steps or subsequences within `steps`
-            % with an offset.
+            %% Wait for all the steps or subsequences within `steps` with an offset.
             % It is allowed to wait for steps or subsequences that are not a child
             % of `self`. It is also allowed to wait for floating sequence provided
             % that all the floating part is shared (i.e. only the common parents are floating
@@ -151,41 +185,22 @@ classdef ExpSeqBase < TimeSeq
             self.subSeqForeach(@checkBackgroundTime);
         end
 
+        %% Other helper functions.
+
         function step = add(self, name, pulse, len)
-            if isnumeric(pulse)
+            % Convenient shortcut for adding a single pulse in a step.
+            if isnumeric(pulse) || islogical(pulse)
+                % `0` length for setting values.
                 if exist('len', 'var')
                     error('Too many arguments for ExpSeq.add');
                 end
-                % This is just a placeholder.
+                % The 10us here is just a placeholder.
                 % The exact length doesn't really matter except for total sequence length
-                len = 1e-5;
+                self.addBackground(1e-5).add(name, pulse);
+            else
+                self.addStep(len).add(name, pulse);
             end
-            self.addBackground(len).add(name, pulse);
             step = self;
-        end
-
-        function step = addBackground(self, first_arg, varargin)
-            %% Shortcut for addStepReal with 'is_background' = true ,
-            % and does not advanceself.curTime.  addStepReal usually advances curTime.
-
-            old_time = self.curTime;
-            step = addStepReal(self, old_time, true, first_arg, varargin{:});
-            self.curTime = old_time;
-        end
-
-        function step = addStep(self, first_arg, varargin)
-            step = addStepReal(self, self.curTime, false, first_arg, varargin{:});
-        end
-
-        function step = addFloating(self, first_arg, varargin)
-            old_time = self.curTime;
-            step = addStepReal(self, nan, true, first_arg, varargin{:});
-            self.curTime = old_time;
-        end
-
-        function res = addAt(self, tp, first_arg, varargin)
-            step = addFloating(self, first_arg, varargin{:});
-            step.setTime(tp);
         end
 
         function res = alignEnd(self, seq1, seq2, offset)
@@ -299,9 +314,6 @@ classdef ExpSeqBase < TimeSeq
 
     methods(Access=private)
         function step = addStepReal(self, curtime, is_background, first_arg, varargin)
-            % step = addStepReal(self, curtime, is_background [logic], first_arg, varargin)
-            %     addStepReal is called by shortcut methods addStep  (is_background=false) and addBackground (is_background=true).
-            %     It is private and not called outside this class.
             %     Case 1:  self.addStepReal(curtime, true/false, len>0)
             %          first_arg = len,  varargin is empty.  Only runs line with  % Case 1(labeled below).
             %          Case 1 calls step = self.addTimeStep( len , 0), which adds
@@ -311,14 +323,6 @@ classdef ExpSeqBase < TimeSeq
             %          Only runs line % Case 2, which calls  s.addCustomStep(curtime, function_handle)
             %          This case is used by s.add('Channel',value).
 
-
-            % addStep(len[, offset=0])
-            %     Add a #TimeStep with len and offset from the last step
-            % addStep([offset=0, ]class_or_func, *extra_args)
-            %     Construct a step or sub sequence with @class_or_func(*extra_args)
-
-            %     If offset is not an absolute time (TODO: abstime not supported yet),
-            %     forward @self.curTime by the length of the step.
             if ~isnumeric(first_arg)
                 % If first arg is not a number, assume to be a custom step.
                 % What fall through should be (number, *arg)
