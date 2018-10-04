@@ -36,9 +36,9 @@ classdef FPGABackend < PulseBackend
     end
 
     methods
-        %%
         function self = FPGABackend(seq)
             self = self@PulseBackend(seq);
+            % The FPGA poster is stateless so it is shared between all `FPGABackend`s
             self.poster = FPGAPoster.get(seq.config.fpgaUrls('FPGA1'));
         end
 
@@ -48,9 +48,7 @@ classdef FPGABackend < PulseBackend
             end
         end
 
-        %%
         function initChannel(self, cid)
-            %
             if length(self.type_cache) >= cid && self.type_cache(cid) > 0
                 return;
             end
@@ -73,20 +71,24 @@ classdef FPGABackend < PulseBackend
         end
 
         %%
-        % generate(self[ExpSeq], cids[list])
-        % Called in ExpSeq generate() method. Makes data to be sent to FPGA.
-        % Afterwards, run() method is called and data is sent to board.
-        % Commands are stored in 'code', which is then scheduled to byteode and stored in
-        % self.req, and is sent to the board in the run() method.
+        % Generate data for the FPGA. Called by `ExpSeq::generate` method.
+        % We currently do this by first serializing the sequence (see format below)
+        % including the timing info and serialized ramp functions using `IRFunc`.
+        % The sequence is then scheduled by `libnacs-seq` (called through python)
+        % to the bytecode that we execute on the FPGA directly.
+        % We want to do as much processing as possible in this function so we convert
+        % the sequence all the way to the ZMQ request that we'll send to the FPGA board
+        % and cache it in `req`.
         function generate(self, cids)
-            %% [TTL default: 4B]
-            %% [n_non_ttl: 4B]
-            %% [[[chn_type: 4B][chn_id: 4B][defaults: 8B]] x n_non_ttl]
-            %% [n_pulses: 4B]
-            %% [[[chn_type: 4B][chn_id: 4B][t_start: 8B][t_len: 8B]
-            %%  [[0: 4B][val: 8B] / [code_len: 4B][code: code_len x 4B]]] x n_pulses]
-            %% Optional:
-            %% [[n_clocks: 4B][[[t_start_ns: 8B][t_len_ns: 8B][clock_div: 4B]] x n_clocks]]
+            %% Sequence serialization format.
+            % [TTL default: 4B]
+            % [n_non_ttl: 4B]
+            % [[[chn_type: 4B][chn_id: 4B][defaults: 8B]] x n_non_ttl]
+            % [n_pulses: 4B]
+            % [[[chn_type: 4B][chn_id: 4B][t_start: 8B][t_len: 8B]
+            %  [[0: 4B][val: 8B] / [code_len: 4B][code: code_len x 4B]]] x n_pulses]
+            % Optional:
+            % [[n_clocks: 4B][[[t_start_ns: 8B][t_len_ns: 8B][clock_div: 4B]] x n_clocks]]
 
             TTL_CHN = self.TTL_CHN;
             SEQ_DELAY = self.SEQ_DELAY;
@@ -107,7 +109,7 @@ classdef FPGABackend < PulseBackend
             n_non_ttl = 0;
             n_pulses = 0;
 
-            %
+            % Channel count
             for i = 1:nchn
                 cid = cids(i);
                 pulses = getPulses(self.seq, cid);
@@ -124,7 +126,7 @@ classdef FPGABackend < PulseBackend
 
             code = [int32(ttl_values), int32(n_non_ttl)];
 
-            %
+            % Default values
             for i = 1:nchn
                 cid = cids(i);
                 chn_type = type_cache(cid);
@@ -144,7 +146,7 @@ classdef FPGABackend < PulseBackend
             targ = IRNode.getArg(1);
             oldarg = IRNode.getArg(2);
 
-            %
+            % Serialize all pulses
             for i = 1:nchn
                 cid = cids(i);
                 chn_type = type_cache(cid);
@@ -202,6 +204,7 @@ classdef FPGABackend < PulseBackend
                     end
                 end
             end
+            % Serialize clock
             clock_offset_ns = int64(SEQ_DELAY / 1e-9);
             clock_period_tik = self.clock_period_tik;
             clock_ns = self.clock_div * 20;
@@ -220,22 +223,19 @@ classdef FPGABackend < PulseBackend
             self.req = prepare_msg(self.poster, totalTime(self.seq) * 1e9, code);
         end
 
-        %%
         function run(self)
-            %sends the command string 'cmd_str' over the web server. Called in ExpSeq
-            %run() method, after the driver is prepared (nothing right now) and generated (creates cmd_str). Th
             post(self.poster, self.req);
         end
 
-        %%
         function wait(self)
             wait(self.poster);
         end
     end
 
     methods(Access=private)
-        %%
         function [chn_type, chn_num] = parseCId(self, cid)
+            %% Parse the channel name (`/` separated names)
+            % to channel type and channel number.
             cpath = strsplit(cid, '/');
             if strncmp(cpath{1}, 'TTL', 3)
                 chn_type = self.TTL_CHN;
