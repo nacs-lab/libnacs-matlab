@@ -1,4 +1,4 @@
-%% Copyright (c) 2014-2014, Yichao Yu <yyc1992@gmail.com>
+%% Copyright (c) 2014-2018, Yichao Yu <yyc1992@gmail.com>
 %
 % This library is free software; you can redistribute it and/or
 % modify it under the terms of the GNU Lesser General Public
@@ -67,7 +67,7 @@ classdef (Sealed) TimeStep < TimeSeq
             self.pulses{cid} = pulse;
         end
 
-        function res = length(self)
+        function res = totalTime(self)
             res = self.len;
         end
     end

@@ -1,4 +1,4 @@
-% Copyright (c) 2014-2014, Yichao Yu <yyc1992@gmail.com>
+% Copyright (c) 2014-2018, Yichao Yu <yyc1992@gmail.com>
 %
 % This library is free software; you can redistribute it and/or
 % modify it under the terms of the GNU Lesser General Public
@@ -175,7 +175,7 @@ classdef ExpSeqBase < TimeSeq
         function self = waitAll(self)
             %% Wait for everything that have been currently added to finish.
             % This is the recursive version of `waitBackground`.
-            self.curTime = length(self);
+            self.curTime = totalTime(self);
         end
 
         function self = waitFor(self, steps, offset)
@@ -281,21 +281,21 @@ classdef ExpSeqBase < TimeSeq
             res = {seq1, seq2};
         end
 
-        function res = length(self)
+        function res = totalTime(self)
             res = 0;
             for i = 1:self.nSubSeqs
                 sub_seq = self.subSeqs{i};
                 if isa(sub_seq, 'TimeStep')
                     sub_end = sub_seq.len + sub_seq.tOffset;
                 else
-                    sub_end = length(sub_seq) + sub_seq.tOffset;
+                    sub_end = totalTime(sub_seq) + sub_seq.tOffset;
                 end
                 if sub_end > res
                     res = sub_end;
                 end
             end
             if isnan(res)
-                error('Cannot get length with floating sub sequence.');
+                error('Cannot get total time with floating sub sequence.');
             end
         end
 

@@ -1,4 +1,4 @@
-%% Copyright (c) 2014-2014, Yichao Yu <yyc1992@gmail.com>
+%% Copyright (c) 2014-2018, Yichao Yu <yyc1992@gmail.com>
 %
 % This library is free software; you can redistribute it and/or
 % modify it under the terms of the GNU Lesser General Public
@@ -217,7 +217,7 @@ classdef FPGABackend < PulseBackend
                         typecast(t_len_ns, 'int32'), clock_div];
             end
             code(n_pulses_idx) = n_pulses;
-            self.req = prepare_msg(self.poster, length(self.seq) * 1e9, code);
+            self.req = prepare_msg(self.poster, totalTime(self.seq) * 1e9, code);
         end
 
         %%

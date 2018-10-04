@@ -1,4 +1,4 @@
-%% Copyright (c) 2014-2017, Yichao Yu <yyc1992@gmail.com>
+%% Copyright (c) 2014-2018, Yichao Yu <yyc1992@gmail.com>
 %
 % This library is free software; you can redistribute it and/or
 % modify it under the terms of the GNU Lesser General Public
@@ -45,7 +45,7 @@ classdef ExpSeq < ExpSeqBase
         drivers_sorted;
         output_manager = {};
         pulses_overwrite = {};
-        cached_length = -1;
+        cached_total_time = -1;
     end
 
     methods
@@ -66,14 +66,14 @@ classdef ExpSeq < ExpSeqBase
             self.cid_cache = containers.Map('KeyType', 'char', 'ValueType', 'double');
         end
 
-        function res=length(self)
-            % Note that this length does not account for the timing
+        function res=totalTime(self)
+            % Note that this total time does not account for the timing
             % difference caused by output managers.
-            if self.cached_length > 0
-                res = self.cached_length;
+            if self.cached_total_time > 0
+                res = self.cached_total_time;
                 return;
             end
-            res = length@ExpSeqBase(self);
+            res = totalTime@ExpSeqBase(self);
         end
 
         function mgr = addOutputMgr(self, chn, cls, varargin)
@@ -117,10 +117,10 @@ classdef ExpSeq < ExpSeqBase
                 if ~exist('preserve', 'var')
                     preserve = 0;
                 end
-                self.cached_length = self.length();
-                if self.config.maxLength > 0 && self.length() > self.config.maxLength
+                self.cached_total_time = self.totalTime();
+                if self.config.maxLength > 0 && self.totalTime() > self.config.maxLength
                     error('Sequence length %f exceeds max sequence length of maxLength=%f', ...
-                          self.length(), self.config.maxLength);
+                          self.totalTime(), self.config.maxLength);
                 end
                 fprintf('|');
                 populateChnMask(self, length(self.chn_manager.channels));
@@ -315,7 +315,7 @@ classdef ExpSeq < ExpSeqBase
         end
 
         function vals = getValues(self, dt, varargin)
-            total_t = self.length();
+            total_t = totalTime(self);
             nstep = fld(total_t, dt) + 1;
             nchn = nargin - 2;
 
@@ -549,7 +549,7 @@ classdef ExpSeq < ExpSeqBase
 
         function plotReal(self, cids, names)
             cids = num2cell(cids);
-            len = self.length();
+            len = totalTime(self);
             dt = len / 1e4;
             data = self.getValues(dt, cids{:})';
             ts = (1:size(data, 1)) * dt;

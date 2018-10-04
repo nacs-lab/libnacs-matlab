@@ -21,7 +21,7 @@ classdef DynProps < handle
     methods(Static, Access=private)
         function [a, changed]=merge_struct(a, b, changed, undefnan)
             fns = fieldnames(b);
-            for i=1:length(fns)
+            for i = 1:length(fns)
                 name = fns{i};
                 newv = b.(name);
                 if ~DynProps.isfield_def(a, name, undefnan)
