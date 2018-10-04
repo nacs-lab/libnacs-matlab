@@ -1,4 +1,4 @@
-%% Copyright (c) 2014-2014, Yichao Yu <yyc1992@gmail.com>
+%% Copyright (c) 2014-2018, Yichao Yu <yyc1992@gmail.com>
 %
 % This library is free software; you can redistribute it and/or
 % modify it under the terms of the GNU Lesser General Public
@@ -12,30 +12,30 @@
 % License along with this library.
 
 classdef NiDACBackend < PulseBackend
-    %NiDACBackend, along with FPGABackend, is a subclass of PulseBackend (which only has the property seq).
-    %NiDACBackend has all code relateverythin grelated to the NiDAC
-
-    %Methods
-    % self = NiDACBackend(seq)
-    % val = getPriority(self)
-    % initDev(self, did)
-    % initChannel(self, cid)
-    % connectClock(self, did)
-    % generate(self, cids)
-    % run(self)
-    % wait(self)
-
+    % Contains everything related to the NiDAQ.
     properties(Hidden)
+        % Cached NiDAQ session
         session;
+        % The matlab API expect a matrix as output data with the
+        % channels in a specific order (the order we add them).
+        % Therefore, we need to maintain another mapping from the
+        % index in the output data to the channel id/name we
+        % use in other part of the code.
+
+        % Index in the output matrix to device name and NiDAQ channel ID
         cid_map = {};
-        cids = [];      % list of channel ids, ie [5,6,7,8]
-        data;           % matrix of values to be queued to board.
+        % Index in the output matrix to `ExpSeq` channel ID.
+        cids = [];
+        % Generated output data.
+        data;
+        % Cached output pulses (computed in `prepare`)
         all_pulses;
+        % Clock time needed (sent to `FPGABackend`).
         active_times;
 
-        clk_period;     % defined in contructor.
+        clk_period;
         clk_period_ns;
-        clk_rate; % Constant
+        clk_rate;
     end
 
     properties(Constant, Hidden, Access=private)
@@ -44,7 +44,6 @@ classdef NiDACBackend < PulseBackend
     end
 
     methods
-        %%
         function self = NiDACBackend(seq)
             self = self@PulseBackend(seq);
 
@@ -53,18 +52,14 @@ classdef NiDACBackend < PulseBackend
             self.clk_rate = 1 / self.clk_period;
         end
 
-        %%
         function val = getPriority(self)
             val = 2;
         end
 
-        %%
         function initDev(self, did)
         end
 
-        %%
         function initChannel(self, cid)
-            %
             if length(self.cid_map) >= cid && ~isempty(self.cid_map{cid})
                 return;
             end
@@ -98,6 +93,7 @@ classdef NiDACBackend < PulseBackend
         end
 
         function prepare(self, cids0)
+            %% Get the pulse data and compute the clock time needed.
             if ~all(sort(cids0) == sort(self.cids))
                 error('Channel mismatch.');
             end
@@ -154,6 +150,7 @@ classdef NiDACBackend < PulseBackend
         end
 
         function generate(self, cids0)
+            %% Generate the actual output data.
             cids = self.cids;
             if ~all(sort(cids0) == sort(cids))
                 error('Channel mismatch.');
@@ -269,7 +266,6 @@ classdef NiDACBackend < PulseBackend
             session.Rate = self.clk_rate;
             inited_devs = containers.Map();
 
-            %
             for i = 1:length(self.cids)
                 cid = self.cids(i);
                 dev_name = self.cid_map{cid}{1};

@@ -16,7 +16,7 @@ classdef FPGABackend < PulseBackend
     properties(Hidden)
         % PulseBackend properties: seq
         clock_div = 0;
-        poster = [];
+        poster; % ::FPGAPoster
         req = [];
         type_cache = [];
         num_cache = [];
