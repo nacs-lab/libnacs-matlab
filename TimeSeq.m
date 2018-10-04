@@ -18,7 +18,7 @@
 % host an arbitrary number of steps or sub-sequences.
 % All outputs (pulses) are stored in the leaf nodes `TimeStep`.
 %
-% The timing info is stored in the DAG. See `ExpSeqBase` for the timing APIs.
+% All the timing info is stored in the DAG. See `ExpSeqBase` for the timing APIs.
 % The pulse (output) info is stored in the step (leaf node).
 % See `TimeStep` for the APIs that operate on the output.
 %
@@ -30,6 +30,14 @@
 % * `TimeStep` will have a fixed length but cannot have childs.
 %   Instead, `TimeStep` can only contain pulses, which describe the
 %   output to be done on certain channels.
+%
+% The separation of the time and output info/API allows one to be changed/understood
+% without changing/understanding the other.
+% For example, the timing of the sequence can be inferred without looking at any
+% pulses and the output on a channel can be found and understood without
+% looking at the timing (one still need both to understand the whole sequence of course).
+% More importantly, pulses can be added and removed without **any** effect on the timing,
+% which is really important when debugging/tweaking an actual experiemental sequence.
 classdef TimeSeq < handle
     properties(Hidden)
         % This is a `SeqConfig` that contains global config loaded from `expConfig`.
@@ -105,8 +113,8 @@ classdef TimeSeq < handle
         end
 
         %%
-        % See `TimeSeq::setTime`. Wrapper of `TimeSeq::setTime` to set the time
-        % based on end time.
+        % Wrapper of `TimeSeq::setTime` to set the time based on end time.
+        % See `TimeSeq::setTime`.
         function setEndTime(self, time, offset)
             if ~exist('offset', 'var')
                 offset = 0;
@@ -117,6 +125,7 @@ classdef TimeSeq < handle
 
     methods(Access=protected)
         function p = globalPath(self)
+            %% See `global_path` above.
             p = self.global_path;
             if isempty(p)
                 self.global_path = globalPath(self.parent);
@@ -126,7 +135,7 @@ classdef TimeSeq < handle
         end
 
         function res = offsetDiff(self, step)
-            % compute the offset different starting from the lowest common ancestor
+            %% Compute the offset different starting from the lowest common ancestor
             % This reduce rounding error and make it possible to support floating sequence
             % in the common ancestor.
             self_path = globalPath(self);

@@ -12,7 +12,7 @@
 % License along with this library.
 
 classdef ExpSeqBase < TimeSeq
-    % `ExpSeqBase` are generally non-leaf node in the experiment sequence (tree/DAG).
+    %% `ExpSeqBase`s are generally non-leaf nodes in the experiment sequence (tree/DAG).
     % See `TimeSeq` for the general structure of the sequence.
 
     % Other than the fields to keep track of the tree structure,
