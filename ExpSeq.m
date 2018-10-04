@@ -19,15 +19,18 @@ classdef ExpSeq < ExpSeqBase
     % override, start and end callbacks, channel manager etc., and APIs related
     % to generating and running the sequence.
     properties
+        %% Generation/driver related:
         % Map from driver name to driver instance
         drivers;
         % Map from driver name to the list of channel IDs managed by the driver
         driver_cids; % ::containers.Map
+        % Drivers sorted in the order they should be run and waited.
+        drivers_sorted;
         generated = false;
-        % Whether the default has been overwritten and the new default value.
-        % Indexed by the channel ID.
-        default_override = false(0);
-        default_override_val = [];
+        % The total time of the sequence is cached before generation.
+        cached_total_time = -1;
+
+        %% Channel management:
         % The channel name used when the channel is first added, indexed by channel ID.
         % Only used for plotting.
         orig_channel_names = {};
@@ -36,12 +39,12 @@ classdef ExpSeq < ExpSeqBase
         cid_cache;
         % Managing the mapping between channel name and channel ID
         chn_manager;
-        % Callback to be called (without argument) before the sequence start
-        before_start_cbs = {};
-        % Callback to be called (without argument) after the sequence finishes
-        after_end_cbs = {};
-        % Drivers sorted in the order they should be run and waited.
-        drivers_sorted;
+
+        %% Output related:
+        % Whether the default has been overwritten and the new default value.
+        % Indexed by the channel ID.
+        default_override = false(0);
+        default_override_val = [];
         % Output managers indexed by channel ID.
         % These are classes that can process the output (time and value)
         % of a channel after the whole sequence is constructed using the global
@@ -50,8 +53,12 @@ classdef ExpSeq < ExpSeqBase
         output_manager = {};
         % Cache of the output manager output.
         pulses_overwrite = {};
-        % The total time of the sequence is cached before generation.
-        cached_total_time = -1;
+
+        %% Running related:
+        % Callback to be called (without argument) before the sequence start
+        before_start_cbs = {};
+        % Callback to be called (without argument) after the sequence finishes
+        after_end_cbs = {};
     end
 
     methods
