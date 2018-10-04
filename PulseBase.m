@@ -12,10 +12,11 @@
 %% License along with this library.
 
 classdef(Abstract) PulseBase < handle
-    % PulseBase is the parent class of FuncPulse etc.
-    % PulseBase does not have any used properties.  The PulseBase objects
-    % are store in the TimeStep.pulses{cid}, where cid is the channel id for
-    % the pulse.
+    %% This is the base class for pulses. The main purpose of this is to distinguish
+    % between pulse classes that has important fields (e.g. `IRPulse`) or methods
+    % and arbitrary callbacks.
+    % The only API required by pulses is `calcValue` which returns the value
+    % of the pulse at a given time within the step (`TimeStep`).
 
     methods(Abstract=true)
         % Old value is the value of the channel at tstart returned by timeSpan.
