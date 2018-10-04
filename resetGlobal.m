@@ -7,7 +7,5 @@ function resetGlobal()
     URLPoster.dropAll();
     USRPPoster.dropAll();
     KeySight.dropAll();
-    WavemeterClient.dropAll();
-    % Wavemeter.dropAll();
     EnableScan.set(1);
 end
