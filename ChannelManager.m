@@ -12,8 +12,6 @@
 % License along with this library.
 
 classdef ChannelManager < handle
-    % A ChannelManager object is set as ExpSeq.chn_manager
-
     properties
         channels = {};
     end
@@ -22,12 +20,10 @@ classdef ChannelManager < handle
     end
 
     methods
-        %%
         function self = ChannelManager()
             self.cid_map = containers.Map();
         end
 
-        %%
         function id = findId(self, name)
             if isKey(self.cid_map, name)
                 id = self.cid_map(name);
@@ -36,7 +32,6 @@ classdef ChannelManager < handle
             end
         end
 
-        %%
         function id = getId(self, name)
             if isKey(self.cid_map, name)
                 id = self.cid_map(name);

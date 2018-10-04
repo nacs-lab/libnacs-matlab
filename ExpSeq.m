@@ -12,48 +12,50 @@
 % License along with this library.
 
 classdef ExpSeq < ExpSeqBase
-    % ExpSeq is an object representing the entire experimental sequence.
-    % ExpSeq adds properties related to hardware, ie the drivers and channels.
-
-    %Methods:  %self = ExpSeq(name)
-    %cid = translateChannel(self, name)
-    %cid = findChannelId(self, name)
-    %driver = findDriver(self, driver_name)
-    %generate(self)
-    %run_async(self)
-    %waitFinish(self)
-    %run(self)
-    %res = setDefault(self, name, val)
-    %plot(self, varargin)
-    %id = nextPulseId(self)
-    %id = nextSeqId(self)
-    %val = getDefault(self, cid)
-    %[driver, driver_name] = initDeviceDriver(self, did)
-    %logDefault(self)
-    %plotReal(self, cids, names)
+    %% `ExpSeq` is the object representing the entire experimental sequence (root node).
+    % In additional to other properties and APIs provided for manipulating the
+    % tree structure (timing APIs in `ExpSeqBase`), this contains global information
+    % and API for the whole sequence including global sequence settings, e.g.
+    % override, start and end callbacks, channel manager etc., and APIs related
+    % to generating and running the sequence.
     properties
-        drivers;            % map with key values 'FPGABackend' 'NiDACBackend'. This is updated when channel is used in a pulse, so it starts empty.
-        driver_cids;        %
-        generated = false;  %
+        % Map from driver name to driver instance
+        drivers;
+        % Map from driver name to the list of channel IDs managed by the driver
+        driver_cids; % ::containers.Map
+        generated = false;
+        % Whether the default has been overwritten and the new default value.
+        % Indexed by the channel ID.
         default_override = false(0);
         default_override_val = [];
+        % The channel name used when the channel is first added, indexed by channel ID.
+        % Only used for plotting.
         orig_channel_names = {};
-        cid_cache;          %
-        chn_manager;        %
+        % Map from channel name to channel ID.
+        % Include both translated name and untranslated ones as keys.
+        cid_cache;
+        % Managing the mapping between channel name and channel ID
+        chn_manager;
+        % Callback to be called (without argument) before the sequence start
         before_start_cbs = {};
+        % Callback to be called (without argument) after the sequence finishes
         after_end_cbs = {};
+        % Drivers sorted in the order they should be run and waited.
         drivers_sorted;
+        % Output managers indexed by channel ID.
+        % These are classes that can process the output (time and value)
+        % of a channel after the whole sequence is constructed using the global
+        % information of the sequence that's only available at this time.
+        % See `TTLMgr` for an example.
         output_manager = {};
+        % Cache of the output manager output.
         pulses_overwrite = {};
+        % The total time of the sequence is cached before generation.
         cached_total_time = -1;
     end
 
     methods
         function self = ExpSeq(varargin)
-            % Contstructor. Uses ExpSeqBase contructor to initializes, then
-            % populate new properties with empty cells and maps. After the
-            % contrutor, only the chn_manager, config, and logger properties
-            % are populated.
             if nargin > 1
                 error('Too many arguments for ExpSeq.');
             elseif nargin == 1 && ~isstruct(varargin{1})
@@ -66,7 +68,7 @@ classdef ExpSeq < ExpSeqBase
             self.cid_cache = containers.Map('KeyType', 'char', 'ValueType', 'double');
         end
 
-        function res=totalTime(self)
+        function res = totalTime(self)
             % Note that this total time does not account for the timing
             % difference caused by output managers.
             if self.cached_total_time > 0
@@ -77,19 +79,23 @@ classdef ExpSeq < ExpSeqBase
         end
 
         function mgr = addOutputMgr(self, chn, cls, varargin)
+            %% Add an output manager for the channel
+            % See `output_manager` above.
             chn = translateChannel(self, chn);
             mgr = cls(self, chn, varargin{:});
             self.output_manager{chn} = mgr;
         end
 
         function cid = translateChannel(self, name)
+            %% Convert a channel name to a channel ID.
+            % A new ID is created if it does not exist yet.
             [cid, name, inited] = getChannelId(self, name);
             if inited || checkChannelDisabled(self.config, name)
                 return;
             end
             cpath = strsplit(name, '/');
             did = cpath{1};
-            [driver, driver_name] = self.initDeviceDriver(did);
+            [driver, driver_name] = initDeviceDriver(self, did);
 
             driver.initChannel(cid);
             cur_cids = self.driver_cids(driver_name);
@@ -97,11 +103,13 @@ classdef ExpSeq < ExpSeqBase
         end
 
         function cid = findChannelId(self, name)
-            name = self.config.translateChannel(name);
-            cid = self.chn_manager.findId(name);
+            %% Similar to `translateChannel` but does not create new ID.
+            name = translateChannel(self.config, name);
+            cid = findId(self.chn_manager, name);
         end
 
         function driver = findDriver(self, driver_name)
+            %% Lazily create driver of the given name.
             try
                 driver = self.drivers(driver_name);
             catch
@@ -113,14 +121,17 @@ classdef ExpSeq < ExpSeqBase
         end
 
         function generate(self, preserve)
+            %% Called after the sequence is fully constructed.
+            % Collect global information (e.g. totla time, channel mask)
+            % before letting drivers generating their output (cached in driver if needed).
             if ~self.generated
                 if ~exist('preserve', 'var')
                     preserve = 0;
                 end
-                self.cached_total_time = self.totalTime();
-                if self.config.maxLength > 0 && self.totalTime() > self.config.maxLength
+                self.cached_total_time = totalTime(self);
+                if self.config.maxLength > 0 && totalTime(self) > self.config.maxLength
                     error('Sequence length %f exceeds max sequence length of maxLength=%f', ...
-                          self.totalTime(), self.config.maxLength);
+                          totalTime(self), self.config.maxLength);
                 end
                 fprintf('|');
                 populateChnMask(self, length(self.chn_manager.channels));
@@ -160,6 +171,9 @@ classdef ExpSeq < ExpSeqBase
         end
 
         function run_async(self)
+            %% Start the run and return.
+            % Generate the sequence first if it is not done yet.
+            %
             % Do **NOT** put anything related to runSeq in this file!!!!!!!!!!
             % It messes up EVERYTHING!!!!!!!!!!!!!!!!!!!!!!
             global nacsExpSeqDisableRunHack;
@@ -171,6 +185,9 @@ classdef ExpSeq < ExpSeqBase
         end
 
         function run_real(self)
+            %% Similar to `run_async` but more lower level.
+            % Assume the generation is already done and does not check the
+            % disable run flag.
             drivers = self.drivers_sorted;
             if ~isempty(self.before_start_cbs)
                 for cb = self.before_start_cbs
@@ -199,6 +216,7 @@ classdef ExpSeq < ExpSeqBase
         end
 
         function waitFinish(self)
+            %% Wait for the sequences to finish.
             % Do **NOT** put anything related to runSeq in this file!!!!!!!!!!
             % It messes up EVERYTHING!!!!!!!!!!!!!!!!!!!!!!
             global nacsExpSeqDisableRunHack;
@@ -233,9 +251,9 @@ classdef ExpSeq < ExpSeqBase
             if ~isempty(nacsExpSeqDisableRunHack) && nacsExpSeqDisableRunHack
                 return;
             end
-            self.run_async();
+            run_async(self);
             fprintf('Running @%s\n', datestr(now(), 'yyyy/mm/dd HH:MM:SS'));
-            self.waitFinish();
+            waitFinish(self);
         end
 
         function self = setDefault(self, name, val)
@@ -262,7 +280,7 @@ classdef ExpSeq < ExpSeqBase
                 end
                 if arg(end) == '/'
                     matches = regexp(arg, '^(.*[^/])/*$', 'tokens');
-                    prefix = self.config.translateChannel(matches{1}{1});
+                    prefix = translateChannel(self.config, matches{1}{1});
                     prefix_len = size(prefix, 2);
 
                     for cid = 1:length(self.orig_channel_names)
@@ -270,7 +288,7 @@ classdef ExpSeq < ExpSeqBase
                         if isempty(orig_name)
                             continue;
                         end
-                        name = self.config.translateChannel(orig_name);
+                        name = translateChannel(self.config, orig_name);
                         if strncmp(prefix, name, prefix_len)
                             cids(end + 1) = cid;
                             names{end + 1} = orig_name;
@@ -284,7 +302,7 @@ classdef ExpSeq < ExpSeqBase
                         if isempty(orig_name)
                             continue;
                         end
-                        name = self.config.translateChannel(orig_name);
+                        name = translateChannel(self.config, orig_name);
                         if ~isempty(regexp(name, arg))
                             cids(end + 1) = cid;
                             names{end + 1} = orig_name;
@@ -292,7 +310,7 @@ classdef ExpSeq < ExpSeqBase
                     end
                 else
                     try
-                        cid = self.findChannelId(arg);
+                        cid = findChannelId(self, arg);
                     catch
                         error('Channel does not exist.');
                     end
@@ -305,7 +323,7 @@ classdef ExpSeq < ExpSeqBase
                 error('No channel to plot.');
             end
 
-            self.plotReal(cids, names);
+            plotReal(self, cids, names);
         end
         function name = channelName(self, cid)
             name = self.chn_manager.channels{cid};
@@ -325,13 +343,13 @@ classdef ExpSeq < ExpSeqBase
                     scale = chn{2};
                     chn = chn{1};
                 end
-                pulses = self.getPulseTimes(chn);
+                pulses = getPulseTimes(self, chn);
 
                 pidx = 1;
                 vidx = 1;
                 npulses = size(pulses, 1);
 
-                cur_value = self.getDefault(chn);
+                cur_value = getDefault(self, chn);
 
                 while pidx <= npulses
                     %% At the beginning of each loop, pidx points to the pulse to be
@@ -434,7 +452,7 @@ classdef ExpSeq < ExpSeqBase
 
         function res = getPulseTimes(self, cid)
             res = {};
-            pulses = self.getPulses(cid);
+            pulses = getPulses(self, cid);
             for i = 1:size(pulses, 1)
                 pulse = pulses(i, :);
                 toffset = pulse{1};
@@ -539,16 +557,16 @@ classdef ExpSeq < ExpSeqBase
         end
 
         function [driver, driver_name] = initDeviceDriver(self, did)
-            driver_name = self.config.pulseDrivers(did);
-            driver = self.findDriver(driver_name);
-            driver.initDev(did);
+            driver_name = pulseDrivers(self.config, did);
+            driver = findDriver(self, driver_name);
+            initDev(driver, did);
         end
 
         function plotReal(self, cids, names)
             cids = num2cell(cids);
             len = totalTime(self);
             dt = len / 1e4;
-            data = self.getValues(dt, cids{:})';
+            data = getValues(self, dt, cids{:})';
             ts = (1:size(data, 1)) * dt;
             plot(ts, data);
             xlabel('t / s');
