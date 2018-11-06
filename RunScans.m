@@ -27,7 +27,7 @@ p = DynProps(scangroup.getseq(1));
 scanp = scangroup.runp();
 nseqs = scangroup.nseq();
 
-fprintf('Total scan points = %f\n', nseqs);
+fprintf('Total scan points: %d\n', nseqs);
 
 Scan = getfields(scanp, 'AndorCenter', 'BoxSize', 'FrameSize', ...
                  'NumImages', 'NumSites', 'SingleAtomSpecies', ...
