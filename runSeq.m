@@ -130,7 +130,18 @@ function params = runSeq(func, varargin)
     nseq = size(arglist, 2);
     seqlist = cell(1, nseq);
 
-
+    % sequence number printing interval
+    if nseq >= 1000
+        log_delta = 100;
+    elseif nseq >= 500
+        log_delta = 50;
+    elseif nseq >= 200
+        log_delta = 20;
+    elseif nseq >= 100
+        log_delta = 10;
+    else
+        log_delta = 5;
+    end
 
     %%
     function prepare_seq(idx)
@@ -170,11 +181,10 @@ function params = runSeq(func, varargin)
     %%
     prev_date = '';
     function log_run(idx)
-        delta = 5; % which to print.
-        if  mod(m.Data(1).CurrentSeqNum, delta) == 0
+        if  mod(m.Data(1).CurrentSeqNum, log_delta) == 0
             fprintf(' %d', m.Data(1).CurrentSeqNum);
         end
-        if mod(m.Data(1).CurrentSeqNum, 15*delta) == 0
+        if mod(m.Data(1).CurrentSeqNum, 15 * log_delta) == 0
             t = now();
             date = datestr(t, 'yyyy/mm/dd');
             time = datestr(t, 'HH:MM:SS');
