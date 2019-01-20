@@ -65,7 +65,12 @@ Scan.NumPerGroup = length(Scan.Params);
 
 % Email somebody when finished?  Options are nobody, nick, lee, yichao,
 % jessie, or an email address.  Enter as a string.
-Email = scanp.Email('nobody');
+Email = scanp.Email('');
+if ~isempty(Email)
+    Email = {['email:' Email]};
+else
+    Email = {};
+end
 % Average number of loaded atoms per parameter.  Sequence will keep running
 % until this condition is fulfilled!  Input 0 to just run through one group.
 % Loop check if MeanLoads output from plot_data() is > NumPerParamAvg. In
@@ -167,7 +172,7 @@ pause(0.1);
 
 % Run the sequences.  This will run forever until the average number of
 % loads per point is NumPerParamAvg.
-runSeq(seq, 0, scangroup, Scan.Params, ['email:' Email]);
+runSeq(seq, 0, scangroup, Scan.Params, Email{:});
 
 % Scan is now finished.
 m.Data(1).ScanComplete = 1;
