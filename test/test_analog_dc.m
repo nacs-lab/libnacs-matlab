@@ -14,8 +14,8 @@
 s = ExpSeq();
 
 s.addStep(1) ...
- .add('Dev2/6', 0.14);
+ .add('Dev1/6', 0.14);
 s.addStep(1) ...
- .add('Dev2/6', 0);
+ .add('Dev1/6', 0);
 
 s.run();

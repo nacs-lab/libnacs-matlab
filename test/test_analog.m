@@ -13,12 +13,12 @@
 
 s = daq.createSession('ni');
 s.Rate = 100;
-s.addAnalogOutputChannel('Dev2', 0, 'Voltage');
-s.addTriggerConnection('External', 'Dev2/PFI1', 'StartTrigger');
-s.addClockConnection('External', 'Dev2/PFI0', 'ScanClock');
-s.addAnalogOutputChannel('Dev2', 1, 'Voltage');
-s.addAnalogOutputChannel('Dev2', 2, 'Voltage');
-s.addAnalogOutputChannel('Dev2', 4, 'Voltage');
+s.addAnalogOutputChannel('Dev1', 0, 'Voltage');
+s.addTriggerConnection('External', 'Dev1/PFI1', 'StartTrigger');
+s.addClockConnection('External', 'Dev1/PFI0', 'ScanClock');
+s.addAnalogOutputChannel('Dev1', 1, 'Voltage');
+s.addAnalogOutputChannel('Dev1', 2, 'Voltage');
+s.addAnalogOutputChannel('Dev1', 4, 'Voltage');
 data = zeros(6, 4);
 data(2:4, 4) = 1;
 s.queueOutputData(data);
