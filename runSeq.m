@@ -35,6 +35,8 @@ function params = runSeq(func, varargin)
     %        construct the sequence. Each argument will be used to construct
     %        a sequence.
     params = {};
+    % no need to keep track of a growing array if no one is interested in it.
+    has_ret = nargout > 0;
     rep = 1;
     has_rep = false;
     is_random = false;
@@ -181,7 +183,7 @@ function params = runSeq(func, varargin)
     %%
     prev_date = '';
     function log_run(idx)
-        if  mod(m.Data(1).CurrentSeqNum, log_delta) == 0
+        if mod(m.Data(1).CurrentSeqNum, log_delta) == 0
             fprintf(' %d', m.Data(1).CurrentSeqNum);
         end
         if mod(m.Data(1).CurrentSeqNum, 15 * log_delta) == 0
@@ -195,7 +197,9 @@ function params = runSeq(func, varargin)
                 fprintf('\n%s', time);
             end
         end
-        params{end + 1} = arglist{idx};
+        if has_ret
+            params{end + 1} = arglist{idx};
+        end
     end
 
     function abort = run_seq(idx, next_idx)
