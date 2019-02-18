@@ -23,8 +23,8 @@ classdef WavemeterParser < handle
             wp = py.eval('WavemeterParser', pyglob);
             self.parser = wp(varargin{:});
         end
-        function [t, d] = parse(self, name, use_cache)
-            res = self.parser.parse(name, use_cache ~= 0);
+        function [t, d] = parse(self, name, varargin)
+            res = self.parser.parse(name, varargin{:});
             t = double(res{1});
             d = double(res{2});
         end
