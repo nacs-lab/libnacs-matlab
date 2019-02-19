@@ -23,6 +23,9 @@ classdef FacyOnCleanup < handle
             self.cb = cb;
             self.args = varargin;
         end
+        function self = setarg(self, i, v)
+            self.args{i} = v;
+        end
         function disable(self)
             self.enable = 0;
         end

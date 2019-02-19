@@ -283,6 +283,10 @@ classdef NiDACBackend < PulseBackend
             % This can be further improved by storing an age of the session and
             % skip the check if the age didn't change. The current implementation
             % seems to be fast enough though ;-)
+            if isempty(session) || ~isvalid(session)
+                res = 0;
+                return;
+            end
             Channels = session.Channels;
             nchns = length(self.cids);
             if length(Channels) ~= nchns
@@ -312,7 +316,6 @@ classdef NiDACBackend < PulseBackend
             % operations on the invalid session may error.
             if (~isempty(nacsNiDACBackendSessionUsing) && ...
                 nacsNiDACBackendSessionUsing == 1) || ...
-               isempty(nacsNiDACBackendSession) || ...
                ~checkSession(self, nacsNiDACBackendSession)
                 delete(nacsNiDACBackendSession);
                 nacsNiDACBackendSession = createNewSession(self);
