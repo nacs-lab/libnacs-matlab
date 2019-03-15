@@ -69,6 +69,8 @@ classdef USRPBackend < PulseBackend
             %% [[[chn_type: 4B][chn_id: 4B][t_start: 8B][t_len: 8B]
             %%  [[0: 4B][val: 8B] / [code_len: 4B][code: code_len x 4B]]] x n_pulses]
 
+            ir_ctx = self.seq.ir_ctx;
+
             CH_AMP = self.CH_AMP;
             CH_PHASE = self.CH_PHASE;
 
@@ -104,8 +106,8 @@ classdef USRPBackend < PulseBackend
 
             code = int32([1, 0]);
 
-            targ = IRNode.getArg(1);
-            oldarg = IRNode.getArg(2);
+            targ = IRNode.getArg(1, ir_ctx);
+            oldarg = IRNode.getArg(2, ir_ctx);
             for i = 1:nchn
                 cid = cids(i);
                 chn_type = type_cache(cid);

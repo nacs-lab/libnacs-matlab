@@ -120,13 +120,32 @@ classdef IRNode < handle
     properties
         head;
         args;
+        ctx;
+        id;
     end
 
     methods
         %%
-        function self = IRNode(head, args)
+        function self = IRNode(head, args, ctx)
             self.head = head;
             self.args = args;
+            if exist('ctx', 'var')
+                self.ctx = ctx;
+            else
+                ctx_set = false;
+                for arg = args
+                    arg = arg{:};
+                    if isa(arg, 'IRNode')
+                        self.ctx = arg.ctx;
+                        ctx_set = true;
+                        break;
+                    end
+                end
+                if ~ctx_set
+                    error('Cannot determine IRContext from arguments');
+                end
+            end
+            self.id = next_id(self.ctx);
         end
         function res = plus(a, b)
             res = IRNode(IRNode.OPAdd, {a, b});
@@ -354,8 +373,8 @@ classdef IRNode < handle
     end
 
     methods(Static)
-        function res = getArg(i)
-            res = IRNode(IRNode.HArg, {i});
+        function res = getArg(i, ctx)
+            res = IRNode(IRNode.HArg, {i}, ctx);
         end
     end
 end

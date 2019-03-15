@@ -89,6 +89,7 @@ classdef FPGABackend < PulseBackend
             %  [[0: 4B][val: 8B] / [code_len: 4B][code: code_len x 4B]]] x n_pulses]
             % Optional:
             % [[n_clocks: 4B][[[t_start_ns: 8B][t_len_ns: 8B][clock_div: 4B]] x n_clocks]]
+            ir_ctx = self.seq.ir_ctx;
 
             TTL_CHN = self.TTL_CHN;
             SEQ_DELAY = self.SEQ_DELAY;
@@ -143,8 +144,8 @@ classdef FPGABackend < PulseBackend
             end
             code = [code, 0];
             n_pulses_idx = length(code);
-            targ = IRNode.getArg(1);
-            oldarg = IRNode.getArg(2);
+            targ = IRNode.getArg(1, ir_ctx);
+            oldarg = IRNode.getArg(2, ir_ctx);
 
             % Serialize all pulses
             for i = 1:nchn

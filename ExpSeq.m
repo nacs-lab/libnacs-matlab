@@ -61,6 +61,10 @@ classdef ExpSeq < ExpSeqBase
         before_start_cbs = {};
         % Callback to be called (without argument) after the sequence finishes
         after_end_cbs = {};
+
+        %% IR stuff
+        % For dealing with code generation within the sequence.
+        ir_ctx;
     end
 
     methods
@@ -74,6 +78,7 @@ classdef ExpSeq < ExpSeqBase
             self.drivers = containers.Map();
             self.driver_cids = containers.Map();
             self.cid_cache = containers.Map('KeyType', 'char', 'ValueType', 'double');
+            self.ir_ctx = IRContext();
         end
 
         function res = totalTime(self)

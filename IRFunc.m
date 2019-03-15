@@ -27,6 +27,7 @@ classdef IRFunc < handle
         consts;
         const_f64_map;
         const_i32_map;
+        node_map;
 
         float_table;
     end
@@ -45,6 +46,8 @@ classdef IRFunc < handle
                                                 'ValueType', 'double');
             self.const_i32_map = containers.Map('KeyType', 'int32', ...
                                                 'ValueType', 'double');
+            self.node_map = containers.Map('KeyType', 'int32', ...
+                                           'ValueType', 'any');
             self.float_table = [];
         end
 
@@ -167,6 +170,12 @@ classdef IRFunc < handle
                 typ = self.valtypes(argnum);
                 return;
             end
+            if isKey(self.node_map, node.id)
+                cached = self.node_map(node.id);
+                id = cached.id;
+                typ = cached.typ;
+                return;
+            end
             if head == IRNode.OPCall
                 callee = args{1};
                 nargs = length(args) - 1;
@@ -269,6 +278,7 @@ classdef IRFunc < handle
                 id = addVal(self, typ);
                 code(2) = id;
             end
+            self.node_map(node.id) = struct('id', id, 'typ', typ);
             self.code = [self.code, {code}];
         end
     end
