@@ -245,5 +245,12 @@ classdef DynProps < handle
             A = self;
             self.V = subsasgn(self.V, S, B);
         end
+        function disp(self)
+            fprintf('DynProps: ');
+            YAML.print(self.V, length('DynProps: '));
+        end
+        function display(self, name)
+            fprintf('%s = DynProps:\n  %s\n', name, YAML.sprint(self.V, 2));
+        end
     end
 end
