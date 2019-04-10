@@ -44,7 +44,8 @@ classdef SubProps < handle
                 subdisplay(self.parent, self.path, name);
                 return;
             end
-            builtin('display', self, name);
+            fprintf('%s =\n\n', name);
+            disp(self);
         end
     end
 end
