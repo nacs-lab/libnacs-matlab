@@ -529,6 +529,26 @@ classdef ScanGroup < handle
             end
             A = builtin('subsasgn', self, S, B);
         end
+        function disp(self)
+            fprintf('ScanGroup:\n');
+            if ~isempty(fieldnames(self.base.params)) || ~isempty(self.base.vars)
+                fprintf('  Default:\n    %s\n', sprint_scan(self, self.base, 4));
+            end
+            if length(self.scans) > 1 || ~isempty(fieldnames(self.scans(1).params)) || ...
+               ~isempty(self.scans(1).vars)
+                for i = 1:length(self.scans)
+                    fprintf('  Scan %d:\n    %s\n', i, sprint_scan(self, self.scans(i), 4));
+                end
+            end
+            runp = self.runparam();
+            if ~isempty(fieldnames(runp))
+                fprintf('  Run parameters:\n     %s\n', YAML.sprint(runp, 5, true));
+            end
+        end
+        function display(self, name)
+            fprintf('%s = ', name);
+            disp(self);
+        end
     end
     methods(Access=?ScanInfo)
         %% Implementations of `ScanInfo` API. We need to access a lot of `ScanGroup`
@@ -672,6 +692,29 @@ classdef ScanGroup < handle
         end
     end
     methods(Access=private)
+        function str = sprint_scan(self, scan, indent)
+            strary = {};
+            if isfield(scan, 'baseidx') && scan.baseidx ~= 0
+                strary{end + 1} = sprintf('Base index: %d', scan.baseidx);
+            end
+            params = scan.params;
+            if ~isempty(fieldnames(params))
+                strary{end + 1} = sprintf('Fixed parameters:');
+                strary{end + 1} = ['   ', YAML.sprint(params, indent + 3, true)];
+            end
+            for i = 1:length(scan.vars)
+                var = scan.vars(i);
+                if var.size == 0
+                    continue;
+                end
+                strary{end + 1} = sprintf('Scan dimension %d: (size %d)', i, var.size);
+                strary{end + 1} = ['   ', YAML.sprint(var.params, indent + 3, true)];
+            end
+            str = strjoin(strary, [char(10), repmat(' ', 1, indent)]);
+            if isempty(str)
+                str = '<empty>';
+            end
+        end
         function base = getbaseidx(self, idx)
             base = self.scans(idx).baseidx;
         end
