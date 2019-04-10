@@ -627,7 +627,7 @@ classdef ScanGroup < handle
         function info_subdisp(self, idx, info, S)
             path = ['.', strjoin({S.subs}, '.')];
             fprintf('SubProp{ScanInfo}: <%d> ', idx);
-            cprintf('*magenta', '%s\n', path);
+            cprintf('*magenta', '[%s]\n', path);
             scan = getfullscan(self, idx);
             print_scan(self, self.get_subscan(scan, S), 2);
         end
@@ -763,11 +763,11 @@ classdef ScanGroup < handle
             if length(idx) == 1
                 if idx == 0
                     fprintf('SubProp{ScanParam}: <default> ');
-                    cprintf('*magenta', '%s\n', path);
+                    cprintf('*magenta', '[%s]\n', path);
                     scan = self.base;
                 else
                     fprintf('SubProp{ScanParam}: <%d>, ', idx);
-                    cprintf('*magenta', '%s\n', path);
+                    cprintf('*magenta', '[%s]\n', path);
                     if idx > length(self.scans)
                         cprintf('*red', '  <Uninitialized>\n');
                         return;
@@ -792,13 +792,13 @@ classdef ScanGroup < handle
                 end
             end
             fprintf('> ');
-            cprintf('*magenta', '%s\n', path);
+            cprintf('*magenta', '[%s]\n', path);
             for i = idx
                 if i == 0
-                    cprintf('*magenta', '  Default: %s\n', path)
+                    cprintf('*magenta', '  Default: [%s]\n', path)
                     scan = self.base;
                 else
-                    cprintf('*magenta', '  Scan %d: %s\n', i, path);
+                    cprintf('*magenta', '  Scan %d: [%s]\n', i, path);
                     if i > length(self.scans)
                         cprintf('*red', '    <Uninitialized>\n');
                         continue;
