@@ -436,7 +436,7 @@ classdef ScanGroup < handle
                 else
                     % At most one return value in this branch.
                     % Throw and error if we got more than that.
-                    % nargoutchk(0, 1);
+                    nargoutchk(0, 1);
                     varargout{1} = scan;
                 end
                 return;
@@ -644,7 +644,7 @@ classdef ScanGroup < handle
                     if i < nS
                         error('Invalid parameter access syntax.');
                     end
-                    % nargoutchk(0, 2);
+                    nargoutchk(0, 2);
                     [val, dim] = try_getfield(self, idx, S(1:i - 1), 1);
                     if dim < 0
                         error('Parameter does not exist yet.');
@@ -659,7 +659,7 @@ classdef ScanGroup < handle
                     elseif i < nS
                         error('Invalid scan() syntax after scan.');
                     end
-                    % nargoutchk(0, 0);
+                    nargoutchk(0, 0);
                     subs = S(i).subs;
                     switch length(subs)
                         case 0
@@ -676,6 +676,8 @@ classdef ScanGroup < handle
                 error('Invalid parameter access syntax.');
             end
             % nargoutchk(0, 1);
+            % Workaround MATLAB inferring return number incorrectly.
+            varargout{1:nargout} = [];
             varargout{1} = SubProps(param, S);
         end
         function param_subsasgn(self, idx, param, S, B)
