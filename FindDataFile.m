@@ -39,7 +39,7 @@ function [fname, stamp] = FindDataFile(id)
         end
         if isempty(path)
             parts = split(stamp, '_');
-            if length(parts) ~= 2
+            if length(parts) < 2
                 error('Cannot parse file name: %s', name);
             end
             name = ['data_' stamp];
