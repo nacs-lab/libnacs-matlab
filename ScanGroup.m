@@ -791,7 +791,8 @@ classdef ScanGroup < handle
                     fprintf('%d', i)
                 end
             end
-            fprintf('>\n');
+            fprintf('> ');
+            cprintf('*magenta', '%s\n', path);
             for i = idx
                 if i == 0
                     cprintf('*magenta', '  Default: %s\n', path)
