@@ -57,5 +57,11 @@ classdef ScanInfo < handle
         function res = subfieldnames(self, S)
             res = info_fieldnames(self.group, self.idx, self, S);
         end
+        function disp(self)
+            info_disp(self.group, self.idx, self);
+        end
+        function display(self, name)
+            info_display(self.group, self.idx, self, name);
+        end
     end
 end

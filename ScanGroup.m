@@ -615,6 +615,15 @@ classdef ScanGroup < handle
                 add_fieldnames(scan.vars(j).params);
             end
         end
+        function info_disp(self, idx, info)
+            fprintf('ScanInfo: <%d>\n', idx);
+            scan = getfullscan(self, idx);
+            fprintf('  %s\n', sprint_scan(self, scan, 2));
+        end
+        function info_display(self, idx, info, name)
+            fprintf('%s = ', name);
+            info_disp(self, idx, info);
+        end
     end
     methods(Access=?ScanParam)
         function varargout = param_subsref(self, idx, param, S)
@@ -689,6 +698,25 @@ classdef ScanGroup < handle
                 error('Invalid parameter access syntax.');
             end
             addparam(self, idx, S, B);
+        end
+        function param_disp(self, idx, param)
+            if idx == 0
+                fprintf('ScanParam: <default>\n');
+                scan = self.base;
+            else
+                fprintf('ScanParam: <%d>\n', idx);
+                if idx > length(self.scans)
+                    fprintf('  <Uninitialized>\n');
+                    return;
+                else
+                    scan = self.scans(idx);
+                end
+            end
+            fprintf('  %s\n', sprint_scan(self, scan, 2));
+        end
+        function param_display(self, idx, param, name)
+            fprintf('%s = ', name);
+            param_disp(self, idx, param);
         end
     end
     methods(Access=private)

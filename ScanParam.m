@@ -69,5 +69,11 @@ classdef ScanParam < handle
         function res = toscan(self)
             res = ScanGroup.cat_scans(self);
         end
+        function disp(self)
+            param_disp(self.group, self.idx, self);
+        end
+        function display(self, name)
+            param_display(self.group, self.idx, self, name);
+        end
     end
 end
