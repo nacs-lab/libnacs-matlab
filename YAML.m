@@ -13,22 +13,25 @@
 
 classdef YAML
     methods(Static)
-        function str = sprint(s, indent)
+        function str = sprint(s, indent, relaxed)
             if ~exist('indent', 'var')
                 indent = 0;
             end
-            str = YAML.print_generic(s, indent, indent);
+            if ~exist('relaxed', 'var')
+                relaxed = 0;
+            end
+            str = YAML.print_generic(s, indent, indent, relaxed);
         end
         function print(varargin)
             fprintf('%s\n', YAML.sprint(varargin{:}));
         end
     end
     methods(Static, Access=private)
-        function str = print_generic(s, indent, cur_indent)
+        function str = print_generic(s, indent, cur_indent, relaxed)
             if isscalar(s)
-                str = YAML.print_scalar(s, indent, cur_indent);
+                str = YAML.print_scalar(s, indent, cur_indent, relaxed);
             else
-                str = YAML.print_array(s, indent, cur_indent);
+                str = YAML.print_array(s, indent, cur_indent, relaxed);
             end
         end
 
@@ -45,7 +48,7 @@ classdef YAML
             res = false;
         end
 
-        function str = print_string(s, indent, cur_indent)
+        function str = print_string(s, indent, cur_indent, relaxed)
             s = char(s);
             if isempty(s)
                 str = '""';
@@ -65,7 +68,7 @@ classdef YAML
             end
         end
 
-        function str = print_single_field_struct(s, indent, cur_indent)
+        function str = print_single_field_struct(s, indent, cur_indent, relaxed)
             strary = {};
             while isstruct(s) && isscalar(s)
                 fields = fieldnames(s);
@@ -76,8 +79,12 @@ classdef YAML
                 strary{end + 1} = field;
                 s = s.(field);
             end
-            str = [strjoin(strary, ': '), ':'];
-            strfield = YAML.print_generic(s, indent + 2, indent + length(str) + 1);
+            if relaxed
+                str = [strjoin(strary, '.'), ':'];
+            else
+                str = [strjoin(strary, ': '), ':'];
+            end
+            strfield = YAML.print_generic(s, indent + 2, indent + length(str) + 1, relaxed);
             if ~isempty(strfield) && strfield(1) ~= char(10)
                 str = [str, ' ', strfield];
             else
@@ -88,13 +95,13 @@ classdef YAML
             end
         end
 
-        function str = print_struct(s, indent, cur_indent)
+        function str = print_struct(s, indent, cur_indent, relaxed)
             fields = fieldnames(s);
             if isempty(fields)
                 str = '{}';
                 return;
             elseif length(fields) == 1
-                str = YAML.print_single_field_struct(s, indent, cur_indent);
+                str = YAML.print_single_field_struct(s, indent, cur_indent, relaxed);
                 return;
             end
             strary = cell(1, length(fields));
@@ -102,7 +109,7 @@ classdef YAML
                 name = fields{i};
                 strary{i} = [name, ': ', ...
                              YAML.print_generic(s.(name), indent + 2 + length(name), ...
-                                                indent + 2 + length(name))];
+                                                indent + 2 + length(name), relaxed)];
             end
             str = [strjoin(strary, [char(10) repmat(' ', 1, indent)])];
             if indent < cur_indent
@@ -110,7 +117,7 @@ classdef YAML
             end
         end
 
-        function str = print_scalar(s, indent, cur_indent)
+        function str = print_scalar(s, indent, cur_indent, relaxed)
             if islogical(s)
                 if s
                     str = 'true';
@@ -120,17 +127,17 @@ classdef YAML
             elseif isnumeric(s)
                 str = num_to_str(s);
             elseif isstruct(s)
-                str = YAML.print_struct(s, indent, cur_indent);
+                str = YAML.print_struct(s, indent, cur_indent, relaxed);
             elseif ischar(s) || isstring(s)
-                str = YAML.print_string(s, indent, cur_indent);
+                str = YAML.print_string(s, indent, cur_indent, relaxed);
             else
                 str = '"<unknown object>"';
             end
         end
 
-        function str = print_array(ary, indent, cur_indent)
+        function str = print_array(ary, indent, cur_indent, relaxed)
             if isvector(ary) && ischar(ary)
-                str = YAML.print_string(ary, indent, cur_indent);
+                str = YAML.print_string(ary, indent, cur_indent, relaxed);
                 return;
             end
             nele = numel(ary);
@@ -172,13 +179,13 @@ classdef YAML
             elseif iscell(ary)
                 strary = cell(1, nele);
                 for i = 1:nele
-                    strary{i} = YAML.print_generic(ary{i}, indent + 2, indent + 2);
+                    strary{i} = YAML.print_generic(ary{i}, indent + 2, indent + 2, relaxed);
                 end
                 str = ['- ' strjoin(strary, [char(10) repmat(' ', 1, indent) '- '])];
             else
                 strary = cell(1, nele);
                 for i = 1:nele
-                    strary{i} = YAML.print_generic(ary(i), indent + 2, indent + 2);
+                    strary{i} = YAML.print_generic(ary(i), indent + 2, indent + 2, relaxed);
                 end
                 str = ['- ' strjoin(strary, [char(10) repmat(' ', 1, indent) '- '])];
             end

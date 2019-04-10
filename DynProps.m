@@ -248,10 +248,10 @@ classdef DynProps < handle
         function disp(self)
             prefix = 'DynProps: ';
             fprintf(prefix);
-            YAML.print(self.V, length(prefix));
+            YAML.print(self.V, length(prefix), true);
         end
         function display(self, name)
-            fprintf('%s = DynProps:\n  %s\n', name, YAML.sprint(self.V, 2));
+            fprintf('%s = DynProps:\n  %s\n', name, YAML.sprint(self.V, 2, true));
         end
         function subdisp(self, S)
             nS = length(S);
@@ -277,7 +277,7 @@ classdef DynProps < handle
                 end
             end
             fprintf(prefix);
-            YAML.print(v, length(prefix));
+            YAML.print(v, length(prefix), true);
         end
         function subdisplay(self, S, name)
             fprintf('%s = SubProps{DynProps}:\n  ', name);
@@ -302,7 +302,7 @@ classdef DynProps < handle
                         return;
                 end
             end
-            YAML.print(v, 2);
+            YAML.print(v, 2, true);
         end
     end
 end
