@@ -246,11 +246,63 @@ classdef DynProps < handle
             self.V = subsasgn(self.V, S, B);
         end
         function disp(self)
-            fprintf('DynProps: ');
-            YAML.print(self.V, length('DynProps: '));
+            prefix = 'DynProps: ';
+            fprintf(prefix);
+            YAML.print(self.V, length(prefix));
         end
         function display(self, name)
             fprintf('%s = DynProps:\n  %s\n', name, YAML.sprint(self.V, 2));
+        end
+        function subdisp(self, S)
+            nS = length(S);
+            v = self.V;
+            prefix = 'SubProps{DynProps}: ';
+            for i = 1:nS
+                switch S(i).type
+                    case '.'
+                        name = S(i).subs;
+                        if isfield(v, name)
+                            newv = v.(name);
+                            % Treat NaN as missing value
+                            if ~DynProps.isnanobj(newv)
+                                v = newv;
+                                continue;
+                            end
+                        end
+                        fprintf([prefix, '{}']);
+                        return;
+                    otherwise
+                        fprintf([prefix, '{}']);
+                        return;
+                end
+            end
+            fprintf(prefix);
+            YAML.print(v, length(prefix));
+        end
+        function subdisplay(self, S, name)
+            fprintf('%s = SubProps{DynProps}:\n  ', name);
+            nS = length(S);
+            v = self.V;
+            for i = 1:nS
+                switch S(i).type
+                    case '.'
+                        name = S(i).subs;
+                        if isfield(v, name)
+                            newv = v.(name);
+                            % Treat NaN as missing value
+                            if ~DynProps.isnanobj(newv)
+                                v = newv;
+                                continue;
+                            end
+                        end
+                        fprintf('{}');
+                        return;
+                    otherwise
+                        fprintf('{}');
+                        return;
+                end
+            end
+            YAML.print(v, 2);
         end
     end
 end

@@ -32,5 +32,19 @@ classdef SubProps < handle
         function res = fieldnames(self)
             res = subfieldnames(self.parent, self.path);
         end
+        function disp(self)
+            if ismethod(self.parent, 'subdisp')
+                subdisp(self.parent, self.path);
+                return;
+            end
+            builtin('disp', self);
+        end
+        function display(self, name)
+            if ismethod(self.parent, 'subdisplay')
+                subdisplay(self.parent, self.path, name);
+                return;
+            end
+            builtin('display', self, name);
+        end
     end
 end
