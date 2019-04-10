@@ -819,7 +819,7 @@ classdef ScanGroup < handle
                 cprintf('*red', [prefix, 'Base index: %d\n'], scan.baseidx);
             end
             params = scan.params;
-            if ~isstruct(params) ~isempty(fieldnames(params))
+            if ~isstruct(params) || ~isempty(fieldnames(params))
                 empty = false;
                 cprintf('*blue', [prefix, 'Fixed parameters:\n']);
                 cprintf('blue', [prefix, '   %s\n'], YAML.sprint(params, indent + 3, true));
