@@ -580,6 +580,7 @@ classdef ScanGroup < handle
                     end
                     return;
                 end
+                error('Invalid parameter access syntax.');
             end
             [res, dim] = try_getfield(self, idx, S, 1);
             if dim < 0
@@ -623,9 +624,12 @@ classdef ScanGroup < handle
             scan = getfullscan(self, idx);
             print_scan(self, scan, 2);
         end
-        function info_display(self, idx, info, name)
-            fprintf('%s = ', name);
-            info_disp(self, idx, info);
+        function info_subdisp(self, idx, info, S)
+            path = ['.', strjoin({S.subs}, '.')];
+            fprintf('SubProp{ScanInfo}: <%d> ', idx);
+            cprintf('*magenta', '%s\n', path);
+            scan = getfullscan(self, idx);
+            print_scan(self, self.get_subscan(scan, S), 2);
         end
     end
     methods(Access=?ScanParam)
@@ -749,9 +753,55 @@ classdef ScanGroup < handle
                 print_scan(self, scan, 4);
             end
         end
-        function param_display(self, idx, param, name)
-            fprintf('%s = ', name);
-            param_disp(self, idx, param);
+        function param_subdisp(self, idx, param, S)
+            path = ['.', strjoin({S.subs}, '.')];
+            if length(idx) == 1
+                if idx == 0
+                    fprintf('SubProp{ScanParam}: <default> ');
+                    cprintf('*magenta', '%s\n', path);
+                    scan = self.base;
+                else
+                    fprintf('SubProp{ScanParam}: <%d>, ', idx);
+                    cprintf('*magenta', '%s\n', path);
+                    if idx > length(self.scans)
+                        cprintf('*red', '  <Uninitialized>\n');
+                        return;
+                    else
+                        scan = self.scans(idx);
+                    end
+                end
+                print_scan(self, self.get_subscan(scan, S), 2);
+                return;
+            end
+            fprintf('ScanParam: <');
+            first = true;
+            for i = idx
+                if ~first
+                    fprintf(', ');
+                end
+                first = false;
+                if idx == 0
+                    fprintf('default');
+                else
+                    fprintf('%d', i)
+                end
+            end
+            fprintf('>\n');
+            for i = idx
+                if i == 0
+                    cprintf('*magenta', '  Default: %s\n', path)
+                    scan = self.base;
+                else
+                    cprintf('*magenta', '  Scan %d: %s\n', i, path);
+                    if i > length(self.scans)
+                        cprintf('*red', '    <Uninitialized>\n');
+                        continue;
+                    else
+                        scan = self.scans(i);
+                    end
+                end
+                print_scan(self, self.get_subscan(scan, S), 4);
+            end
         end
     end
     methods(Access=private)
@@ -782,6 +832,48 @@ classdef ScanGroup < handle
                 cprintf('*red', [prefix, '<empty>\n']);
             end
         end
+        function res = get_subscan(self, scan, S)
+            res = ScanGroup.DEF_SCAN;
+            if isfield(scan, 'baseidx')
+                res.baseidx = scan.baseidx;
+            end
+            nS = length(S);
+            for i = 1:nS
+                assert(strcmp(S(i).type, '.'));
+            end
+            found = true;
+            params = scan.params;
+            for i = 1:nS
+                name = S(i).subs;
+                if ~isfield(params, name)
+                    found = false;
+                    break;
+                end
+                params = params.(name);
+            end
+            if found
+                res.params = params;
+            end
+            nvars = length(scan.vars);
+            for i = 1:nvars
+                var = scan.vars(i);
+                found = true;
+                params = var.params;
+                for j = 1:nS
+                    name = S(j).subs;
+                    if ~isfield(params, name)
+                        found = false;
+                        break;
+                    end
+                    params = params.(name);
+                end
+                if found
+                    res.vars(length(res.vars) + 1:i) = ScanGroup.DEF_VARS;
+                    res.vars(i).size = var.size;
+                    res.vars(i).params = params;
+                end
+            end
+       end
         function base = getbaseidx(self, idx)
             base = self.scans(idx).baseidx;
         end

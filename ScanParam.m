@@ -73,7 +73,15 @@ classdef ScanParam < handle
             param_disp(self.group, self.idx, self);
         end
         function display(self, name)
-            param_display(self.group, self.idx, self, name);
+            fprintf('%s = ', name);
+            disp(self);
+        end
+        function subdisp(self, S)
+            param_subdisp(self.group, self.idx, self, S);
+        end
+        function subdisplay(self, S, name)
+            fprintf('%s = ', name);
+            subdisp(self, S);
         end
     end
 end
