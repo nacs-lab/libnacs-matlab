@@ -246,41 +246,16 @@ classdef DynProps < handle
             self.V = subsasgn(self.V, S, B);
         end
         function disp(self)
-            prefix = 'DynProps: ';
-            fprintf(prefix);
-            YAML.print(self.V, length(prefix), true);
+            fprintf('DynProps:\n  %s\n', YAML.sprint(self.V, 2, true));
         end
         function display(self, name)
-            fprintf('%s = DynProps:\n  %s\n', name, YAML.sprint(self.V, 2, true));
+            fprintf('%s = ', name);
+            disp(self);
         end
         function subdisp(self, S)
-            nS = length(S);
-            v = self.V;
-            prefix = 'SubProps{DynProps}: ';
-            for i = 1:nS
-                switch S(i).type
-                    case '.'
-                        name = S(i).subs;
-                        if isfield(v, name)
-                            newv = v.(name);
-                            % Treat NaN as missing value
-                            if ~DynProps.isnanobj(newv)
-                                v = newv;
-                                continue;
-                            end
-                        end
-                        fprintf([prefix, '{}']);
-                        return;
-                    otherwise
-                        fprintf([prefix, '{}']);
-                        return;
-                end
-            end
-            fprintf(prefix);
-            YAML.print(v, length(prefix), true);
-        end
-        function subdisplay(self, S, name)
-            fprintf('%s = SubProps{DynProps}:\n  ', name);
+            path = ['.', strjoin({S.subs}, '.')];
+            fprintf('SubProps{DynProps}: ');
+            cprintf('*magenta', '[%s]\n  ', path);
             nS = length(S);
             v = self.V;
             for i = 1:nS
@@ -303,6 +278,10 @@ classdef DynProps < handle
                 end
             end
             YAML.print(v, 2, true);
+        end
+        function subdisplay(self, S, name)
+            fprintf('%s = ', name);
+            subdisp(self, S);
         end
     end
 end
