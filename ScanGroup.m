@@ -677,7 +677,10 @@ classdef ScanGroup < handle
             end
             % nargoutchk(0, 1);
             % Workaround MATLAB inferring return number incorrectly.
-            varargout{1:nargout} = [];
+            for i = 2:nargout
+                % Suppress printing...
+                varargout{i} = DummyObject();
+            end
             varargout{1} = SubProps(param, S);
         end
         function param_subsasgn(self, idx, param, S, B)
