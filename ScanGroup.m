@@ -778,7 +778,7 @@ classdef ScanGroup < handle
                 print_scan(self, self.get_subscan(scan, S), 2);
                 return;
             end
-            fprintf('ScanParam: <');
+            fprintf('SubProp{ScanParam}: <');
             first = true;
             for i = idx
                 if ~first
