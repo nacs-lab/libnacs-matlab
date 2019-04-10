@@ -532,17 +532,20 @@ classdef ScanGroup < handle
         function disp(self)
             fprintf('ScanGroup:\n');
             if ~isempty(fieldnames(self.base.params)) || ~isempty(self.base.vars)
-                fprintf('  Default:\n    %s\n', sprint_scan(self, self.base, 4));
+                cprintf('*magenta', '  Default:\n');
+                print_scan(self, self.base, 4);
             end
             if length(self.scans) > 1 || ~isempty(fieldnames(self.scans(1).params)) || ...
                ~isempty(self.scans(1).vars)
                 for i = 1:length(self.scans)
-                    fprintf('  Scan %d:\n    %s\n', i, sprint_scan(self, self.scans(i), 4));
+                    cprintf('*magenta', '  Scan %d:\n', i);
+                    print_scan(self, self.scans(i), 4);
                 end
             end
             runp = self.runparam();
             if ~isempty(fieldnames(runp))
-                fprintf('  Run parameters:\n     %s\n', YAML.sprint(runp, 5, true));
+                cprintf('*0.90,0.50,0.21', '  Run parameters:\n');
+                cprintf('0.90,0.50,0.21', '     %s\n', YAML.sprint(runp, 5, true));
             end
         end
         function display(self, name)
@@ -618,7 +621,7 @@ classdef ScanGroup < handle
         function info_disp(self, idx, info)
             fprintf('ScanInfo: <%d>\n', idx);
             scan = getfullscan(self, idx);
-            fprintf('  %s\n', sprint_scan(self, scan, 2));
+            print_scan(self, scan, 2);
         end
         function info_display(self, idx, info, name)
             fprintf('%s = ', name);
@@ -712,7 +715,7 @@ classdef ScanGroup < handle
                     scan = self.scans(idx);
                 end
             end
-            fprintf('  %s\n', sprint_scan(self, scan, 2));
+            print_scan(self, scan, 2);
         end
         function param_display(self, idx, param, name)
             fprintf('%s = ', name);
@@ -720,27 +723,31 @@ classdef ScanGroup < handle
         end
     end
     methods(Access=private)
-        function str = sprint_scan(self, scan, indent)
-            strary = {};
+        function print_scan(self, scan, indent)
+            prefix = repmat(' ', 1, indent);
+            empty = true;
             if isfield(scan, 'baseidx') && scan.baseidx ~= 0
-                strary{end + 1} = sprintf('Base index: %d', scan.baseidx);
+                empty = false;
+                cprintf('*red', [prefix, 'Base index: %d\n'], scan.baseidx);
             end
             params = scan.params;
             if ~isempty(fieldnames(params))
-                strary{end + 1} = sprintf('Fixed parameters:');
-                strary{end + 1} = ['   ', YAML.sprint(params, indent + 3, true)];
+                empty = false;
+                cprintf('*blue', [prefix, 'Fixed parameters:\n']);
+                cprintf('blue', [prefix, '   %s\n'], YAML.sprint(params, indent + 3, true));
             end
             for i = 1:length(scan.vars)
                 var = scan.vars(i);
                 if var.size == 0
                     continue;
                 end
-                strary{end + 1} = sprintf('Scan dimension %d: (size %d)', i, var.size);
-                strary{end + 1} = ['   ', YAML.sprint(var.params, indent + 3, true)];
+                empty = false;
+                cprintf('*0,0.62,0', [prefix, 'Scan dimension %d: (size %d)\n'], i, var.size);
+                cprintf('0,0.62,0', [prefix, '   %s\n'], ...
+                        YAML.sprint(var.params, indent + 3, true));
             end
-            str = strjoin(strary, [char(10), repmat(' ', 1, indent)]);
-            if isempty(str)
-                str = '<empty>';
+            if empty
+                cprintf('*red', [prefix, '<empty>\n']);
             end
         end
         function base = getbaseidx(self, idx)
