@@ -544,8 +544,8 @@ classdef ScanGroup < handle
             end
             runp = self.runparam();
             if ~isempty(fieldnames(runp))
-                cprintf('*0.90,0.50,0.21', '  Run parameters:\n');
-                cprintf('0.90,0.50,0.21', '     %s\n', YAML.sprint(runp, 5, true));
+                cprintf('*0.66,0.33,0.1', '  Run parameters:\n');
+                cprintf('0.66,0.33,0.1', '     %s\n', YAML.sprint(runp, 5, true));
             end
         end
         function display(self, name)
@@ -703,19 +703,51 @@ classdef ScanGroup < handle
             addparam(self, idx, S, B);
         end
         function param_disp(self, idx, param)
-            if idx == 0
-                fprintf('ScanParam: <default>\n');
-                scan = self.base;
-            else
-                fprintf('ScanParam: <%d>\n', idx);
-                if idx > length(self.scans)
-                    fprintf('  <Uninitialized>\n');
-                    return;
+            if length(idx) == 1
+                if idx == 0
+                    fprintf('ScanParam: <default>\n');
+                    scan = self.base;
                 else
-                    scan = self.scans(idx);
+                    fprintf('ScanParam: <%d>\n', idx);
+                    if idx > length(self.scans)
+                        cprintf('*red', '  <Uninitialized>\n');
+                        return;
+                    else
+                        scan = self.scans(idx);
+                    end
+                end
+                print_scan(self, scan, 2);
+                return;
+            end
+            fprintf('ScanParam: <');
+            first = true;
+            for i = idx
+                if ~first
+                    fprintf(', ');
+                end
+                first = false;
+                if idx == 0
+                    fprintf('default');
+                else
+                    fprintf('%d', i)
                 end
             end
-            print_scan(self, scan, 2);
+            fprintf('>\n');
+            for i = idx
+                if i == 0
+                    cprintf('*magenta', '  Default:\n')
+                    scan = self.base;
+                else
+                    cprintf('*magenta', '  Scan %d:\n', i);
+                    if i > length(self.scans)
+                        cprintf('*red', '    <Uninitialized>\n');
+                        continue;
+                    else
+                        scan = self.scans(i);
+                    end
+                end
+                print_scan(self, scan, 4);
+            end
         end
         function param_display(self, idx, param, name)
             fprintf('%s = ', name);
