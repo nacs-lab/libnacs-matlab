@@ -170,7 +170,7 @@ classdef USRPBackend < PulseBackend
         function run(self)
             self.seq_id = self.poster.post(self.code);
             if self.seq_id == 0
-                error('USRP run failed')
+                error('USRP run failed');
             end
         end
 

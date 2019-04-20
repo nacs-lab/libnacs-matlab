@@ -45,7 +45,7 @@ classdef USRPPoster < handle
 
         function wait(self, id)
             cleanup = register_cleanup(self);
-            self.poster.wait_send(id)
+            self.poster.wait_send(id);
             while ~self.poster.wait_reply()
             end
             cleanup.disable();

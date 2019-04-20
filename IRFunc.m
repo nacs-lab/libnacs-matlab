@@ -164,7 +164,7 @@ classdef IRFunc < handle
             if head == IRNode.HArg
                 argnum = args{1};
                 if argnum > self.nargs || argnum < 1
-                    error('Argument ID out of range')
+                    error('Argument ID out of range');
                 end
                 id = argnum - 1;
                 typ = self.valtypes(argnum);
@@ -263,7 +263,7 @@ classdef IRFunc < handle
                 elseif head == IRNode.OPFDiv
                     opcode = IRNode.OPFDiv;
                 else
-                    error('Unknown head')
+                    error('Unknown head');
                 end
                 code = zeros(1, 4, 'int32');
                 code(1) = opcode;

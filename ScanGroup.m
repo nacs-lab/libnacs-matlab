@@ -386,13 +386,13 @@ classdef ScanGroup < handle
                 path = sp;
             end
             if isnumeric(field)
-                ScanGroup.foreach_nonstruct(@check_path_idx, params)
+                ScanGroup.foreach_nonstruct(@check_path_idx, params);
                 if field > 0
                     error('Cannot find scan field');
                 end
             else
                 found = false;
-                ScanGroup.foreach_nonstruct(@check_path_str, params)
+                ScanGroup.foreach_nonstruct(@check_path_str, params);
                 if ~found
                     error('Cannot find scan field');
                 end
