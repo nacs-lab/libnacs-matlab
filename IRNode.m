@@ -148,12 +148,33 @@ classdef IRNode < handle
             self.id = next_id(self.ctx);
         end
         function res = plus(a, b)
+            if ~isa(a, 'IRNode') && a == 0
+                res = b;
+                return;
+            elseif ~isa(b, 'IRNode') && b == 0
+                res = a;
+                return;
+            end
             res = IRNode(IRNode.OPAdd, {a, b});
         end
         function res = minus(a, b)
+            if ~isa(b, 'IRNode') && b == 0
+                res = a;
+                return;
+            end
             res = IRNode(IRNode.OPSub, {a, b});
         end
         function res = times(a, b)
+            if (~isa(a, 'IRNode') && a == 0) || (~isa(b, 'IRNode') && b == 0)
+                res = false;
+                return;
+            elseif ~isa(a, 'IRNode') && a == 1
+                res = b;
+                return;
+            elseif ~isa(b, 'IRNode') && b == 1
+                res = a;
+                return;
+            end
             res = IRNode(IRNode.OPMul, {a, b});
         end
         function res = uplus(a)
@@ -163,10 +184,17 @@ classdef IRNode < handle
             res = int32(-1) .* a;
         end
         function res = rdivide(a, b)
+            if ~isa(a, 'IRNode') && a == 0
+                res = false;
+                return;
+            elseif ~isa(b, 'IRNode') && b == 1
+                res = a;
+                return;
+            end
             res = IRNode(IRNode.OPFDiv, {a, b});
         end
         function res = ldivide(b, a)
-            res = IRNode(IRNode.OPFDiv, {a, b});
+            res = a / b;
         end
         function res = lt(a, b)
             res = IRNode(IRNode.OPCmp, {IRNode.Cmp_lt, a, b});
@@ -368,6 +396,14 @@ classdef IRNode < handle
             res = IRNode(IRNode.OPInterp, {x, x0, x1 - x0, vals});
         end
         function res = ifelse(cond, v1, v2)
+            if ~isa(cond, 'IRNode')
+                if cond
+                    res = v1;
+                else
+                    res = v2;
+                end
+                return;
+            end
             res = IRNode(IRNode.OPSelect, {cond, v1, v2});
         end
     end
