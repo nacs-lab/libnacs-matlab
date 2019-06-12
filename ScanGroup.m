@@ -470,10 +470,12 @@ classdef ScanGroup < handle
                 A = self;
                 if nS > 1
                     % Assignment to the `ScanParam`, pass that on.
+                    % This is the common case when creating the scan group.
                     scan = ScanParam(self, idx);
-                    scan = subsasgn(scan, S(2:end), B);
+                    param_subsasgn(self, idx, scan, S(2:end), B);
                     return;
                 end
+                % Assigning a whole scan.
                 if isa(B, 'ScanParam')
                     Bgroup = getgroup(B);
                     Bidx = getidx(B);
@@ -1014,9 +1016,11 @@ classdef ScanGroup < handle
         function addparam(self, idx, S, val)
             check_noconflict(self, idx, S, 0);
             if idx == 0
+                ScanGroup.check_param_overwrite(self.base.params, S, val);
                 self.base.params = subsasgn(self.base.params, S, val);
                 set_dirty_all(self);
             else
+                ScanGroup.check_param_overwrite(self.scans(idx).params, S, val);
                 self.scans(idx).params = subsasgn(self.scans(idx).params, S, val);
                 self.scanscache(idx).dirty = true;
             end
@@ -1143,6 +1147,48 @@ classdef ScanGroup < handle
                 obj = obj.(name);
             end
             res = true;
+        end
+        % Check if the assigning `val` to `obj` with subfield reference `path`
+        % will cause forbidden overwrite. This happens when `path` exists in `obj`
+        % and if either the original value of the new value is a scalar struct.
+        % These assignments are forbidding since we do not want any field to
+        % change type (struct -> non-struct or non-struct -> struct).
+        % We also don't allow assigning struct to struct even if there's no conflict
+        % in the structure of the old and new values since the old value might have
+        % individual fields explicitly assigned previously and this has caused a few
+        % surprises in practice...
+        % We could in principle change the semantics to treat the assigned value as default
+        % value (so it will not overwrite any existing fields)
+        % but that is not super consistent with other semantics.
+        % If the more restricted semantics (error on struct assignment to struct)
+        % is proven insufficient, we can always add the merge semantics later without breaking.
+        function check_param_overwrite(obj, path, val)
+            % Only handles `.` reference
+            for i = 1:length(path)
+                if ~DynProps.isscalarstruct(obj)
+                    if isstruct(obj)
+                        error('Assignment to field of struct array not allowed.');
+                    else
+                        error('Assignment to field of non-struct not allowed.');
+                    end
+                end
+                name = path(i).subs;
+                if ~isfield(obj, name)
+                    % We are creating a new field, that's fine.
+                    return;
+                end
+                obj = obj.(name);
+            end
+            is_struct = DynProps.isscalarstruct(val);
+            was_struct = DynProps.isscalarstruct(obj);
+            if is_struct && ~was_struct
+                error('Changing field from non-struct to struct not allowed.');
+            elseif ~is_struct && was_struct
+                error('Changing field from struct to non-struct not allowed.');
+            elseif is_struct && was_struct
+                % See comment above for explaination.
+                error('Override struct not allowed.');
+            end
         end
         % Check if the field is a leaf field within the parameter tree.
         % Throw an error if the field's parent is set to non-scalar struct.
