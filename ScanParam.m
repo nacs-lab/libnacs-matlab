@@ -57,6 +57,9 @@ classdef ScanParam < handle
         end
     end
     methods
+        function sz = size(self, dim)
+            sz = param_size(self.group, self.idx, self, dim);
+        end
         function varargout = subsref(self, S)
             [varargout{1:nargout}] = param_subsref(self.group, self.idx, self, S);
         end

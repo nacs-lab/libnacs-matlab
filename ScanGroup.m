@@ -635,6 +635,30 @@ classdef ScanGroup < handle
         end
     end
     methods(Access=?ScanParam)
+        function sz = param_size(self, idx, param, dim)
+            if length(idx) ~= 1
+                error('Cannot get scan size for multiple scans.');
+            elseif idx == 0
+                scan = self.base;
+            else
+                if idx > length(self.scans)
+                    sz = 1;
+                    return;
+                else
+                    scan = self.scans(idx);
+                end
+            end
+            vars = scan.vars;
+            if length(vars) < dim
+                sz = 1;
+                return;
+            end
+            var = vars(dim);
+            sz = var.size;
+            if sz <= 0
+                sz = 1;
+            end
+        end
         function varargout = param_subsref(self, idx, param, S)
             nS = length(S);
             for i = 1:nS
