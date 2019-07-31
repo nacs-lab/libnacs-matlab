@@ -272,6 +272,7 @@ classdef ExpSeq < ExpSeqBase
             if nargin <= 1
                 error('Please specify at least one channel to plot.');
             end
+            populateChnMask(self, length(self.channel_names));
 
             cids = [];
             names = {};
@@ -572,7 +573,7 @@ classdef ExpSeq < ExpSeqBase
         function plotReal(self, cids, names)
             cids = num2cell(cids);
             len = totalTime(self);
-            dt = len / 1e4;
+            dt = len / 1e6;
             data = getValues(self, dt, cids{:})';
             ts = (1:size(data, 1)) * dt;
             plot(ts, data);
