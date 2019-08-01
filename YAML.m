@@ -28,7 +28,9 @@ classdef YAML
     end
     methods(Static, Access=private)
         function str = print_generic(s, indent, cur_indent, relaxed)
-            if isscalar(s)
+            if isscalar(s) && ~iscell(s)
+                % Length-1 cell array is `isscalar` but we still want
+                % to treat it as array.
                 str = YAML.print_scalar(s, indent, cur_indent, relaxed);
             else
                 str = YAML.print_array(s, indent, cur_indent, relaxed);
