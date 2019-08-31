@@ -6,6 +6,5 @@ function resetGlobal()
     FPGAPoster.dropAll();
     URLPoster.dropAll();
     USRPPoster.dropAll();
-    KeySight.dropAll();
     EnableScan.set(1);
 end
