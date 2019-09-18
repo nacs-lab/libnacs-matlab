@@ -86,10 +86,10 @@ classdef StructDiff
             if ~DynProps.isscalarstruct(v1) || ~DynProps.isscalarstruct(v2)
                 assert(~toplevel);
                 fprintf(':\n');
-                cprintf('red', '%s-%s\n', spaces, ...
-                        YAML.sprint(v1, indent + 1, true));
-                cprintf('green', '%s+%s\n', spaces, ...
-                        YAML.sprint(v2, indent + 1, true));
+                cprintf('red', '%s- %s\n', spaces, ...
+                        YAML.sprint(v1, indent + 2, true));
+                cprintf('green', '%s+ %s\n', spaces, ...
+                        YAML.sprint(v2, indent + 2, true));
                 return;
             end
 
@@ -131,8 +131,8 @@ classdef StructDiff
                 else
                     fprintf('%s', spaces);
                 end
-                cprintf('red', '-%s:\n   %s%s\n', name, spaces, ...
-                        YAML.sprint(v1.(name), indent + 3, true));
+                cprintf('red', '- %s:\n    %s%s\n', name, spaces, ...
+                        YAML.sprint(v1.(name), indent + 4, true));
             end
             for i = 1:length(fns2)
                 name = fns2{i};
@@ -147,8 +147,8 @@ classdef StructDiff
                 else
                     fprintf('%s', spaces);
                 end
-                cprintf('green', '+%s:\n   %s%s\n', name, spaces, ...
-                        YAML.sprint(v2.(name), indent + 3, true));
+                cprintf('green', '+ %s:\n    %s%s\n', name, spaces, ...
+                        YAML.sprint(v2.(name), indent + 4, true));
             end
 
             for i = 1:length(fns1)
@@ -187,10 +187,14 @@ classdef StructDiff
             [self.v1, self.v2] = StructDiff.compute(v1, v2);
         end
         function disp(self)
-            fprintf('StructDiff:\n  ');
             if isempty(fieldnames(self.v1)) && isempty(fieldnames(self.v2))
+                fprintf('StructDiff:\n  ');
                 cprintf('blue', '<empty>\n');
             else
+                fprintf('StructDiff: ');
+                cprintf('red', '-1 ');
+                cprintf('green', '+2');
+                fprintf('\n  ');
                 StructDiff.print(self.v1, self.v2, 2, true);
             end
         end
