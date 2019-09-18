@@ -22,6 +22,9 @@ classdef SubProps < handle
             self.parent = parent;
             self.path = path;
         end
+        function parent = get_parent(self)
+            parent = self.parent;
+        end
         function B = subsref(self, S)
             B = subsref(self.parent, [self.path, S]);
         end

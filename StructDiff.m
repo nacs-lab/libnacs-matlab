@@ -16,7 +16,7 @@ classdef StructDiff
         v1;
         v2;
     end
-    methods(Static)
+    methods(Static, Access=private)
         function res = compare(v1, v2)
             try
                 s1 = isscalar(v1);
@@ -173,9 +173,20 @@ classdef StructDiff
                 fprintf('\n');
             end
         end
+        function v = get_struct(v)
+            if isa(v, 'ExpSeq')
+                v = v.C();
+            elseif isa(v, 'DynProps')
+                v = v();
+            elseif isa(v, 'SubProps') && isa(get_parent(v), 'DynProps')
+                v = v();
+            end
+        end
     end
     methods(Static)
         function [d1, d2] = compute(v1, v2)
+            v1 = StructDiff.get_struct(v1);
+            v2 = StructDiff.get_struct(v2);
             if ~DynProps.isscalarstruct(v1) || ~DynProps.isscalarstruct(v2)
                 error('Input must be scalar structures');
             end
