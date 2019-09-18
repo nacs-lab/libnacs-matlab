@@ -156,6 +156,12 @@
 %     the fixed parameter will be used for lookup.
 %     An error is thrown if the parameter cannot be found.
 %
+% * axisnum(grp[, idx[, dim]]) / grp.axisnum([idx[, dim]]):
+%     Get the number of scan parameters for the `idx`th scan in the group
+%     along the `dim`th axis. `idx` and `dim` both default to `1`.
+%     Return `0` for out-of-bound dimension. Error for out-of-bound scan
+%     index.
+%
 %
 % For both:
 % * runp(grp) / grp.runp():
@@ -278,6 +284,23 @@ classdef ScanGroup < handle
                     res = res * sz1d;
                 end
             end
+        end
+        function res = axisnum(self, idx, dim)
+            if ~exist('dim', 'var')
+                dim = 1;
+            end
+            if ~exist('idx', 'var')
+                idx = 1;
+            end
+            scan = getfullscan(self, idx);
+            res = 0;
+            if dim > length(scan.vars) || scan.vars(dim).size <= 1
+                return;
+            end
+            function counter_cb(~, ~)
+                res = res + 1;
+            end
+            ScanGroup.foreach_nonstruct(@counter_cb, scan.vars(dim).params);
         end
         function res = scandim(self, idx)
             scan = getfullscan(self, idx);

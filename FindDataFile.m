@@ -49,7 +49,15 @@ function [fname, stamp] = FindDataFile(id)
         end
         fname = fullfile(path, [name, ext]);
     else
-        if numel(id) ~= 2
+        if id == 0
+            try
+                m = MemoryMap;
+                id = [m.Data(1).DateStamp, m.Data(1).TimeStamp];
+            catch
+                fprintf('mem map not available!')
+                return
+            end
+        elseif numel(id) ~= 2
             error('2-element array required');
         end
         date = to_char('%08d', id(1));
