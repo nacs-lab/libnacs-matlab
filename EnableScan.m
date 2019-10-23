@@ -21,18 +21,25 @@ classdef EnableScan < FacyOnCleanup
             EnableScan.set(enable);
         end
     end
+    methods(Static, Access=private)
+        % Workaround matlab not allow static non-const properties
+        % so we have to use a presistent variable instead.
+        function res = setget(val)
+            persistent enabled;
+            if exist('val', 'var')
+                enabled = logical(val);
+            elseif isempty(enabled)
+                enabled = false;
+            end
+            res = enabled;
+        end
+    end
     methods(Static)
         function res = check()
-            global nacsEnableScan;
-            if isempty(nacsEnableScan)
-                res = 1;
-            else
-                res = nacsEnableScan;
-            end
+            res = EnableScan.setget();
         end
         function set(enable)
-            global nacsEnableScan;
-            nacsEnableScan = enable;
+            EnableScan.setget(enable);
         end
     end
 end
