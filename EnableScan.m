@@ -29,7 +29,7 @@ classdef EnableScan < FacyOnCleanup
             if exist('val', 'var')
                 enabled = logical(val);
             elseif isempty(enabled)
-                enabled = false;
+                enabled = true;
             end
             res = enabled;
         end
