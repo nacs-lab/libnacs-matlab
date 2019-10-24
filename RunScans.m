@@ -1,4 +1,4 @@
-function varargout = RunScans(scangroup, seq)
+function varargout = RunScans(scangroup, seq, varargin)
 % RunScans(scangroup)
 % Run a scan over parameters.  This function is designed to be run in one
 % MATLAB instance, while MonitorAndSaveAndorScans is running in another
@@ -21,7 +21,12 @@ if ~EnableScan.check()
     return;
 end
 
-resetGlobal;
+argparse = inputParser();
+addParameter(argparse, 'prescan_cb', @(~) 0);
+addParameter(argparse, 'postscan_cb', @(~) 0);
+parse(argparse, varargin{:});
+
+resetGlobal();
 
 p = DynProps(scangroup.getseq(1));
 scanp = scangroup.runp();
@@ -170,9 +175,13 @@ disp(['Andor is configured and acquiring.  Starting scan ' CurrentDate '_' Curre
 
 pause(0.1);
 
+argparse.Results.prescan_cb(fname);
+
 % Run the sequences.  This will run forever until the average number of
 % loads per point is NumPerParamAvg.
 runSeq(seq, 0, scangroup, Scan.Params, Email{:});
+
+argparse.Results.postscan_cb(fname);
 
 % Scan is now finished.
 m.Data(1).ScanComplete = 1;
