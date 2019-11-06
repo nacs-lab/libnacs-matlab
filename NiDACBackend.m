@@ -122,7 +122,7 @@ classdef NiDACBackend < PulseBackend
             self.all_pulses = all_pulses;
             times = sortrows(times', [1, 2]);
 
-            % `start_tidx; end_tidx; tidx_offset; end_pulseidx`
+            % `start_tidx; end_tidx; tidx_offset`
             % `end_tidx` and `start_tidx` are zero-based and the difference
             % between the two is the number of points we need to generate.
             % Valid tidx (0-based) are `start_tidx:(end_tidx - 1)`
@@ -340,6 +340,13 @@ classdef NiDACBackend < PulseBackend
             cleanup = FacyOnCleanup(@(old_state) pause(old_state), old_state);
             wait(self.session);
             nacsNiDACBackendSessionUsing = 0;
+            delete(cleanup);
+            % 1.5 has some strange issue (no output from time to time) that
+            % seems to go away with any amount of pause time after the
+            % sequence finishes. It could be related to us disabling the
+            % pause above. In any case, 1ms of wait time here is a pretty
+            % cheap way to fix it.
+            pause(1e-3);
         end
     end
     methods(Static)
