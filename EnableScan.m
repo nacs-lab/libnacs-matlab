@@ -38,6 +38,7 @@ classdef EnableScan < FacyOnCleanup
         function res = check()
             res = EnableScan.setget();
         end
+        % Only for testing, use the scoped version (`EnableScan(val)`) instead.
         function set(enable)
             EnableScan.setget(enable);
         end

@@ -47,7 +47,6 @@ function params = runSeq(func, varargin)
     SeqConfig.cache(1);
 
     function runSeqCleanup()
-        ExpSeq.reset();
         SeqConfig.reset();
     end
 
@@ -157,8 +156,7 @@ function params = runSeq(func, varargin)
             end
             seq_map(arg0) = idx;
         end
-        global nacsExpSeqDisableRunHack;
-        nacsExpSeqDisableRunHack = 1;
+        disabler = ExpSeq.disable(true);
         if is_scangroup
             s = ExpSeq(getseq(scangroup, arglist{idx}{:}));
             func(s);
@@ -166,7 +164,7 @@ function params = runSeq(func, varargin)
         else
             seqlist{idx} = func(arglist{idx}{:});
         end
-        nacsExpSeqDisableRunHack = 0;
+        delete(disabler);
         seqlist{idx}.generate();
     end
 

@@ -12,10 +12,13 @@
 % License along with this library.
 
 classdef (Sealed) IRCache < handle
+    properties(Constant, Access=private)
+        cache = IRCache();
+    end
     properties
         dict
     end
-    methods(Access = private)
+    methods(Access=private)
         function self = IRCache()
             self.dict = containers.Map();
         end
@@ -38,12 +41,7 @@ classdef (Sealed) IRCache < handle
     end
     methods(Static)
         function self = get()
-            global nacsIRCache
-            if isempty(nacsIRCache)
-                delete(nacsIRCache);
-                nacsIRCache = IRCache();
-            end
-            self = nacsIRCache;
+            self = IRCache.cache;
         end
     end
 end

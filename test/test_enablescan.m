@@ -2,6 +2,8 @@
 
 function test_enablescan()
 
+cleanup = onCleanup(@() EnableScan.set(true));
+
 assert(EnableScan.check());
 EnableScan.set(false);
 assert(~EnableScan.check());

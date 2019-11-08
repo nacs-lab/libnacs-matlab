@@ -183,8 +183,7 @@ classdef ExpSeq < ExpSeqBase
             %
             % Do **NOT** put anything related to runSeq in this file!!!!!!!!!!
             % It messes up EVERYTHING!!!!!!!!!!!!!!!!!!!!!!
-            global nacsExpSeqDisableRunHack;
-            if ~isempty(nacsExpSeqDisableRunHack) && nacsExpSeqDisableRunHack
+            if ExpSeq.disabledState()
                 return;
             end
             generate(self);
@@ -226,8 +225,7 @@ classdef ExpSeq < ExpSeqBase
             %% Wait for the sequences to finish.
             % Do **NOT** put anything related to runSeq in this file!!!!!!!!!!
             % It messes up EVERYTHING!!!!!!!!!!!!!!!!!!!!!!
-            global nacsExpSeqDisableRunHack;
-            if ~isempty(nacsExpSeqDisableRunHack) && nacsExpSeqDisableRunHack
+            if ExpSeq.disabledState()
                 return;
             end
             drivers = self.drivers_sorted;
@@ -247,9 +245,8 @@ classdef ExpSeq < ExpSeqBase
             % It messes up EVERYTHING!!!!!!!!!!!!!!!!!!!!!!
             % Also, this function has to be only run_async() and then
             % waitFinish() do not put any more complex logic in.
-            % DisableRunHack is fine since it doesn't mutate anything.
-            global nacsExpSeqDisableRunHack;
-            if ~isempty(nacsExpSeqDisableRunHack) && nacsExpSeqDisableRunHack
+            % `disableState` is fine since it doesn't mutate anything.
+            if ExpSeq.disabledState()
                 return;
             end
             run_async(self);
@@ -581,10 +578,23 @@ classdef ExpSeq < ExpSeqBase
             legend(names{:});
         end
     end
+    methods(Static, Access=private)
+        % Workaround matlab not allow static non-const properties
+        % so we have to use a presistent variable instead.
+        function res = disabledState(val)
+            persistent disabled;
+            if exist('val', 'var')
+                disabled = logical(val);
+            elseif isempty(disabled)
+                disabled = false;
+            end
+            res = disabled;
+        end
+    end
     methods(Static)
-        function reset()
-            global nacsExpSeqDisableRunHack;
-            nacsExpSeqDisableRunHack = 0;
+        function disabler = disable(val)
+            ExpSeq.disabledState(val);
+            disabler = FacyOnCleanup(@() ExpSeq.disableState(false));
         end
     end
 end

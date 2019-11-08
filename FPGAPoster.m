@@ -12,6 +12,10 @@
 % License along with this library.
 
 classdef FPGAPoster < handle
+    properties(Constant, Access=private)
+        cache = containers.Map();
+    end
+
     properties
         poster;
     end
@@ -57,15 +61,10 @@ classdef FPGAPoster < handle
 
     methods(Static)
         function dropAll()
-            global nacsFPGAPosterCache
-            nacsFPGAPosterCache = [];
+            remove(FPGAPoster.cache, keys(FPGAPoster.cache));
         end
         function res = get(url)
-            global nacsFPGAPosterCache
-            if isempty(nacsFPGAPosterCache)
-                nacsFPGAPosterCache = containers.Map();
-            end
-            cache = nacsFPGAPosterCache;
+            cache = FPGAPoster.cache;
             if isKey(cache, url)
                 res = cache(url);
                 return;
