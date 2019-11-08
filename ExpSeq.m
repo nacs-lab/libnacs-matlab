@@ -245,7 +245,7 @@ classdef ExpSeq < ExpSeqBase
             % It messes up EVERYTHING!!!!!!!!!!!!!!!!!!!!!!
             % Also, this function has to be only run_async() and then
             % waitFinish() do not put any more complex logic in.
-            % `disableState` is fine since it doesn't mutate anything.
+            % `disabledState` is fine since it doesn't mutate anything.
             if ExpSeq.disabledState()
                 return;
             end
@@ -594,7 +594,7 @@ classdef ExpSeq < ExpSeqBase
     methods(Static)
         function disabler = disable(val)
             ExpSeq.disabledState(val);
-            disabler = FacyOnCleanup(@() ExpSeq.disableState(false));
+            disabler = FacyOnCleanup(@() ExpSeq.disabledState(false));
         end
     end
 end
