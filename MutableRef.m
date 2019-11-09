@@ -1,4 +1,4 @@
-%% Copyright (c) 2018-2018, Yichao Yu <yyc1992@gmail.com>
+%% Copyright (c) 2019-2019, Yichao Yu <yyc1992@gmail.com>
 %
 % This library is free software; you can redistribute it and/or
 % modify it under the terms of the GNU Lesser General Public
@@ -11,26 +11,25 @@
 % You should have received a copy of the GNU Lesser General Public
 % License along with this library.
 
-classdef EnableScan < FacyOnCleanup
-    properties(Constant, Access=private)
-        enabled = MutableRef(true);
+%% Matlab only supports constant static variables for classes
+% This is a mutable container that can be used as a constant member
+% to work around this limitation
+
+classdef MutableRef < handle
+    properties
+        x;
     end
     methods
-        function self = EnableScan(enable)
-            function cb(old)
-                EnableScan.set(old);
+        function self = MutableRef(x)
+            if exist('x', 'var')
+                self.x = x;
             end
-            self = self@FacyOnCleanup(@cb, EnableScan.check());
-            EnableScan.set(enable);
         end
-    end
-    methods(Static)
-        function res = check()
-            res = EnableScan.enabled.get();
+        function self = set(self, x)
+            self.x = x;
         end
-        % Only for testing, use the scoped version (`EnableScan(val)`) instead.
-        function set(enable)
-            EnableScan.enabled.set(enable);
+        function x = get(self)
+            x = self.x;
         end
     end
 end

@@ -67,6 +67,10 @@ classdef ExpSeq < ExpSeqBase
         ir_ctx;
     end
 
+    properties(Constant, Access=private)
+        disabled = MutableRef(false);
+    end
+
     methods
         function self = ExpSeq(varargin)
             if nargin > 1
@@ -183,7 +187,7 @@ classdef ExpSeq < ExpSeqBase
             %
             % Do **NOT** put anything related to runSeq in this file!!!!!!!!!!
             % It messes up EVERYTHING!!!!!!!!!!!!!!!!!!!!!!
-            if ExpSeq.disabledState()
+            if ExpSeq.disabled.get()
                 return;
             end
             generate(self);
@@ -225,7 +229,7 @@ classdef ExpSeq < ExpSeqBase
             %% Wait for the sequences to finish.
             % Do **NOT** put anything related to runSeq in this file!!!!!!!!!!
             % It messes up EVERYTHING!!!!!!!!!!!!!!!!!!!!!!
-            if ExpSeq.disabledState()
+            if ExpSeq.disabled.get()
                 return;
             end
             drivers = self.drivers_sorted;
@@ -245,8 +249,8 @@ classdef ExpSeq < ExpSeqBase
             % It messes up EVERYTHING!!!!!!!!!!!!!!!!!!!!!!
             % Also, this function has to be only run_async() and then
             % waitFinish() do not put any more complex logic in.
-            % `disabledState` is fine since it doesn't mutate anything.
-            if ExpSeq.disabledState()
+            % `disabled` is fine since it doesn't mutate anything.
+            if ExpSeq.disabled.get()
                 return;
             end
             run_async(self);
@@ -578,23 +582,10 @@ classdef ExpSeq < ExpSeqBase
             legend(names{:});
         end
     end
-    methods(Static, Access=private)
-        % Workaround matlab not allow static non-const properties
-        % so we have to use a presistent variable instead.
-        function res = disabledState(val)
-            persistent disabled;
-            if exist('val', 'var')
-                disabled = logical(val);
-            elseif isempty(disabled)
-                disabled = false;
-            end
-            res = disabled;
-        end
-    end
     methods(Static)
         function disabler = disable(val)
-            ExpSeq.disabledState(val);
-            disabler = FacyOnCleanup(@() ExpSeq.disabledState(false));
+            ExpSeq.disabled.set(val);
+            disabler = FacyOnCleanup(@() ExpSeq.disabled.set(false));
         end
     end
 end
