@@ -169,28 +169,28 @@ classdef SeqConfig < handle
             func = @disableChannel;
         end
     end
+
+    properties(Constant, Access=private)
+        cache = MutableRef();
+    end
     methods(Static)
         function config = get(is_seq)
-            global nacsSeqConfigCache;
             if ~exist('is_seq', 'var')
                 is_seq = 0;
             end
-            if ~isempty(nacsSeqConfigCache)
-                config = nacsSeqConfigCache;
-            else
+            config = SeqConfig.cache.get();
+            if isempty(config)
                 config = SeqConfig(is_seq);
             end
         end
         function reset()
-            global nacsSeqConfigCache;
-            nacsSeqConfigCache = [];
+            SeqConfig.cache.set([]);
         end
         function cache(is_seq)
             if ~exist('is_seq', 'var')
                 is_seq = 0;
             end
-            global nacsSeqConfigCache;
-            nacsSeqConfigCache = SeqConfig(is_seq);
+            SeqConfig.cache.set(SeqConfig(is_seq));
         end
     end
 end

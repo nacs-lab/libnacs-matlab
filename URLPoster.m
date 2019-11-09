@@ -47,17 +47,15 @@ classdef URLPoster < handle
         end
     end
 
+    properties(Constant, Access=private)
+        cache = containers.Map();
+    end
     methods(Static)
         function dropAll()
-            global nacsURLPosterCache
-            nacsURLPosterCache = [];
+            remove(URLPoster.cache, keys(URLPoster.cache));
         end
         function res = get(url)
-            global nacsURLPosterCache
-            if isempty(nacsURLPosterCache)
-                nacsURLPosterCache = containers.Map();
-            end
-            cache = nacsURLPosterCache;
+            cache = URLPoster.cache;
             if isKey(cache, url)
                 res = cache(url);
                 return;

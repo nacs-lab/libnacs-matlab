@@ -41,6 +41,9 @@ classdef NiDACBackend < PulseBackend
     properties(Constant, Hidden, Access=private)
         EXTERNAL_CLOCK = true;
         CLOCK_DIVIDER = 100;
+
+        cache = MutableRef();
+        cache_in_use = MutableRef(false);
     end
 
     methods
@@ -308,20 +311,18 @@ classdef NiDACBackend < PulseBackend
         end
 
         function ensureSession(self)
-            % Use a global variable to cache the session since
-            % adding channels is really slow.... (50ms per channel)
-            global nacsNiDACBackendSession
-            global nacsNiDACBackendSessionUsing
+            % Use cache for the session since adding channels is really slow....
+            % (50ms per channel)
+            session = NiDACBackend.cache.get();
             % Check if the session is in use first since
             % operations on the invalid session may error.
-            if (~isempty(nacsNiDACBackendSessionUsing) && ...
-                nacsNiDACBackendSessionUsing == 1) || ...
-               ~checkSession(self, nacsNiDACBackendSession)
-                delete(nacsNiDACBackendSession);
-                nacsNiDACBackendSession = createNewSession(self);
+            if NiDACBackend.cache_in_use.get() || ~checkSession(self, session)
+                delete(session);
+                session = createNewSession(self);
+                NiDACBackend.cache.set(session);
             end
-            nacsNiDACBackendSessionUsing = 1;
-            self.session = nacsNiDACBackendSession;
+            NiDACBackend.cache_in_use.set(1);
+            self.session = session;
         end
 
         function run(self)
@@ -332,14 +333,13 @@ classdef NiDACBackend < PulseBackend
         end
 
         function wait(self)
-            global nacsNiDACBackendSessionUsing
             % This turns the pause(0.1) in the NI driver into a busy wait loop
             % and reduce ~50ms of wait time per run on average.
             old_state = pause('off');
             % The cleanup object tracks the lifetime of the current scope.
             cleanup = FacyOnCleanup(@(old_state) pause(old_state), old_state);
             wait(self.session);
-            nacsNiDACBackendSessionUsing = 0;
+            NiDACBackend.cache_in_use.set(0);
             delete(cleanup);
             % 1.5 has some strange issue (no output from time to time) that
             % seems to go away with any amount of pause time after the
@@ -351,10 +351,10 @@ classdef NiDACBackend < PulseBackend
     end
     methods(Static)
         function clearSession()
-            global nacsNiDACBackendSession;
-            if ~isempty(nacsNiDACBackendSession)
-                delete(nacsNiDACBackendSession);
-                nacsNiDACBackendSession = [];
+            session = NiDACBackend.cache.get();
+            if ~isempty(session)
+                delete(session);
+                NiDACBackend.cache.set([]);
             end
         end
     end

@@ -58,17 +58,15 @@ classdef USRPPoster < handle
         end
     end
 
+    properties(Constant, Access=private)
+        cache = containers.Map();
+    end
     methods(Static)
         function dropAll()
-            global nacsUSRPPosterCache
-            nacsUSRPPosterCache = [];
+            remove(USRPPoster.cache, keys(USRPPoster.cache));
         end
         function res = get(url)
-            global nacsUSRPPosterCache
-            if isempty(nacsUSRPPosterCache)
-                nacsUSRPPosterCache = containers.Map();
-            end
-            cache = nacsUSRPPosterCache;
+            cache = USRPPoster.cache;
             if isKey(cache, url)
                 res = cache(url);
                 return;
