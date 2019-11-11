@@ -585,7 +585,11 @@ classdef ExpSeq < ExpSeqBase
     methods(Static)
         function disabler = disable(val)
             ExpSeq.disabled.set(val);
-            disabler = FacyOnCleanup(@() ExpSeq.disabled.set(false));
+            % Using an anonymous function here upsets MATLAB's parser...
+            function cb()
+                ExpSeq.disabled.set(false);
+            end
+            disabler = FacyOnCleanup(@cb);
         end
     end
 end
