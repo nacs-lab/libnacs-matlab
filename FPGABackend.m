@@ -40,15 +40,17 @@ classdef FPGABackend < PulseBackend
             self = self@PulseBackend(seq);
             % The FPGA poster is stateless so it is shared between all `FPGABackend`s
             self.poster = FPGAPoster.get(seq.config.fpgaUrls('FPGA1'));
+            ovr = self.poster.has_override();
+            if ovr ~= 0
+                state = warning('off', 'backtrace');
+                cleanup = FacyOnCleanup(@(state) warning(state), state);
+                warning('TTL override enabled: 0x%08x', ovr);
+            end
         end
 
         function initDev(self, did)
             if ~strcmp('FPGA1', did)
                 error('Unknown FPGA device "%s".', did);
-            end
-            ovr = self.poster.has_override();
-            if ovr ~= 0
-                warning('TTL override enabled: 0x%08x', ovr);
             end
         end
 

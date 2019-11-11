@@ -28,8 +28,11 @@ class FPGAPoster(object):
         self.__ctx.destroy()
 
     def has_override(self):
-        self.__sock.send_string("has_override")
-        reply = self.__sock.recv()
+        # Use a separate socket since the main one might be in use.
+        sock = self.__ctx.socket(zmq.REQ)
+        sock.connect(self.__url)
+        sock.send_string("has_override")
+        reply = sock.recv()
         if len(reply) != 4:
             return 0
         return int.from_bytes(reply, byteorder='little')

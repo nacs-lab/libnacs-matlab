@@ -42,7 +42,7 @@ classdef FPGAPoster < handle
         end
 
         function res = has_override(self)
-            res = self.poster.has_override();
+            res = int64(self.poster.has_override());
         end
 
         function wait(self)
