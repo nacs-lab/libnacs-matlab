@@ -30,9 +30,9 @@ class FPGAPoster(object):
     def has_override(self):
         self.__sock.send_string("has_override")
         reply = self.__sock.recv()
-        if len(msg) != 4:
+        if len(reply) != 4:
             return 0
-        return int.from_bytes(msg, byteorder='little')
+        return int.from_bytes(reply, byteorder='little')
 
     def prepare_msg(self, tlen, code):
         bc = int(tlen).to_bytes(8, byteorder='little', signed=False)
