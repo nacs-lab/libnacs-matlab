@@ -171,26 +171,26 @@ classdef SeqConfig < handle
     end
 
     properties(Constant, Access=private)
-        cache = MutableRef();
+        cached_config = MutableRef();
     end
     methods(Static)
         function config = get(is_seq)
             if ~exist('is_seq', 'var')
                 is_seq = 0;
             end
-            config = SeqConfig.cache.get();
+            config = SeqConfig.cached_config.get();
             if isempty(config)
                 config = SeqConfig(is_seq);
             end
         end
         function reset()
-            SeqConfig.cache.set([]);
+            SeqConfig.cached_config.set([]);
         end
         function cache(is_seq)
             if ~exist('is_seq', 'var')
                 is_seq = 0;
             end
-            SeqConfig.cache.set(SeqConfig(is_seq));
+            SeqConfig.cached_config.set(SeqConfig(is_seq));
         end
     end
 end
