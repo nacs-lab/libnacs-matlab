@@ -27,6 +27,13 @@ class FPGAPoster(object):
     def __del__(self):
         self.__ctx.destroy()
 
+    def has_override(self):
+        self.__sock.send_string("has_override")
+        reply = self.__sock.recv()
+        if len(msg) != 4:
+            return 0
+        return int.from_bytes(msg, byteorder='little')
+
     def prepare_msg(self, tlen, code):
         bc = int(tlen).to_bytes(8, byteorder='little', signed=False)
         code, mask = libnacs.bin_to_bytecode(code)

@@ -46,6 +46,10 @@ classdef FPGABackend < PulseBackend
             if ~strcmp('FPGA1', did)
                 error('Unknown FPGA device "%s".', did);
             end
+            ovr = self.poster.has_override();
+            if ovr ~= 0
+                warning('TTL override enabled: 0x%08x', ovr);
+            end
         end
 
         function initChannel(self, cid)

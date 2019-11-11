@@ -41,6 +41,10 @@ classdef FPGAPoster < handle
             cleanup.disable();
         end
 
+        function res = has_override(self)
+            res = self.poster.has_override();
+        end
+
         function wait(self)
             cleanup = register_cleanup(self);
             while ~self.poster.post_reply()
