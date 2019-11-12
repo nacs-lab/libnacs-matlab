@@ -35,6 +35,9 @@ classdef SubProps < handle
         function res = fieldnames(self)
             res = subfieldnames(self.parent, self.path);
         end
+        function res = isfield(self, name)
+            res = subisfield(self.parent, self.path, name);
+        end
         function disp(self)
             if ismethod(self.parent, 'subdisp')
                 subdisp(self.parent, self.path);

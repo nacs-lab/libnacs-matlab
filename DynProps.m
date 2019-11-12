@@ -77,6 +77,33 @@ classdef DynProps < handle
             end
         end
     end
+    methods(Access=private)
+        function res = try_getfield(self, S, missing)
+            nS = length(S);
+            % Scan through all the '.' in the leading access items
+            v = self.V;
+            for i = 1:nS
+                switch S(i).type
+                    case '.'
+                        name = S(i).subs;
+                        if isfield(v, name)
+                            newv = v.(name);
+                            % Treat NaN as missing value
+                            if ~DynProps.isnanobj(newv)
+                                v = newv;
+                                continue;
+                            end
+                        end
+                        res = missing;
+                        return;
+                    otherwise
+                        res = missing;
+                        return;
+                end
+            end
+            res = v;
+        end
+    end
     methods
         function self = DynProps(V)
             if ~exist('V', 'var')
@@ -114,29 +141,7 @@ classdef DynProps < handle
             res = fieldnames(self.V);
         end
         function res = subfieldnames(self, S)
-            nS = length(S);
-            % Scan through all the '.' in the leading access items
-            v = self.V;
-            for i = 1:nS
-                switch S(i).type
-                    case '.'
-                        name = S(i).subs;
-                        if isfield(v, name)
-                            newv = v.(name);
-                            % Treat NaN as missing value
-                            if ~DynProps.isnanobj(newv)
-                                v = newv;
-                                continue;
-                            end
-                        end
-                        res = {};
-                        return;
-                    otherwise
-                        res = {};
-                        return;
-                end
-            end
-            res = fieldnames(v);
+            res = fieldnames(try_getfield(self, S, struct()));
         end
         function B = subsref(self, S)
             nS = length(S);
@@ -256,32 +261,17 @@ classdef DynProps < handle
             path = ['.', strjoin({S.subs}, '.')];
             fprintf('SubProps{DynProps}: ');
             cprintf('*magenta', '[%s]\n  ', path);
-            nS = length(S);
-            v = self.V;
-            for i = 1:nS
-                switch S(i).type
-                    case '.'
-                        name = S(i).subs;
-                        if isfield(v, name)
-                            newv = v.(name);
-                            % Treat NaN as missing value
-                            if ~DynProps.isnanobj(newv)
-                                v = newv;
-                                continue;
-                            end
-                        end
-                        fprintf('{}');
-                        return;
-                    otherwise
-                        fprintf('{}');
-                        return;
-                end
-            end
-            YAML.print(v, 2, true);
+            YAML.print(try_getfield(self, S, struct()), 2, true);
         end
         function subdisplay(self, S, name)
             fprintf('%s = ', name);
             subdisp(self, S);
+        end
+        function res = isfield(self, name)
+            res = DynProps.isfield_def(self.V, name, true);
+        end
+        function res = subisfield(self, S, name)
+            res = isfield(try_getfield(self, S, struct()), name);
         end
     end
 end
