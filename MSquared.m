@@ -141,8 +141,10 @@ classdef MSquared < handle
             key = sprintf('%s/%d/%s', remote, port, local);
             if isKey(cache, key)
                 res = cache(key);
-                res.start();
-                return;
+                if ~isempty(res) && isvalid(res)
+                    res.start();
+                    return;
+                end
             end
             res = MSquared(remote, port, local);
             cache(key) = res;
