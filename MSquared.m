@@ -122,6 +122,10 @@ classdef MSquared < handle
         function self = stop(self)
             self.ms.stop();
         end
+
+        function delete(self)
+            self.ms.stop();
+        end
     end
 
     properties(Constant, Access=private)
