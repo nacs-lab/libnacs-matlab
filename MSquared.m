@@ -116,6 +116,12 @@ classdef MSquared < handle
             res = self.wait_res(self.ms.wavelength_range(varargin{:}));
         end
 
+        % Frequency in GHz
+        function res = move_freq(self, freq)
+            % Wavelength in nm
+            res = move_wave(self, 299792458 / freq);
+        end
+
         function self = start(self)
             self.ms.start();
         end
