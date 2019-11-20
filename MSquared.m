@@ -62,11 +62,14 @@ classdef MSquared < handle
     methods
         function res = wait_res(self, future)
             try
-                while true
+                for i = 1:60
                     % Wait with timeout to give matlab time to response to user input.
-                    res = self.ms.wait(future);
-                    res = MSquared.py2matlab(res);
-                    return;
+                    % Wait up to 60 seconds in total.
+                    res = self.ms.wait(future, 1);
+                    if isa(res, 'py.dict')
+                        res = MSquared.py2matlab(res);
+                        return;
+                    end
                 end
             catch
                 res = false;
