@@ -58,7 +58,9 @@ classdef URLPoster < handle
             cache = URLPoster.cache;
             if isKey(cache, url)
                 res = cache(url);
-                return;
+                if ~isempty(res) && isvalid(res)
+                    return;
+                end
             end
             res = URLPoster(url);
             cache(url) = res;

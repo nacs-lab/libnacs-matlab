@@ -12,11 +12,8 @@
 % License along with this library.
 
 classdef (Sealed) IRCache < handle
-    properties(Constant, Access=private)
-        cache = IRCache();
-    end
     properties
-        dict
+        dict;
     end
     methods(Access=private)
         function self = IRCache()
@@ -38,6 +35,10 @@ classdef (Sealed) IRCache < handle
         function ir = setindex(self, ir, id)
             self.dict(id) = ir;
         end
+    end
+
+    properties(Constant, Access=private)
+        cache = IRCache();
     end
     methods(Static)
         function self = get()

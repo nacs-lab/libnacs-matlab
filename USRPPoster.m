@@ -69,7 +69,9 @@ classdef USRPPoster < handle
             cache = USRPPoster.cache;
             if isKey(cache, url)
                 res = cache(url);
-                return;
+                if ~isempty(res) && isvalid(res)
+                    return;
+                end
             end
             res = USRPPoster(url);
             cache(url) = res;
