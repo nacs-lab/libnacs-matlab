@@ -29,6 +29,7 @@ classdef SeqConfig < handle
         disabledChannels;
 
         fpgaUrls;
+        fpgaTTLOverrideMask;
         usrpUrls;
 
         niClocks;
@@ -45,6 +46,7 @@ classdef SeqConfig < handle
             self.name_map = containers.Map();
             % Create empty maps
             fpgaUrls = containers.Map();
+            fpgaTTLOverrideMask = containers.Map();
             usrpUrls = containers.Map();
             pulseDrivers = containers.Map();
             channelAlias = containers.Map();
@@ -62,6 +64,7 @@ classdef SeqConfig < handle
             expConfig();
 
             self.fpgaUrls = fpgaUrls;
+            self.fpgaTTLOverrideMask = fpgaTTLOverrideMask;
             self.usrpUrls = usrpUrls;
             self.niClocks = niClocks;
             self.niStart = niStart;
