@@ -41,6 +41,8 @@ classdef ExpSeq < ExpSeqBase
         % Map from channel name to channel ID.
         % Include both translated name and untranslated ones as keys.
         cid_cache;
+        % Locally disabled channels
+        disabled_channels;
 
         %% Output related:
         % Whether the default has been overwritten and the new default value.
@@ -83,6 +85,8 @@ classdef ExpSeq < ExpSeqBase
             self.driver_cids = containers.Map();
             self.cid_cache = containers.Map('KeyType', 'char', 'ValueType', 'double');
             self.ir_ctx = IRContext();
+            self.disabled_channels = containers.Map('KeyType', 'char', ...
+                                                    'ValueType', 'double');
         end
 
         function res = totalTime(self)
@@ -523,14 +527,32 @@ classdef ExpSeq < ExpSeqBase
             % `getChannelId` guarantees that all translated names used are in `cid_cache`
             for key = keys(self.cid_cache)
                 % This should not have false positive disabled channels
-                % for the same reason as `SeqConfig::checkChannelDisabled`.
+                % for the same reason as `checkChannelDisabled`.
                 % name is always translated here.
                 key = key{:};
                 if strcmp(key, name) || startsWith(key, [name, '/'])
                     error('Cannot disable channel that is already initialized');
                 end
             end
-            disableChannel(self.config, name);
+            if isempty(self.disabled_channels)
+                warning('Channel disabled locally.');
+            end
+            self.disabled_channels(name) = 0;
+        end
+        %% name is assumed to be translated. Returns false for untranslated name.
+        function res = checkChannelDisabled(self, name)
+            % See `SeqConfig::checkChannelDisabled`
+            for key = keys(self.disabled_channels)
+                key = key{:};
+                if strcmp(name, key)
+                    res = true;
+                    return;
+                elseif startsWith(name, [key, '/'])
+                    res = true;
+                    return;
+                end
+            end
+            res = checkChannelDisabled(self.config);
         end
     end
 

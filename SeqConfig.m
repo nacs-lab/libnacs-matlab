@@ -136,11 +136,6 @@ classdef SeqConfig < handle
             res = false;
         end
 
-        %% name is assumed to be translated.
-        function disableChannel(self, name)
-            self.disabledChannels(name) = 0;
-        end
-
         %%
         function res = translateChannel(self, name)
             if isKey(self.name_map, name)
