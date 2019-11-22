@@ -45,7 +45,7 @@ classdef FPGABackend < PulseBackend
                 mask = int64(seq.config.fpgaTTLOverrideMask('FPGA1'));
             end
             ovr = self.poster.has_override();
-            if bitand(ovr, bitnot(mask)) ~= 0
+            if bitand(ovr, bitcmp(mask)) ~= 0
                 state = warning('off', 'backtrace');
                 cleanup = FacyOnCleanup(@(state) warning(state), state);
                 warning('TTL override enabled: 0x%08x', ovr);
