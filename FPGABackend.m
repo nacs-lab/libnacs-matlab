@@ -41,8 +41,8 @@ classdef FPGABackend < PulseBackend
             % The FPGA poster is stateless so it is shared between all `FPGABackend`s
             self.poster = FPGAPoster.get(seq.config.fpgaUrls('FPGA1'));
             mask = int64(0);
-            if isKey(seq.config.fpgaTTLOverrideMask, 'FPGA1')
-                mask = int64(seq.config.fpgaTTLOverrideMask('FPGA1'));
+            if isKey(seq.config.fpgaTTLWarningMask, 'FPGA1')
+                mask = int64(seq.config.fpgaTTLWarningMask('FPGA1'));
             end
             ovr = self.poster.has_override();
             if bitand(ovr, bitcmp(mask)) ~= 0
