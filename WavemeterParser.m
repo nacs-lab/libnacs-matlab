@@ -23,10 +23,17 @@ classdef WavemeterParser < handle
             wp = py.eval('WavemeterParser', pyglob);
             self.parser = wp(varargin{:});
         end
-        function [t, d] = parse(self, name, varargin)
-            res = self.parser.parse(name, varargin{:});
-            t = double(res{1});
-            d = double(res{2});
+        function [t, d, varargout] = parse(self, name, varargin)
+            if isempty(varargout)
+                res = self.parser.parse(name, varargin{:});
+                t = double(res{1});
+                d = double(res{2});
+            else
+                res = self.parser.parse_with_heights(name, varargin{:});
+                t = double(res{1});
+                d = double(res{2});
+                varargout{1} = double(res{3});
+            end
         end
     end
 end
