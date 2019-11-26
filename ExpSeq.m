@@ -111,7 +111,7 @@ classdef ExpSeq < ExpSeqBase
             %% Convert a channel name to a channel ID.
             % A new ID is created if it does not exist yet.
             [cid, name, inited] = getChannelId(self, name);
-            if inited || checkChannelDisabled(self.config, name)
+            if inited || checkChannelDisabled(self, name)
                 return;
             end
             cpath = strsplit(name, '/');
