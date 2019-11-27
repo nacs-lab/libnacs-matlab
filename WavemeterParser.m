@@ -24,7 +24,7 @@ classdef WavemeterParser < handle
             self.parser = wp(varargin{:});
         end
         function [t, d, varargout] = parse(self, name, varargin)
-            if isempty(varargout)
+            if nargout <= 2
                 res = self.parser.parse(name, varargin{:});
                 t = double(res{1});
                 d = double(res{2});
