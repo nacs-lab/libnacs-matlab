@@ -235,19 +235,15 @@ classdef ExpSeqBase < TimeSeq
 
         %% Other helper functions.
 
-        function self = add(self, name, pulse, len)
+        function step = add(self, name, pulse)
             %% Convenient shortcut for adding a single pulse in a step.
-            if isnumeric(pulse) || islogical(pulse)
-                % `0` length for setting values.
-                if exist('len', 'var')
-                    error('Too many arguments for ExpSeq.add');
-                end
-                % The 10us here is just a placeholder.
-                % The exact length doesn't really matter except for total sequence length
-                add(addBackground(self, 1e-5), name, pulse);
-            else
-                add(addStep(self, len), name, pulse);
+            if ~isnumeric(pulse) && ~islogical(pulse)
+                error('Use addStep to add a ramp pulse.');
             end
+            % The 10us here is just a placeholder.
+            % The exact length doesn't really matter except for total sequence length
+            step = addBackground(self, 1e-6);
+            add(step, name, pulse);
         end
 
         function res = alignEnd(self, seq1, seq2, offset)
