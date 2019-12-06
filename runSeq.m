@@ -215,12 +215,20 @@ function params = runSeq(func, varargin)
             pause(tstartwait);
         end
         run_cb(pre_cb, idx);
-        run_real(seqlist{idx});
+        cur_seq = seqlist{idx};
+        start_t = now() * 86400;
+        run_real(cur_seq);
         if next_idx > 0
             prepare_seq(next_idx);
         end
         m.Data(1).CurrentSeqNum = m.Data(1).CurrentSeqNum + 1;
-        waitFinish(seqlist{idx});
+        % We'll wait until this time before returning to the caller
+        end_after = start_t + totalTime(cur_seq) - 5e-3;
+        waitFinish(cur_seq);
+        end_t = now() * 86400;
+        if end_t < end_after
+            pause(end_after - end_t);
+        end
         run_cb(post_cb, idx);
         % If we are using NumGroup to run sequences in groups, pause every
         % NumGroup sequences.

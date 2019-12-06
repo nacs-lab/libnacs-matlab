@@ -257,9 +257,16 @@ classdef ExpSeq < ExpSeqBase
             if ExpSeq.disabled.get()
                 return;
             end
+            start_t = now() * 86400;
             run_async(self);
             fprintf('Running @%s\n', datestr(now(), 'yyyy/mm/dd HH:MM:SS'));
+            % We'll wait until this time before returning to the caller
+            end_after = start_t + totalTime(self) - 5e-3;
             waitFinish(self);
+            end_t = now() * 86400;
+            if end_t < end_after
+                pause(end_after - end_t);
+            end
         end
 
         function self = setDefault(self, name, val)
