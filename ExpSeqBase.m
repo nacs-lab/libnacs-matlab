@@ -292,6 +292,9 @@ classdef ExpSeqBase < TimeSeq
             if isnan(res)
                 error('Cannot get total time with floating sub sequence.');
             end
+            if res < self.curTime
+                res = self.curTime;
+            end
         end
 
         function tdiff = getTimePointOffset(self, time)
