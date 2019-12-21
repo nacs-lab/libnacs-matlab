@@ -32,6 +32,9 @@ class FPGAPoster(object):
         sock = self.__ctx.socket(zmq.REQ)
         sock.connect(self.__url)
         sock.send_string("has_override")
+        # Wait up to 2 seconds
+        if sock.poll(2000) == 0:
+            return 0
         reply = sock.recv()
         if len(reply) != 4:
             return 0
