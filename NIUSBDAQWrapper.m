@@ -1,23 +1,23 @@
 classdef NIUSBDAQWrapper < handle
     %NIUSBDAQPoster Python wrapper for control of NI USB DAQ
     %Requires nidaqmx python library installed
-    
+
     properties(Constant, Access=private)
         cache = containers.Map();
     end
-    
+
     properties(SetAccess = private)
         serialNum;
         pyglob;
     end
-    
+
     properties
         devNum;
         channelName = "ai0";
         trigChan = "PFI0";
         bTrig = 1;
     end
-    
+
     methods
         function res = setChannels(self,channelSettings)
             %Set data acquisition and (optionally) triggering properties
@@ -25,7 +25,7 @@ classdef NIUSBDAQWrapper < handle
             %   channelName, string: Name of the channel to read from, e.g. "ai0"
             %   bTrig, bool: 1 to do triggered acquisition, 0 to autostart
             %   trigChan, string: Name of  channel to trigger from
-            
+
             if isfield(channelSettings, 'channelName')
                 self.channelName = channelSettings.channelName;
             end
@@ -37,7 +37,7 @@ classdef NIUSBDAQWrapper < handle
             end
             res = self;
         end
-        
+
         function aiData = acquire(self, sampleRate, sampleTime, varargin)
             %Acquire data from NI USB DAQ
             %Arguments:
@@ -45,7 +45,7 @@ classdef NIUSBDAQWrapper < handle
             %   sampleTime, float: Number of seconds for which to sample
             %   optional argument:
             %       channelSettings, struct: channelName, bTrig, trigChan
-            
+
             %Set optional arguments to overwrite current values
             if ~isempty(varargin)
                 channelSettings = varargin{1};
@@ -61,7 +61,7 @@ classdef NIUSBDAQWrapper < handle
                 sampleRate, sampleTime,self.bTrig, self.trigChan)));
         end
     end
-    
+
     methods(Access = private)
         function self = NIUSBDAQWrapper(devNum,serialNum)
             %NIUSBDAQWrapper Construct an instance of this class
@@ -69,12 +69,12 @@ classdef NIUSBDAQWrapper < handle
             self.serialNum = serialNum;
         end
     end
-    
+
     methods(Static)
         function dropAll()%Delete NIUSBDAQWrapper connection from memory
             remove(NIUSBDAQWrapper.cache, keys(NIUSBDAQWrapper.cache));
         end
-        
+
         function res = get(serialNum, varargin)
             %Create new object or return existing object
             %Arguments:
@@ -83,14 +83,14 @@ classdef NIUSBDAQWrapper < handle
             %       channelName, string: Name of the channel to read from, e.g. "ai0"
             %       bTrig, bool: 1 to do triggered acquisition, 0 to autostart
             %       trigChan, string: Name of  channel to trigger from
-            
+
             cache = NIUSBDAQWrapper.cache;
-            
+
             %Get path of class definition, which should be in same place as
             %Python library
             [path, ~, ~] = fileparts(mfilename('fullpath'));
             pyglob = py.dict(pyargs('mat_srcpath', path,'serialNum',serialNum));
-            
+
             %Load python library
             try
                 py.exec('import NIUSBDAQ', pyglob);
@@ -98,16 +98,16 @@ classdef NIUSBDAQWrapper < handle
                 py.exec('import sys; sys.path.append(mat_srcpath)', pyglob);
                 py.exec('import NIUSBDAQ', pyglob);
             end
-            
+
             %Get number of devices connected
             numDevs = int64(py.NIUSBDAQ.numDevices());
-            
+
             if numDevs == 0
                 disp('Error: No NI USB DAQ devices connected.')
                 res = [];
                 return
             end
-            
+
             %Search for device with given serial number
             devNum = -1;
             for i = 0:(numDevs - 1)
@@ -117,18 +117,18 @@ classdef NIUSBDAQWrapper < handle
                     break
                 end
             end
-            
+
             if devNum == -1
                 warning('No device found with given serial number. B field comp is not working.')
                 res = [];
                 return
             end
-            
+
             %Generate id from serial number
             id = NIUSBDAQWrapper.getID(serialNum);
-            
+
             %Check if connection to instrument already exists
-            if isKey(cache, id) 
+            if isKey(cache, id)
                 res = cache(id);
                 if ~isempty(res)
                     res.devNum = devNum; %Reset device number to located device
@@ -136,11 +136,11 @@ classdef NIUSBDAQWrapper < handle
                 end
                 delete(res);
             end
-            
+
             %If no connection exists, initialize
             res = NIUSBDAQWrapper(devNum, serialNum);
             cache(id) = res;
-            
+
             %Set optional arguments to overwrite current values
             if ~isempty(varargin)
                 channelSettings = varargin{1};
@@ -150,12 +150,12 @@ classdef NIUSBDAQWrapper < handle
                     warning('channelSettings input must be a struct')
                 end
             end
-            
+
             %Updated global python environment
             res.pyglob = py.dict(pyargs('mat_srcpath', path,'serialNum',serialNum,...
                 'trigChan', res.trigChan,'channelName',res.channelName, 'bTrig', res.bTrig));
         end
-        
+
         function id = getID(serialNum)
             %Generate unique device id from serial number
             id = sprintf('NI-USB-DAQ:serial#%d', serialNum);
