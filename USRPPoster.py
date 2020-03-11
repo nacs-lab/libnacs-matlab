@@ -39,7 +39,8 @@ class USRPPoster(object):
         try:
             v = struct.unpack('@Q', self.__sock.recv())[0]
             if v == 0:
-                return 1
+                return -1
+            return v
         except:
             return -1
 
