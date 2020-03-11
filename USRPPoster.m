@@ -44,6 +44,10 @@ classdef USRPPoster < handle
         end
 
         function wait(self, id)
+            if id <= 0
+                % Error
+                return;
+            end
             cleanup = register_cleanup(self);
             self.poster.wait_send(id);
             while ~self.poster.wait_reply()
