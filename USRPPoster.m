@@ -46,6 +46,7 @@ classdef USRPPoster < handle
         function wait(self, id)
             if id <= 0
                 % Error
+                recreate_socket(self);
                 return;
             end
             cleanup = register_cleanup(self);
