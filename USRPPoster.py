@@ -17,15 +17,20 @@ import sys
 
 class USRPPoster(object):
     def recreate_sock(self):
+        if self.__sock is not None:
+            self.__sock.close()
         self.__sock = self.__ctx.socket(zmq.REQ)
+        self.__sock.setsockopt(zmq.LINGER, 0)
         self.__sock.connect(self.__url)
 
     def __init__(self, url):
         self.__url = url
         self.__ctx = zmq.Context()
+        self.__sock = None
         self.recreate_sock()
 
     def __del__(self):
+        self.__sock.close()
         self.__ctx.destroy()
 
     def post(self, data):

@@ -16,26 +16,33 @@ import libnacs
 
 class FPGAPoster(object):
     def recreate_sock(self):
+        if self.__sock is not None:
+            self.__sock.close()
         self.__sock = self.__ctx.socket(zmq.REQ)
+        self.__sock.setsockopt(zmq.LINGER, 0)
         self.__sock.connect(self.__url)
 
     def __init__(self, url):
         self.__url = url
         self.__ctx = zmq.Context()
+        self.__sock = None
         self.recreate_sock()
 
     def __del__(self):
+        self.__sock.close()
         self.__ctx.destroy()
 
     def has_override(self):
         # Use a separate socket since the main one might be in use.
         sock = self.__ctx.socket(zmq.REQ)
+        sock.setsockopt(zmq.LINGER, 0)
         sock.connect(self.__url)
         sock.send_string("has_override")
         # Wait up to 2 seconds
         if sock.poll(2000) == 0:
             return 0
         reply = sock.recv()
+        sock.close()
         if len(reply) != 4:
             return 0
         return int.from_bytes(reply, byteorder='little')
