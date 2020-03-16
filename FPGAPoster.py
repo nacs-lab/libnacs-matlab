@@ -40,6 +40,7 @@ class FPGAPoster(object):
         sock.send_string("has_override")
         # Wait up to 2 seconds
         if sock.poll(2000) == 0:
+            sock.close()
             return 0
         reply = sock.recv()
         sock.close()
