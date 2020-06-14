@@ -24,6 +24,7 @@ end
 argparse = inputParser();
 addParameter(argparse, 'prescan_cb', @(~) 0);
 addParameter(argparse, 'postscan_cb', @(~) 0);
+addParameter(argparse, 'num_per_group', 0);
 parse(argparse, varargin{:});
 
 resetGlobal();
@@ -55,7 +56,11 @@ Params = 1:nseqs;
 % Number of sequences to run between acquisitions of images from the
 % camera.  Must be >1.  Set this to be such that the time delay between
 % group is one to a few minutes.
-NumPerGroup = scanp.NumPerGroup(200);
+if argparse.Results.num_per_group > 0
+    NumPerGroup = argparse.Results.num_per_group;
+else
+    NumPerGroup = scanp.NumPerGroup(200);
+end
 StackNum = max(ceil(NumPerGroup / length(Params)), 2);
 
 %% Duplicate and scramble scan parameters
