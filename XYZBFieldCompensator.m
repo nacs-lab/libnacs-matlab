@@ -107,6 +107,15 @@ classdef XYZBFieldCompensator < handle
             
             xyzAIRead = [xreads;yreads;zreads];
         end
+        
+        function xyzAOVoltage(self,vx,vy,vz)
+            py.NIDAQReadWriteLib.dcoutNow(self.devNumX,self.outputChannelX,...
+                vx)
+            py.NIDAQReadWriteLib.dcoutNow(self.devNumY,self.outputChannelY,...
+                vy)    
+            py.NIDAQReadWriteLib.dcoutNow(self.devNumZ,self.outputChannelY,...
+                vz)
+        end
     end
     methods(Access = private)
         function self = XYZBFieldCompensator(devNums,serialNums)
