@@ -1,4 +1,4 @@
-classdef XYZBFieldCompensator < handle
+classdef NIDAQIOHandler
     %Created by Avery Parr in September 2020. Based on NIDAQUSBWrapper.m
     %code.
     
@@ -12,79 +12,66 @@ classdef XYZBFieldCompensator < handle
     end
     
     properties(SetAccess = private)
-        serialNums;
+        serialNumRead;
+        serialNumWrite;
         pyglob;
     end
     
     properties
-        devNumX = 0;
-        inputChannelX="ai0";
-        outputChannelX="ao0";
-        triggerChannelX="PFI0";
-        bTrigX=1;
-        
-        devNumY = 0;
-        inputChannelY="ai1";
-        outputChannelY="ao1";
-        triggerChannelY="PFI1";
-        bTrigY=1;
-        
-        devNumZ = 1;
-        inputChannelZ="ai0";
-        outputChannelZ="ao0";
-        triggerChannelZ="PFI0";
-        bTrigZ=1;
-        
+        devNumRead=0;
+        devNumWrite=0;
+        inputChannel="ai0";
+        outputChannel="ao0";
+        triggerChannel="PFI0";
+        bTrigger=1;
     end
-    
     methods
         function res = setChannels(self,channelSettings)
             %Allows for setting DAQ input and output channels. 
             %channelSettings is a struct with the following fields:
-            %1) devNums, array, size 3, int: number of device intended to
-            %   handle [x,y,z] B fields, respectively. 
-            %2) inputChannels, array, size 3, string: name of channels to 
-            %   take [x,y,z] inputs from. e.g. ['ai0' 'ai1' 'ai0'], etc.
-            %3) outputChannels, array, size 3, string: name of channels
-            %   on which to output [x,y,z] voltages to. e.g. ['ao0' 'ao1' 
-            %   'ao0]. Generally on different devices.
-            %4) triggerChannels, array, size 3, string: name of channels
-            %   used to trigger read events on the [x,y,z] device. 
-            %   e.g. ['PFI0' 'PFI1' 'PFI1']
-            %5) bTrigs, array, size 3, bool: determines whether the [x,y,z]
-            %   measurements will be autostarted or started on triger.
+            %1) devNum, int: number of device on which reading and writing
+            %   takes place. If specified, will overwrite devNumRead and
+            %   devNumWrite.
+            %2) devNumRead, int: number of device on which voltage reading
+            %   takes place.
+            %3) devNumWrite, int: number of device on which analog out
+            %   signals are relayed. 
+            %4) inputChannel, string: name of channel on which to read
+            %   voltages. E.g. "ai0"
+            %5) outputChannel, string: name of channel on which analog
+            %   writes occur. E.g. "ao0".
+            %6) triggerChannel, string: name of channel
+            %   used to trigger read events. E.g. "PFI0".
+            %7) bTrigger, bool: determines whether read measurements
+            %   will be autostarted or started on triger.
             %   0 causes tasks to run as soon as started; 1
             %   corresponds to tasks starting only on trigger signal. 
-            
-            if isfield(channelSettings, 'devNums')
-                self.devNumX = channelSettings.devNums(1);
-                self.devNumY = channelSettings.devNums(2);
-                self.devNumZ = channelSettings.devNums(3);
+            if isfield(channelSettings,"devNumRead")
+                self.devNumRead=channelSettings.devNumRead;
             end
-            if isfield(channelSettings, 'inputChannels')
-                self.inputChannelX = channelSettings.inputChannels(1);
-                self.inputChannelY = channelSettings.inputChannels(2);
-                self.inputChannelZ = channelSettings.inputChannels(3);
+            if isfield(channelSettings,"devNumWrite")
+                self.devNumWrite=channelSettings.devNumWrite;
             end
-            if isfield(channelSettings, 'outputChannels')
-                self.outputChannelX = channelSettings.outputChannels(1);
-                self.outputChannelY = channelSettings.outputChannels(2);
-                self.outputChannelZ = channelSettings.outputChannels(3);
+            if isfield(channelSettings,"devNum")
+                self.devNumWrite=channelSettings.devNum;
+                self.devNumRead=channelSettings.devNum;
             end
-            if isfield(channelSettings, 'triggerChannels')
-                self.triggerChannelX = channelSettings.triggerChannels(1);
-                self.triggerChannelY = channelSettings.triggerChannels(2);
-                self.triggerChannelZ = channelSettings.triggerChannels(3);
+            if isfield(channelSettings,"inputChannel")
+                self.inputChannel=channelSettings.inputChannel;
             end
-            if isfield(channelSettings, 'bTrigs')
-                self.bTrigX = channelSettings.bTrigs(1);
-                self.bTrigY = channelSettings.bTrigs(2);
-                self.bTrigZ = channelSettings.bTrigs(3);
+            if isfield(channelSettings,"outputChannel")
+                self.outputChannel=channelSettings.outputChannel;
             end
-            res = self;
+            if isfield(channelSettings,"triggerChannel")
+                self.triggerChannel=channelSettings.triggerChannel;
+            end
+            if isfield(channelSettings,"bTrigger")
+                self.bTrigger=channelSettings.bTrigger;
+            end
+            res=self;
         end
         
-        function setupDelayedRead(self, sampleRate, sampleTime,varargin)
+        function taskname = setupDelayedRead(self,readname,sampleRate,sampleTime,varargin)
             if ~isempty(varargin)
                 channelSettings = varargin{1};
                 if isa(channelSettings,'struct')
@@ -93,127 +80,170 @@ classdef XYZBFieldCompensator < handle
                     warning("channelSettings input must be a struct")
                 end
             end
-            py.NIDAQReadWriteLib.acquireDelayed("xread",self.devNumX,self.inputChannelX,...
-                sampleRate,sampleTime,self.bTrigX,self.triggerChannelX);
-            py.NIDAQReadWriteLib.acquireDelayed("yread",self.devNumY,self.inputChannelY,...
-                sampleRate,sampleTime,self.bTrigY,self.triggerChannelY);
-            py.NIDAQReadWriteLib.acquireDelayed("zread",self.devNumZ,self.inputChannelZ,...
-                sampleRate,sampleTime,self.bTrigZ,self.triggerChannelZ);
+            py.NIDAQReadWriteLib.acquireDelayed(readname,self.devNumRead,...
+                self.inputChannel,sampleRate,sampleTime,self.bTrig,...
+                self.triggerChannel)
+            taskname = readname;
         end
-        function xyzAIRead = readDelayed(nSamples)
-            xreads = cell2mat(cell(py.NIDAQReadWriteLib.readOutTask("xread",nSamples)));
-            yreads = cell2mat(cell(py.NIDAQReadWriteLib.readOutTask("yread",nSamples)));
-            zreads = cell2mat(cell(py.NIDAQReadWriteLib.readOutTask("zread",nSamples)));
-            
-            xyzAIRead = [xreads;yreads;zreads];
+        function res = aiRead(taskName,nSamples)
+            reads=cell2mat(cell(py.NIDAQReadWriteLib.readOutTask(taskName,nSamples)));
+            res = reads;
         end
-        
-        function xyzAOVoltage(self,vx,vy,vz)
-            py.NIDAQReadWriteLib.dcoutNow(self.devNumX,self.outputChannelX,...
-                vx)
-            py.NIDAQReadWriteLib.dcoutNow(self.devNumY,self.outputChannelY,...
-                vy)    
-            py.NIDAQReadWriteLib.dcoutNow(self.devNumZ,self.outputChannelY,...
-                vz)
-        end
+        function newvolts = aoVoltage(self,v,varargin)
+            if ~isempty(varargin)
+                channelSettings = varargin{1};
+                if isa(channelSettings,'struct')
+                    self.setChannels(channelSettings)
+                else
+                    warning("channelSettings input must be a struct")
+                end
+            end
+            py.NIDAQReadWriteLib.dcoutNow(self.devNumWrite,self.outputChannel,v);
+            newvolts = v;
+        end   
     end
     methods(Access = private)
-        function self = XYZBFieldCompensator(devNums,serialNums)
-            self.devNumX=devNums(1);
-            self.devNumY=devNums(2);
-            self.devNumZ=devNums(3);
-            self.serialNums=serialNums;
+        function self = NIUSBDAQWrapper(devNum,serialNumRead,serialNumWrite)
+            %NIUSBDAQWrapper Construct an instance of this class
+            self.devNum = devNum;
+            self.serialNumRead = serialNumRead;
+            self.serialNumWrite = serialNumWrite;
         end
     end
     methods(Static)
-        function dropAll() %deletes all connections from memory
-            remove(XYZBFieldCompensator.cache,keys(XYZBFieldCompensator.cache));
+        function dropAll()%Delete NIUSBDAQWrapper connection from memory
+            remove(NIUSBDAQWrapper.cache, keys(NIUSBDAQWrapper.cache));
         end
-        function res = get(serialNums,varargin)
-            cache=XYZBFieldCompensator.cache;
-            
-            %Get path of XYZBFieldCompensator.m, which should be the same
-            %as path of NIDAQReadWriteLib.py. 
-            [path,~,~]=fileparts(mfilename('fullpath'));
-            pyglob = py.dict(pyargs('mat_srcpath',path,'serialNums',serialNums));
-            
-            %loads python library
-            
+
+        function res = get(serialNumRead,serialNumWrite, varargin)
+            %Create new object or return existing object
+            %Arguments:
+            %   serialNumRead, int: Serial number of USB DAQ to connect to
+            %   for analog inputs
+            %   serialNumWrite, int: Serial number of USB DAQ to connect to
+            %   for analog outputs
+            %   
+            %   channelSettings is a struct with the following fields:
+            %       1) devNum, int: number of device on which reading and writing
+            %           takes place. If specified, will overwrite devNumRead and
+            %           devNumWrite.
+            %       2) devNumRead, int: number of device on which voltage reading
+            %           takes place.
+            %       3) devNumWrite, int: number of device on which analog out
+            %           signals are relayed. 
+            %       4) inputChannel, string: name of channel on which to read
+            %           voltages. E.g. "ai0"
+            %       5) outputChannel, string: name of channel on which analog
+            %           writes occur. E.g. "ao0".
+            %       6) triggerChannel, string: name of channel
+            %           used to trigger read events. E.g. "PFI0".
+            %       7) bTrigger, bool: determines whether read measurements
+            %           will be autostarted or started on triger.
+            %           0 causes tasks to run as soon as started; 1
+            %           corresponds to tasks starting only on trigger signal. 
+
+            cache = NIUSBDAQWrapper.cache;
+
+            %Get path of class definition, which should be in same place as
+            %Python library
+            [path, ~, ~] = fileparts(mfilename('fullpath'));
+            pyglob = py.dict(pyargs('mat_srcpath', path,'serialNum',serialNum));
+
+            %Load python library
             try
-                py.exec('import NIDAQReadWriteLib',pyglob);
+                py.exec('import NIUSBDAQ', pyglob);
             catch
-                py.exec('import sys;sys.path.append(mat_srcpath)',pyglob)
-                py.exec('import NIDAQReadWriteLib',pyglob);
+                py.exec('import sys; sys.path.append(mat_srcpath)', pyglob);
+                py.exec('import NIUSBDAQ', pyglob);
             end
-            
-            %asks NIDAQReadWriteLib how many devices are connected
-            nDevices = int64(py.NIDAQReadWriteLib.numDevices());
-            
-            if numDevs==0
-                disp("Error: no NI USB DAQ devices detected by nidaqmx")
+
+            %Get number of devices connected
+            numDevs = int64(py.NIUSBDAQ.numDevices());
+
+            if numDevs == 0
+                disp('Error: No NI USB DAQ devices connected.')
+                res = [];
+                return
+            end
+
+            %Search for device with given serial number
+            devNumRead = -1;
+            for i = 0:(numDevs - 1)
+                if int64(py.NIUSBDAQ.getSerial(i)) == serialNumRead
+                    devNumRead = i;
+                    break
+                end
+            end
+
+            if devNumRead == -1
+                warning('No device found with given serial number for analog inputs. B field comp is not working.')
                 res = [];
                 return
             end
             
-            devNumX=-1;
-            devNumY=-1;
-            devNumZ=-1;
-            for i = 0:(nDevices-1)
-                if int64(py.NIDAQReadWriteLib.getSerial(i))==serialNums(1)
-                    devNumX=i;
+            %Search for device with given serial number
+            devNumWrite = -1;
+            for i = 0:(numDevs - 1)
+                if int64(py.NIUSBDAQ.getSerial(i)) == serialNumWrite
+                    devNumWrite = i;
                     break
                 end
             end
-            for i = 0:(nDevices-1)
-                if int64(py.NIDAQReadWriteLib.getSerial(i))==serialNums(2)
-                    devNumY=i;
-                    break
-                end
-            end
-            for i = 0:(nDevices-1)
-                if int64(py.NIDAQReadWriteLib.getSerial(i))==serialNums(3)
-                    devNumZ=i;
-                    break
-                end
-            end
-            
-            if devNumX==-1
-                warning("No device found with given serial number for X.")
-            end
-            if devNumY==-1
-                warning("No device found with given serial number for Y.")
-            end
-            if devNumZ==-1
-                warning("No device found with given serial number for Z.")
-            end
-            if (devNumX==-1) | (devNumY==-1) | (devNumZ==-1)
-                res=[];
+
+            if devNumWrite == -1
+                warning('No device found with given serial number for analog outputs. B field comp is not working.')
+                res = [];
                 return
             end
-            
-            devNums=[devNumX;devNumY;devNumZ];
-            
-            res = XYZBFieldCompensator(devNums,serialNums);
-            
+
+            %Generate id from serial number
+            idRead = NIDAQIOHandler.getID(serialNumRead);
+            idWrite = NIDAQIOHandler.getID(serialNumWrite);
+
+            %Check if connection to instrument already exists
+            if isKey(cache, idRead)
+                res = cache(idRead);
+                if ~isempty(res)
+                    res.devNumRead = devNumRead; %Reset device number to located device
+                    return;
+                end
+                delete(res);
+            end
+            if isKey(cache, idWrite)
+                res = cache(idWrite);
+                if ~isempty(res)
+                    res.devNumRead = devNumWrite; %Reset device number to located device
+                    return;
+                end
+                delete(res);
+            end
+
+            %If no connection exists, initialize
+            res = NIDAQIOHandle(devNum, serialNumRead,serialNumWrite);
+
+            %Set optional arguments to overwrite current values
             if ~isempty(varargin)
-                channelSettings=varargin{1};
-                if isa(channelSettings,'struct')
-                    res=res.setChannels(channelSettings);
+                channelSettings = varargin{1};
+                if isa(channelSettings, 'struct')
+                    res = res.setChannels(channelSettings);
                 else
-                    warning("channelSettings must be a struct. Cannot assign input or output channels")
+                    warning('channelSettings input must be a struct')
                 end
             end
-            
-            res.pyglob = py.dict(pyargs("mat_srcpath",path,"serialNums",serialNums,...
-                "devNumX",res.devNumX,"devNumY",res.devNumY,"devNumZ",res.devNumZ,...
-                "inputChannelX",res.inputChannelX,"inputChannelY",res.inputChannelY,...
-                "inputChannelZ",res.inputChannelZ,"outputChannelX",res.outputChannelX,...
-                "outputChannelY",res.outputChannelY,"outputChannelZ",res.outputChannelZ,...
-                "triggerChannelX",res.triggerChannelX,"triggerChannelY",res.triggerChannelY,...
-                "triggerChannelZ",res.triggerChannelZ,"bTrigX",res.bTrigX,...
-                "bTrigY",res.bTrigY,"bTrigZ",res.bTrigZ);
+
+            %Updated global python environment
+            res.pyglob = py.dict(pyargs('mat_srcpath', path,'serialNumRead',serialNumRead,...
+                'serialNumWrite',serialNumWrite,'devNumRead',devNumRead,...
+                'devNumWrite',devNumWrite,'inputChannel',inputChannel,'outputChannel',...
+                outputChannel,'triggerChannel',triggerChannel,...
+                'bTrigger',bTrigger));
         end
-            
+
+        function id = getID(serialNum)
+            %Generate unique device id from serial number
+            id = sprintf('NI-USB-DAQ:serial#%d', serialNum);
+        end
     end
+
 end
 
