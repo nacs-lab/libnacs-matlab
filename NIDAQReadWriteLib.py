@@ -7,6 +7,7 @@ import numpy as np
 import time
 import sys,code,time,scipy,pickle
 import matplotlib.pyplot as plt
+from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor
 
 
@@ -63,7 +64,11 @@ def dcoutNow(devNum,channelName,voltage,bTrig = 0, trigChan = "PFI0",fileName="M
         task.start()
         if bTrig:
             task.wait_until_done()
-        saveVariable(voltage,fileName,"Most Recent Output Voltage on "+channelAddr)
+        saveVariable([voltage,datetime.now().time()],fileName,"Most Recent Output Voltage on "+channelAddr)
+def getMostRecentDCOut(devNum,channelName,fileName="MostRecentOutputVoltageOn"):
+    fileName+str(devNum+1)+channelName+".pkl"
+    voltageAndTime=loadVariable(fileName)
+    return voltageAndTime
 def arbitraryoutNow(devNum,channelName,voltagelist,outputRate,outputTime,bTrig = 0, trigChan = "PFI0"):
     assert len(voltagelist)==int(outputRate*outputTime)
 
@@ -123,7 +128,7 @@ def acquireNow(devNum,channelName, sampleRate,sampleTime, bTrig = 0, trigChan = 
         if bTrig:
             task.wait_until_done(timeout=30)
         samples = task.read(number_of_samples_per_channel=nSamples, timeout = 1.5*sampleTime)
-    saveVariable(samples,fileName,"Most Recent Voltage Reading on "+channelAddr)
+    saveVariable([samples,datetime.now().time()],fileName,"Most Recent Voltage Reading on "+channelAddr)
     return samples
 
 def dcoutDelayed(taskName,devNum,channelName,voltage,bTrig = 0, trigChan = "PFI0"):
