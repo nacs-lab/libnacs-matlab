@@ -1,22 +1,22 @@
 classdef NIDAQIOHandler
     %Created by Avery Parr in September 2020. Based on NIDAQUSBWrapper.m
     %code.
-    
-    %Set of Matlab functions to be called before and after sequences to 
+
+    %Set of Matlab functions to be called before and after sequences to
     %access a National Instruments USB DAQ, through the nidaqmx Python
     %package. This package must be installed, and the accompanying code
-    %NIDAQReadWriteLib.py must also be available. 
-    
+    %NIDAQReadWriteLib.py must also be available.
+
     properties(Constant, Access=private)
         cache = containers.Map()
     end
-    
+
     properties(SetAccess = private)
         serialNumRead;
         serialNumWrite;
         pyglob;
     end
-    
+
     properties
         devNumRead=0;
         devNumWrite=0;
@@ -27,7 +27,7 @@ classdef NIDAQIOHandler
     end
     methods
         function res = setChannels(self,channelSettings)
-            %Allows for setting DAQ input and output channels. 
+            %Allows for setting DAQ input and output channels.
             %channelSettings is a struct with the following fields:
             %1) devNum, int: number of device on which reading and writing
             %   takes place. If specified, will overwrite devNumRead and
@@ -35,7 +35,7 @@ classdef NIDAQIOHandler
             %2) devNumRead, int: number of device on which voltage reading
             %   takes place.
             %3) devNumWrite, int: number of device on which analog out
-            %   signals are relayed. 
+            %   signals are relayed.
             %4) inputChannel, string: name of channel on which to read
             %   voltages. E.g. "ai0"
             %5) outputChannel, string: name of channel on which analog
@@ -45,7 +45,7 @@ classdef NIDAQIOHandler
             %7) bTrigger, bool: determines whether read measurements
             %   will be autostarted or started on triger.
             %   0 causes tasks to run as soon as started; 1
-            %   corresponds to tasks starting only on trigger signal. 
+            %   corresponds to tasks starting only on trigger signal.
             if isfield(channelSettings,"devNumRead")
                 self.devNumRead=channelSettings.devNumRead;
             end
@@ -70,7 +70,7 @@ classdef NIDAQIOHandler
             end
             res=self;
         end
-        
+
         function taskname = setupDelayedRead(self,readname,sampleRate,sampleTime,varargin)
             if ~isempty(varargin)
                 channelSettings = varargin{1};
@@ -100,7 +100,7 @@ classdef NIDAQIOHandler
             end
             py.NIDAQReadWriteLib.dcoutNow(self.devNumWrite,self.outputChannel,v);
             newvolts = v;
-        end   
+        end
     end
     methods(Access = private)
         function self = NIUSBDAQWrapper(devNum,serialNumRead,serialNumWrite)
@@ -122,7 +122,7 @@ classdef NIDAQIOHandler
             %   for analog inputs
             %   serialNumWrite, int: Serial number of USB DAQ to connect to
             %   for analog outputs
-            %   
+            %
             %   channelSettings is a struct with the following fields:
             %       1) devNum, int: number of device on which reading and writing
             %           takes place. If specified, will overwrite devNumRead and
@@ -130,7 +130,7 @@ classdef NIDAQIOHandler
             %       2) devNumRead, int: number of device on which voltage reading
             %           takes place.
             %       3) devNumWrite, int: number of device on which analog out
-            %           signals are relayed. 
+            %           signals are relayed.
             %       4) inputChannel, string: name of channel on which to read
             %           voltages. E.g. "ai0"
             %       5) outputChannel, string: name of channel on which analog
@@ -140,7 +140,7 @@ classdef NIDAQIOHandler
             %       7) bTrigger, bool: determines whether read measurements
             %           will be autostarted or started on triger.
             %           0 causes tasks to run as soon as started; 1
-            %           corresponds to tasks starting only on trigger signal. 
+            %           corresponds to tasks starting only on trigger signal.
 
             cache = NIUSBDAQWrapper.cache;
 
@@ -180,7 +180,7 @@ classdef NIDAQIOHandler
                 res = [];
                 return
             end
-            
+
             %Search for device with given serial number
             devNumWrite = -1;
             for i = 0:(numDevs - 1)
