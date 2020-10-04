@@ -10,7 +10,7 @@ classdef XYZBFieldComp < handle
         
         xsettings=struct("serialNumRead",32290082,"serialNumWrite",32290082,"devNum",0,"inputChannel","ai0","outputChannel","ao0","triggerChannel","PFI0",...
             "bTrigger",1);
-        ysettings=struct("serialNumRead",32290082,"serialNumWrite",32290082,"devNum",0,"inputChannel","ai1","outputChannel","ao1","triggerChannel","PFI0",...
+        ysettings=struct("serialNumRead",32290082,"serialNumWrite",32290082,"devNum",0,"inputChannel","ai1","outputChannel","ao1","triggerChannel","PFI1",...
             "bTrigger",1);
         zsettings=struct("serialNumRead",32290073,"serialNumWrite",32290073,"devNum",1,"inputChannel","ai0","outputChannel","ao0","triggerChannel","PFI0",...
             "bTrigger",1);
@@ -92,6 +92,21 @@ classdef XYZBFieldComp < handle
                 if isfield(settings,"zsettings")
                     self.zsettings=settings.zsettings;
                 end
+                if isfield(settings,"desiredBX")
+                    self.desiredBX = settings.desiredBX;
+                end
+                if isfield(settings,"desiredBY")
+                    self.desiredBY = settings.desiredBY;
+                end
+                if isfield(settings, "desiredBZ")
+                    self.desiredBZ = settings.desiredBZ;
+                end
+                if isfield(settings,"inputVoltageToBConversion")
+                    self.inputVoltageToBConversion = settings.inputVoltageToBConversion;
+                end
+                if isfield(settings, "outputVoltageToBConversion")
+                    self.outputVoltageToBConversion = settings.outputVoltageToBConversion;
+                end
             else
                 warning("settings must be a struct")
             end
@@ -117,6 +132,21 @@ classdef XYZBFieldComp < handle
                 end
                 if isfield(settings,"zsettings")
                     self.zsettings=settings.zsettings;
+                end
+                if isfield(settings,"desiredBX")
+                    self.desiredBX = settings.desiredBX;
+                end
+                if isfield(settings,"desiredBY")
+                    self.desiredBY = settings.desiredBY;
+                end
+                if isfield(settings, "desiredBZ")
+                    self.desiredBZ = settings.desiredBZ;
+                end
+                if isfield(settings,"inputVoltageToBConversion")
+                    self.inputVoltageToBConversion = settings.inputVoltageToBConversion;
+                end
+                if isfield(settings, "outputVoltageToBConversion")
+                    self.outputVoltageToBConversion = settings.outputVoltageToBConversion;
                 end
             else
                 warning("settings must be a struct")
