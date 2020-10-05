@@ -6,7 +6,7 @@ classdef NIDAQIOHandler
     %access a National Instruments USB DAQ, through the nidaqmx Python
     %package. This package must be installed, and the accompanying code
     %NIDAQReadWriteLib.py must also be available.
-    
+
     properties(Constant, Access=private)
         cache = containers.Map()
     end
@@ -99,10 +99,12 @@ classdef NIDAQIOHandler
         end
     end
     methods
-        function self = NIDAQIOHandler(serialNumRead,serialNumWrite)
+        function self = NIDAQIOHandler(devNumRead,devNumWrite,serialNumRead,serialNumWrite)
             %NIDAQIOHandler; Construct an instance of this class
             self.serialNumRead = serialNumRead;
             self.serialNumWrite = serialNumWrite;
+            self.devNumRead = devNumRead;
+            self.devNumWrite = devNumWrite;
         end
     end
     methods(Static)
@@ -214,7 +216,8 @@ classdef NIDAQIOHandler
             end
 
             %If no connection exists, initialize
-            res = NIDAQIOHandler(serialNumRead,serialNumWrite);
+            res = NIDAQIOHandler(devNumRead,devNumWrite,...
+                serialNumRead,serialNumWrite);
 
             %Set optional arguments to overwrite current values
             if ~isempty(varargin)
