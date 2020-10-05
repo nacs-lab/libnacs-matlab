@@ -7,8 +7,11 @@ import numpy as np
 import time
 import sys,code,time,scipy,pickle
 import matplotlib.pyplot as plt
-from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor
+
+def doAThing():
+    print("Did a thing.")
+
 
 
 def saveVariable(variable, fileName,desciption="No Description Given"):
@@ -27,7 +30,7 @@ def initDAQ(devNum = 0):
     #Arguments:
     #    devNum: the number of the NI DAQ device to connect to. If only connected
     #        device, devNum = 0, otherwise number in order of connections
-
+    devNum = int(devNum)
     system = nidaqmx.system.System.local()
     devs = system.devices
     try:
@@ -40,6 +43,8 @@ def initDAQ(devNum = 0):
          raise err
 
 def dcoutNow(devNum,channelName,voltage,bTrig = 0, trigChan = "PFI0",fileName="MostRecentOutputVoltageOn"):
+    bTrig = int(bTrig)
+    devNum = int(devNum)
     try:
          daq = initDAQ(devNum)
     except IndexError:
@@ -64,12 +69,12 @@ def dcoutNow(devNum,channelName,voltage,bTrig = 0, trigChan = "PFI0",fileName="M
         task.start()
         if bTrig:
             task.wait_until_done()
-        saveVariable([voltage,datetime.now().time()],fileName,"Most Recent Output Voltage on "+channelAddr)
-def getMostRecentDCOut(devNum,channelName,fileName="MostRecentOutputVoltageOn"):
-    fileName+str(devNum+1)+channelName+".pkl"
-    voltageAndTime=loadVariable(fileName)
-    return voltageAndTime
+        saveVariable(voltage,fileName,"Most Recent Output Voltage on "+channelAddr)
+    return 0
 def arbitraryoutNow(devNum,channelName,voltagelist,outputRate,outputTime,bTrig = 0, trigChan = "PFI0"):
+    devNum=int(devNum)
+    outputRate=int(outputRate)
+    bTrig=int(bTrig)
     assert len(voltagelist)==int(outputRate*outputTime)
 
     try:
@@ -104,6 +109,9 @@ def acquireNow(devNum,channelName, sampleRate,sampleTime, bTrig = 0, trigChan = 
 
 
     #Check NI DAQ connected and reset
+    devNum = int(devNum)
+    bTrig = int(bTrig)
+    sampleRate = int(sampleRate)
     try:
          daq = initDAQ(devNum)
     except IndexError:
@@ -128,7 +136,7 @@ def acquireNow(devNum,channelName, sampleRate,sampleTime, bTrig = 0, trigChan = 
         if bTrig:
             task.wait_until_done(timeout=30)
         samples = task.read(number_of_samples_per_channel=nSamples, timeout = 1.5*sampleTime)
-    saveVariable([samples,datetime.now().time()],fileName,"Most Recent Voltage Reading on "+channelAddr)
+    saveVariable(samples,fileName,"Most Recent Voltage Reading on "+channelAddr)
     return samples
 
 def dcoutDelayed(taskName,devNum,channelName,voltage,bTrig = 0, trigChan = "PFI0"):
@@ -156,6 +164,10 @@ def dcoutDelayed(taskName,devNum,channelName,voltage,bTrig = 0, trigChan = "PFI0
         task.start()
         task.save(save_as=taskName,overwrite_existing_task=True)
 def arbitraryoutDelayed(taskName,devNum,channelName,voltagelist,outputRate,outputTime,bTrig = 0, trigChan = "PFI0"):
+    devNum = int(devNum)
+    outputRate = int(outputRate)
+    bTrig = int(bTrig)
+    
     assert len(voltagelist)==int(outputRate*outputTime)
 
     try:
@@ -190,6 +202,8 @@ def acquireDelayed(taskName,devNum,channelName, sampleRate,sampleTime, bTrig = 0
 
 
     #Check NI DAQ connected and reset
+    devNum = int(devNum)
+    sampleRate = int(sampleRate)
     try:
          daq = initDAQ(devNum)
     except IndexError:
@@ -205,22 +219,26 @@ def acquireDelayed(taskName,devNum,channelName, sampleRate,sampleTime, bTrig = 0
 
         #Record a fixed number of samples on ai0 then return
         nSamples = int(sampleTime*sampleRate)
-        task.timing.cfg_samp_clk_timing(sampleRate, sample_mode=AcquisitionType.FINITE, samps_per_chan=nSamples)
+        task.timing.cfg_samp_clk_timing(sampleRate, samps_per_chan=nSamples,sample_mode=nidaqmx.constants.AcquisitionType.FINITE)
         if bTrig:
             task.triggers.start_trigger.cfg_dig_edge_start_trig(trigChan, Edge.RISING)
-
-        task.start()
-        task.save(save_as=taskName,overwrite_existing_task=True)
+        else:
+            task.start()
+        #task.save(save_as=taskName,overwrite_existing_task=True)
+        return task
 
 def readOutTask(taskName,nSamples):
+    nSamples = int(nSamples)
     task=nidaqmx.system.storage.persisted_task.PersistedTask(taskName).load()
     assert task.is_task_done()==True
-    samples = task.read(number_of_samples_per_channel=nSamples,timeout=15)
+    samples = task.read(number_of_samples_per_channel=nSamples,timeout=5)
     task.stop()
     task.close()
     return samples
 
 def getSerial(devNum):
+    devNum = int(devNum)
+
     #Return the serial number for device number devNum
     daq = initDAQ(devNum)
     if daq == 0:
@@ -237,13 +255,17 @@ def numDevices():
     devs = system.devices
     return len(devs)
 
+def acquireNowParallel(tpe,devNum,channelName, sampleRate,sampleTime, bTrig = 0, trigChan = "PFI0"):
+    print("ok")
+    future = tpe.submit(acquireNow,devNum,channelName,sampleRate,sampleTime,bTrig,trigChan)
+    return future
 
 #acquireDelayed("ai0ReadingTask",1,"ai0",300,2,True)
 
-code.interact(local=locals())
+#print(getSerial(0))
+#print(getSerial(1))
 
-
-
+#syst=nidaqmx.system.System.local()
 
 #code.interact(local=locals())
 
