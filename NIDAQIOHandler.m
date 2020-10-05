@@ -7,6 +7,14 @@ classdef NIDAQIOHandler
     %package. This package must be installed, and the accompanying code
     %NIDAQReadWriteLib.py must also be available.
 
+    properties(Constant)
+        defaultXSettings=struct("devNumRead",0,"devNumWrite",0,"inputChannel","ai0",...
+            "outputChannel","ao0","triggerChannel","PFI0","bTrigger",1);
+        defaultYSettings=struct("devNumRead",1,"devNumWrite",1,"inputChannel","ai0",...
+            "outputChannel","ao0","triggerChannel","PFI0","bTrigger",1);
+        defaultZSettings=struct("devnumRead",1,"devNumWrite",1,"inputChannel","ai1",...
+            "outputChannel","ao1","triggerChannel","PFI1","bTrigger",1);
+    end
     properties(Constant, Access=private)
         cache = containers.Map()
     end
@@ -18,14 +26,29 @@ classdef NIDAQIOHandler
     end
 
     properties
-        devNumRead=0;
-        devNumWrite=0;
+        devNumRead;
+        devNumWrite;
         inputChannel="ai0";
         outputChannel="ao0";
         triggerChannel="PFI0";
+        threadpool=py.NIDAQReadWriteLib.ThreadPoolExecutor(2)
+        lastFuture;
         bTrigger=1;
     end
     methods
+        function volts=getLastVoltages(self)
+            if ~self.lastFuture.done()
+                warning("Data acquisition has either not completed or not been triggered");
+                volts= [];
+                return
+            end
+            volts = self.lastFuture.result();
+        end
+        function self=asyncAcquire(self,sampleRate,sampleTime)
+            f=py.NIDAQReadWriteLib.acquireNowParallel(self.threadpool,self.devNumRead,self.inputChannel,...
+                sampleRate,sampleTime,self.bTrigger,self.triggerChannel);
+            self.lastFuture=f;
+        end
         function res = setChannels(self,channelSettings)
             %Allows for setting DAQ input and output channels.
             %channelSettings is a struct with the following fields:
@@ -70,25 +93,6 @@ classdef NIDAQIOHandler
             end
             res=self;
         end
-
-        function taskname = setupDelayedRead(self,readname,sampleRate,sampleTime,varargin)
-            if ~isempty(varargin)
-                channelSettings = varargin{1};
-                if isa(channelSettings,'struct')
-                    self.setChannels(channelSettings)
-                else
-                    warning("channelSettings input must be a struct")
-                end
-            end
-            py.NIDAQReadWriteLib.acquireDelayed(readname,self.devNumRead,...
-                self.inputChannel,sampleRate,sampleTime,self.bTrig,...
-                self.triggerChannel)
-            taskname = readname;
-        end
-        function res = aiRead(taskName,nSamples)
-            reads=cell2mat(cell(py.NIDAQReadWriteLib.readOutTask(taskName,nSamples)));
-            res = reads;
-        end
         function newvolts = aoVoltage(self,v,varargin)
             if ~isempty(varargin)
                 channelSettings = varargin{1};
@@ -102,17 +106,16 @@ classdef NIDAQIOHandler
             newvolts = v;
         end
     end
-    methods(Access = private)
-        function self = NIUSBDAQWrapper(devNum,serialNumRead,serialNumWrite)
-            %NIUSBDAQWrapper Construct an instance of this class
-            self.devNum = devNum;
+    methods
+        function self = NIDAQIOHandler(serialNumRead,serialNumWrite)
+            %NIDAQIOHandler; Construct an instance of this class
             self.serialNumRead = serialNumRead;
             self.serialNumWrite = serialNumWrite;
         end
     end
     methods(Static)
-        function dropAll()%Delete NIUSBDAQWrapper connection from memory
-            remove(NIUSBDAQWrapper.cache, keys(NIUSBDAQWrapper.cache));
+        function dropAll()%Delete connection from memory
+            remove(NIDAQIOHandler.cache, keys(NIDAQIOHandler.cache));
         end
 
         function res = get(serialNumRead,serialNumWrite, varargin)
@@ -142,23 +145,23 @@ classdef NIDAQIOHandler
             %           0 causes tasks to run as soon as started; 1
             %           corresponds to tasks starting only on trigger signal.
 
-            cache = NIUSBDAQWrapper.cache;
+            cache = NIDAQIOHandler.cache;
 
             %Get path of class definition, which should be in same place as
             %Python library
             [path, ~, ~] = fileparts(mfilename('fullpath'));
-            pyglob = py.dict(pyargs('mat_srcpath', path,'serialNum',serialNum));
+            pyglob = py.dict(pyargs('mat_srcpath', path,'serialNumRead',serialNumRead,'serialNumWrite',serialNumWrite));
 
             %Load python library
             try
-                py.exec('import NIUSBDAQ', pyglob);
+                py.exec('from NIDAQReadWriteLib import *', pyglob);
             catch
                 py.exec('import sys; sys.path.append(mat_srcpath)', pyglob);
-                py.exec('import NIUSBDAQ', pyglob);
+                py.exec('from NIDAQReadWriteLib import *', pyglob);
             end
 
             %Get number of devices connected
-            numDevs = int64(py.NIUSBDAQ.numDevices());
+            numDevs = int64(py.NIDAQReadWriteLib.numDevices());
 
             if numDevs == 0
                 disp('Error: No NI USB DAQ devices connected.')
@@ -169,7 +172,7 @@ classdef NIDAQIOHandler
             %Search for device with given serial number
             devNumRead = -1;
             for i = 0:(numDevs - 1)
-                if int64(py.NIUSBDAQ.getSerial(i)) == serialNumRead
+                if int64(py.NIDAQReadWriteLib.getSerial(i)) == serialNumRead
                     devNumRead = i;
                     break
                 end
@@ -184,7 +187,7 @@ classdef NIDAQIOHandler
             %Search for device with given serial number
             devNumWrite = -1;
             for i = 0:(numDevs - 1)
-                if int64(py.NIUSBDAQ.getSerial(i)) == serialNumWrite
+                if int64(py.NIDAQReadWriteLib.getSerial(i)) == serialNumWrite
                     devNumWrite = i;
                     break
                 end
@@ -212,14 +215,14 @@ classdef NIDAQIOHandler
             if isKey(cache, idWrite)
                 res = cache(idWrite);
                 if ~isempty(res)
-                    res.devNumRead = devNumWrite; %Reset device number to located device
+                    res.devNumWrite = devNumWrite; %Reset device number to located device
                     return;
                 end
                 delete(res);
             end
 
             %If no connection exists, initialize
-            res = NIDAQIOHandle(devNum, serialNumRead,serialNumWrite);
+            res = NIDAQIOHandler(serialNumRead,serialNumWrite);
 
             %Set optional arguments to overwrite current values
             if ~isempty(varargin)
@@ -233,10 +236,7 @@ classdef NIDAQIOHandler
 
             %Updated global python environment
             res.pyglob = py.dict(pyargs('mat_srcpath', path,'serialNumRead',serialNumRead,...
-                'serialNumWrite',serialNumWrite,'devNumRead',devNumRead,...
-                'devNumWrite',devNumWrite,'inputChannel',inputChannel,'outputChannel',...
-                outputChannel,'triggerChannel',triggerChannel,...
-                'bTrigger',bTrigger));
+                'serialNumWrite',serialNumWrite));
         end
 
         function id = getID(serialNum)
