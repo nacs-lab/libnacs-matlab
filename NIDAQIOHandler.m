@@ -6,18 +6,7 @@ classdef NIDAQIOHandler
     %access a National Instruments USB DAQ, through the nidaqmx Python
     %package. This package must be installed, and the accompanying code
     %NIDAQReadWriteLib.py must also be available.
-
-    properties(Constant)
-        defaultXSettings=struct("serialNumRead",32290082,"serialNumWrite",32290082,...
-            "devNumRead",0,"devNumWrite",0,"inputChannel","ai0",...
-            "outputChannel","ao0","triggerChannel","PFI0","bTrigger",1);
-        defaultYSettings=struct("serialNumread",32290073,"serialNumWrite",32290073,...
-            "devNumRead",1,"devNumWrite",1,"inputChannel","ai0",...
-            "outputChannel","ao0","triggerChannel","PFI0","bTrigger",1);
-        defaultZSettings=struct("serialNumread",32290073,"serialNumWrite",32290073,...
-            "devnumRead",1,"devNumWrite",1,"inputChannel","ai1",...
-            "outputChannel","ao1","triggerChannel","PFI1","bTrigger",1);
-    end
+    
     properties(Constant, Access=private)
         cache = containers.Map()
     end
