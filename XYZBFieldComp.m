@@ -207,7 +207,9 @@ classdef XYZBFieldComp < handle
             settings.serNumZ=serNumZ;
             res=XYZBFieldComp(settings);
         end
-            
+        function dropAll()%Delete connection from memory
+            remove(XYZBFieldComp.cache, keys(XYZBFieldComp.cache));
+        end    
         
     end
 end
