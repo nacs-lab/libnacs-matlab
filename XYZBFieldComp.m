@@ -1,37 +1,43 @@
 classdef XYZBFieldComp < handle
     %Intended to compensate for changing magnetic fields within an
     %experiment. 
-    
+    properties(Constant)
+        defaultXSettings=struct("serialNumRead",32290082,"serialNumWrite",32290082,...
+            "devNumRead",0,"devNumWrite",0,"inputChannel","ai0",...
+            "outputChannel","ao0","triggerChannel","PFI0","bTrigger",0);
+        defaultYSettings=struct("serialNumread",32290073,"serialNumWrite",32290073,...
+            "devNumRead",1,"devNumWrite",1,"inputChannel","ai0",...
+            "outputChannel","ao0","triggerChannel","PFI0","bTrigger",0);
+        defaultZSettings=struct("serialNumread",32290073,"serialNumWrite",32290073,...
+            "devnumRead",1,"devNumWrite",1,"inputChannel","ai1",...
+            "outputChannel","ao1","triggerChannel","PFI1","bTrigger",0);
+    end
     properties
-        
-        serNumX;
-        serNumY;
-        serNumZ;
-        
-        xsettings=struct("serialNumRead",32290082,"serialNumWrite",32290082,"devNum",0,"inputChannel","ai0","outputChannel","ao0","triggerChannel","PFI0",...
-            "bTrigger",1);
-        ysettings=struct("serialNumRead",32290082,"serialNumWrite",32290082,"devNum",0,"inputChannel","ai1","outputChannel","ao1","triggerChannel","PFI1",...
-            "bTrigger",1);
-        zsettings=struct("serialNumRead",32290073,"serialNumWrite",32290073,"devNum",1,"inputChannel","ai0","outputChannel","ao0","triggerChannel","PFI0",...
-            "bTrigger",1);
-        
         sampleRate=1000; %1/s
         sampleTime=0.3; %s
         waitTime=5; %s
         lastReadTime=0; %
+        
+        serNumX;
+        serNumY;
+        serNumZ;
         
         lastVX = 0;
         lastVY = 0;
         lastVZ = 0;
         
         %linear conversion factors between input and output voltages and
-        %the B fields (in G) they represent. Calibrated.
-        inputVoltageToBConversion;
-        outputVoltageToBConversion;
+        %the B fields (in mG) they represent. Calibrated.
+        inputVoltageToBConversion=1;
+        outputVoltageToBConversion=1;
         
-        desiredBX = 8.8; %G
+        desiredBX = 0; %mG
         desiredBY = 0;
         desiredBZ = 0;
+        
+        MAXIMUM_COMP=30 %mG
+        
+        recentlySetUp=0;
         
         NIDAQX;
         NIDAQY;
@@ -39,35 +45,48 @@ classdef XYZBFieldComp < handle
     end
     
     methods
-        function readAndCompensate(self,numSamples)
-            if testRecent()
-                recentBXList=self.NIDAQX.aiRead("xread",numSamples)/self.inputVoltageToBConversion;
-                recentBYList=self.NIDAQY.aiRead("yread",numSamples)/self.inputVoltageToBConversion;
-                recentBZList=self.NIDAQZ.aiRead("zread",numSamples)/self.inputVoltageToBConversion;
+        function res = readAndCompensate(self)
+            if self.recentlySetUp
+                recentBXList=self.NIDAQX.getLastVoltages()/self.inputVoltageToBConversion;
+                recentBYList=self.NIDAQY.getLastVoltages()/self.inputVoltageToBConversion;
+                recentBZList=self.NIDAQZ.getLastVoltages()/self.inputVoltageToBConversion;
                 
-                newVX = getOptimalOutputVoltage(mean(recentBXList),self.desiredBX,self.lastVX);
-                newVY = getOptimalOutputVoltage(mean(recentBYList),self.desiredBY,self.lastVY);
-                newVZ = getOptimalOutputVoltage(mean(recentBZList),self.desiredBZ,self.lastVZ);
+                newVX = self.getOptimalOutputVoltage(mean(recentBXList),self.desiredBX,self.lastVX);
+                newVY = self.getOptimalOutputVoltage(mean(recentBYList),self.desiredBY,self.lastVY);
+                newVZ = self.getOptimalOutputVoltage(mean(recentBZList),self.desiredBZ,self.lastVZ);
                 
-                self.lastVX = self.NIDAQ.aoVoltage(newVX);
-                self.lastVY = self.NIDAQ.aoVoltage(newVY);
-                self.lastVZ = self.NIDAQ.aoVoltage(newVZ);
+                self.lastVX = self.NIDAQX.aoVoltage(newVX);
+                self.lastVY = self.NIDAQY.aoVoltage(newVY);
+                self.lastVZ = self.NIDAQZ.aoVoltage(newVZ);
                 
+                res=self;
             end
         end
         
-        function outputVoltage = getOptimalOutputVoltage(CurrentBField,desiredBField,currentVoltage)
-            deltaB=CurrentBField-desiredBField;
+        function outputVoltage = getOptimalOutputVoltage(self,CurrentBField,desiredBField,currentVoltage)
+            deltaB=desiredBField-CurrentBField;
+            if abs(deltaB)>self.MAXIMUM_COMP
+                warning("XYZBField is suggesting a change in B field larger than the preset maximum. Resetting compensating voltage to 0")
+                outputVoltage=0;
+                return
+            end
             deltaV = deltaB*self.outputVoltageToBConversion;
             outputVoltage = currentVoltage+deltaV;
+            if abs(outputVoltage/self.outputVoltageToBConversion) > self.MAXIMUM_COMP
+                warning("XYZBField is suggesting that total compensation exceed the preset maximum. Resetting compensating voltage to 0.")
+                outputVoltage=0;
+            end
         end
         
-        function initializeCompensation(self)
-            if testRecent()
-                self.NIDAQX.setupDelayedRead("xread",self.sampleRate,self.sampleTime,self.xsettings);
-                self.NIDAQY.setupDelayedRead("yread",self.sampleRate,self.sampleTime,self.ysettings);
-                self.NIDAQZ.setupDelayedRead("zread",self.sampleRate,self.sampleTime,self.zsettings);
+        function res = initializeCompensation(self)
+            if self.testRecent()
+                self.lastReadTime=now;
+                self.recentlySetUp=1;
+                self.NIDAQX=self.NIDAQX.asyncAcquire(self.sampleRate,self.sampleTime);
+                self.NIDAQY=self.NIDAQY.asyncAcquire(self.sampleRate,self.sampleTime);
+                self.NIDAQZ=self.NIDAQZ.asyncAcquire(self.sampleRate,self.sampleTime);
             end 
+            res = self;
         end
         function shouldTest = testRecent(self)
             shouldTest= (now-self.lastReadTime)/self.waitTime/86400>1;
@@ -83,15 +102,6 @@ classdef XYZBFieldComp < handle
                 if isfield(settings,"waitTime")
                     self.waitTime=settings.waitTime;
                 end
-                if isfield(settings,"xsettings")
-                    self.xsettings=settings.xsettings;
-                end
-                if isfield(settings,"ysettings")
-                    self.ysettings=settings.ysettings;
-                end
-                if isfield(settings,"zsettings")
-                    self.zsettings=settings.zsettings;
-                end
                 if isfield(settings,"desiredBX")
                     self.desiredBX = settings.desiredBX;
                 end
@@ -106,6 +116,15 @@ classdef XYZBFieldComp < handle
                 end
                 if isfield(settings, "outputVoltageToBConversion")
                     self.outputVoltageToBConversion = settings.outputVoltageToBConversion;
+                end
+                if isfield(settings, "xsettings")
+                    self.NIDAQX.setChannels(settings.xsettings);
+                end
+                if isfield(settings, "ysettings")
+                    self.NIDAQY.setChannels(settings.ysettings);
+                end
+                if isfield(settings,"zsettings")
+                    self.NIDAQZ.setChannels(settings.zsettings);
                 end
             else
                 warning("settings must be a struct")
@@ -123,15 +142,6 @@ classdef XYZBFieldComp < handle
                 end
                 if isfield(settings,"waitTime")
                     self.waitTime=settings.waitTime;
-                end
-                if isfield(settings,"xsettings")
-                    self.xsettings=settings.xsettings;
-                end
-                if isfield(settings,"ysettings")
-                    self.ysettings=settings.ysettings;
-                end
-                if isfield(settings,"zsettings")
-                    self.zsettings=settings.zsettings;
                 end
                 if isfield(settings,"desiredBX")
                     self.desiredBX = settings.desiredBX;
@@ -172,13 +182,33 @@ classdef XYZBFieldComp < handle
                 self=[];
                 return
             end
-            self.NIDAQX=NIDAQIOHandler.get(self.serNumX,self.serNumX,self.xsettings);
-            self.NIDAQY=NIDAQIOHandler.get(self.serNumY,self.serNumY,self.ysettings);
-            self.NIDAQZ=NIDAQIOHandler.get(self.serNumZ,self.serNumZ,self.zsettings);
-            
+            if isfield(settings,"xsettings")
+                self.NIDAQX=NIDAQIOHandler.get(self.serNumX,self.serNumX,settings.xsettings);
+            else
+                self.NIDAQX=NIDAQIOHandler.get(self.serNumX,self.serNumX,self.defaultXSettings);
+            end
+            if isfield(settings,"ysettings")
+                self.NIDAQY=NIDAQIOHandler.get(self.serNumY,self.serNumY,settings.ysettings);
+            else
+                self.NIDAQY=NIDAQIOHandler.get(self.serNumY,self.serNumY,self.defaultYSettings);
+            end
+            if isfield(settings,"zsettings")
+                self.NIDAQZ=NIDAQIOHandler.get(self.serNumZ,self.serNumZ,settings.zsettings);
+            else
+                self.NIDAQZ=NIDAQIOHandler.get(self.serNumZ,self.serNumZ,self.defaultZSettings);
+            end
         end
         
+    end
+    methods(Static)
+        function res = get(settings,serNumX,serNumY,serNumZ)
+            settings.serNumX=serNumX;
+            settings.serNumY=serNumY;
+            settings.serNumZ=serNumZ;
+            res=XYZBFieldComp(settings);
+        end
             
+        
     end
 end
 
