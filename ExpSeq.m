@@ -210,13 +210,13 @@ classdef ExpSeq < ExpSeqBase
                 end
             end
             fields = fieldnames(self.cond_seqs);
-            %if ~isempty(fields)
-            %    for i = 1:length(fields)
-            %        field = fields{i};
-            %        self.cond_seqs.(field).generate();
-            %    end
-            %end
-            %check_branching_tree_complete(self,fields);
+            if ~isempty(fields)
+                for i = 1:length(fields)
+                    field = fields{i};
+                    self.cond_seqs.(field).generate();
+                end
+            end
+            check_branching_tree_complete(self,fields);
         end
 
         function run_async(self)
@@ -230,28 +230,6 @@ classdef ExpSeq < ExpSeqBase
             end
             generate(self);
             run_real(self);
-            if isnumeric(self.run_after_main_seq)&&self.run_after_main_seq==-1
-                state=-1;
-            elseif isa(self.run_after_main_seq,'string')||isa(self.run_after_main_seq,'char')
-                state=self.run_after_main_seq;
-            else
-                state = self.run_after_main_seq(self);
-            end
-            while ~(state ==-1)
-                current_seq=self.cond_seqs.(state);
-                disp(state)
-                generate(current_seq);
-                run_real(current_seq);
-                if self.branch_funcs.(state)==-1
-                    state=-1;
-                elseif isa(self.branch_funcs.(state),'char')||isa(self.branch_funcs.(state),'string')
-                    state = self.branch_funcs.(state);
-                else
-                    state = self.branch_funcs.(state)(self);
-                end
-
-            end
-
         end
 
         function run_real(self)
@@ -319,6 +297,27 @@ classdef ExpSeq < ExpSeqBase
             % We'll wait until this time before returning to the caller
             end_after = start_t + totalTime(self) - 5e-3;
             waitFinish(self);
+            if isnumeric(self.run_after_main_seq)&&self.run_after_main_seq==-1
+                state=-1;
+            elseif isa(self.run_after_main_seq,'string')||isa(self.run_after_main_seq,'char')
+                state=self.run_after_main_seq;
+            else
+                state = self.run_after_main_seq(self);
+            end
+            while ~(state ==-1)
+                current_seq=self.cond_seqs.(state);
+                disp(state)
+                run_real(current_seq);
+                waitFinish(current_seq);
+                if self.branch_funcs.(state)==-1
+                    state=-1;
+                elseif isa(self.branch_funcs.(state),'char')||isa(self.branch_funcs.(state),'string')
+                    state = self.branch_funcs.(state);
+                else
+                    state = self.branch_funcs.(state)(self);
+                end
+
+            end
             end_t = now() * 86400;
             if end_t < end_after
                 pause(end_after - end_t);
