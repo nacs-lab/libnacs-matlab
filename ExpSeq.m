@@ -30,6 +30,10 @@ classdef ExpSeq < ExpSeqBase
         % The total time of the sequence is cached before generation.
         cached_total_time = -1;
 
+        cond_seqs=struct();
+        branch_funcs=struct();
+        run_after_main_seq=-1;
+
         %% Channel management:
         % The channel name used when the channel is first added, indexed by channel ID.
         % Only used for plotting.
@@ -137,6 +141,26 @@ classdef ExpSeq < ExpSeqBase
             end
         end
 
+        function hasEndingCommand = check_branching_tree_complete(self,condseqfields)
+            if isnumeric(self.run_after_main_seq)&&self.run_after_main_seq~=-1
+                hasEndingCommand=false;
+            else
+                hasEndingCommand=true;
+            end
+            for i=1:length(condseqfields)
+                field = condseqfields{i};
+                if ~isfield(self.branch_funcs,field)
+                    error('Must have a specified branching behavior after running sequence %s',field);
+                elseif self.branch_funcs.(field)==-1
+                    hasEndingCommand=true;
+                end
+            end
+            if ~hasEndingCommand
+                error('At least one conditional branch must have an order to end the sequence.')
+            end
+        end
+
+
         function generate(self, preserve)
             %% Called after the sequence is fully constructed.
             % Collect global information (e.g. totla time, channel mask)
@@ -185,6 +209,14 @@ classdef ExpSeq < ExpSeqBase
                     self.subSeqs = [];
                 end
             end
+            fields = fieldnames(self.cond_seqs);
+            %if ~isempty(fields)
+            %    for i = 1:length(fields)
+            %        field = fields{i};
+            %        self.cond_seqs.(field).generate();
+            %    end
+            %end
+            %check_branching_tree_complete(self,fields);
         end
 
         function run_async(self)
@@ -198,6 +230,28 @@ classdef ExpSeq < ExpSeqBase
             end
             generate(self);
             run_real(self);
+            if isnumeric(self.run_after_main_seq)&&self.run_after_main_seq==-1
+                state=-1;
+            elseif isa(self.run_after_main_seq,'string')||isa(self.run_after_main_seq,'char')
+                state=self.run_after_main_seq;
+            else
+                state = self.run_after_main_seq(self);
+            end
+            while ~(state ==-1)
+                current_seq=self.cond_seqs.(state);
+                disp(state)
+                generate(current_seq);
+                run_real(current_seq);
+                if self.branch_funcs.(state)==-1
+                    state=-1;
+                elseif isa(self.branch_funcs.(state),'char')||isa(self.branch_funcs.(state),'string')
+                    state = self.branch_funcs.(state);
+                else
+                    state = self.branch_funcs.(state)(self);
+                end
+
+            end
+
         end
 
         function run_real(self)
@@ -348,7 +402,34 @@ classdef ExpSeq < ExpSeqBase
         function name = channelName(self, cid)
             name = self.channel_names{cid};
         end
+        %Adds a new ExpSeq variable which will be generated at
+        %compile-time, and run if ever pointed to by the conditional
+        %branching graph. Gives it a name which should be a string.
+        function sub_seq = newPart(self,name)
+            sub_seq = ExpSeq();
+            if ~isfield(self.cond_seqs,name)
+                self.cond_seqs.(name)=sub_seq;
+            else
+                warning('Overwriting subsequence %s in sub_seq',name);
+            end
+        end
+        %Adds conditional branching behavior. When generated/run, after
+        %running ending_seq, ExpSeq will check what the next sequence to
+        %run should be; it determines this by looking at nextseq.
+        %ending_seq should be a string referencing an already-created
+        %conditional sequence. nextseq can be any of a) -1, signifying that
+        %the sequence should quit after running ending_seq, b) a string
+        %specifying the next sequence that should be run, or c) a function
+        %taking the top-level ExpSeq object as an argument, and which will
+        %output strings specifying which is the next string to be run.
+        function self = addBranchFunc(self, ending_seq,nextseq)
+            if ending_seq==0
+                self.run_after_main_seq=nextseq;
+            else
+                self.branch_funcs.(ending_seq)=nextseq;
+            end
 
+        end
         function vals = getValues(self, dt, varargin)
             total_t = totalTime(self);
             nstep = fld(total_t, dt) + 1;
