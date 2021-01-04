@@ -30,6 +30,8 @@ classdef ExpSeq < ExpSeqBase
         % The total time of the sequence is cached before generation.
         cached_total_time = -1;
 
+        andorconfig;
+
         cond_seqs=struct();
         branch_funcs=struct();
         run_after_main_seq=-1;
