@@ -218,29 +218,6 @@ function params = runSeq(func, varargin)
         cur_seq = seqlist{idx};
         start_t = now() * 86400;
         run_real(cur_seq);
-        %Doing Conditional Branching
-        waitFinish(cur_seq);
-        if isnumeric(cur_seq.run_after_main_seq)&&cur_seq.run_after_main_seq==-1
-                state=-1;
-        elseif isa(cur_seq.run_after_main_seq,'string')||isa(cur_seq.run_after_main_seq,'char')
-            state=cur_seq.run_after_main_seq;
-        else
-            state = cur_seq.run_after_main_seq(cur_seq);
-        end
-        while ~(state ==-1)
-            current_cond_seq=cur_seq.cond_seqs.(state);
-            run_real(current_cond_seq);
-            waitFinish(current_cond_seq);
-            if cur_seq.branch_funcs.(state)==-1
-                state=-1;
-            elseif isa(cur_seq.branch_funcs.(state),'char')||isa(cur_seq.branch_funcs.(state),'string')
-                state = cur_seq.branch_funcs.(state);
-            else
-                state = cur_seq.branch_funcs.(state)(cur_seq);
-            end
-        end
-
-    
         if next_idx > 0
             prepare_seq(next_idx);
         end
