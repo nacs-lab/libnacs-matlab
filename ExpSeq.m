@@ -295,11 +295,16 @@ classdef ExpSeq < ExpSeqBase
                 return;
             end
             start_t = now() * 86400;
+            %tic;
             run_async(self);
+            %a = toc;
             fprintf('Running @%s\n', datestr(now(), 'yyyy/mm/dd HH:MM:SS'));
             % We'll wait until this time before returning to the caller
             end_after = start_t + totalTime(self) - 5e-3;
+            %tic;
             waitFinish(self);
+            %b = toc;
+            %tic;
             if isnumeric(self.run_after_main_seq)&&self.run_after_main_seq==-1
                 state=-1;
             elseif isa(self.run_after_main_seq,'string')||isa(self.run_after_main_seq,'char')
@@ -307,11 +312,17 @@ classdef ExpSeq < ExpSeqBase
             else
                 state = self.run_after_main_seq(self);
             end
+            %d = toc;
+            %e=0;f=0;g=0;
             while ~(state ==-1)
                 current_seq=self.cond_seqs.(state);
-                disp(state)
+                %tic;
                 run_real(current_seq);
+                %e = toc;
+                %tic;
                 waitFinish(current_seq);
+                %f = toc;
+                %tic;
                 if self.branch_funcs.(state)==-1
                     state=-1;
                 elseif isa(self.branch_funcs.(state),'char')||isa(self.branch_funcs.(state),'string')
@@ -319,8 +330,12 @@ classdef ExpSeq < ExpSeqBase
                 else
                     state = self.branch_funcs.(state)(self);
                 end
+                %g = toc;
+                %fprintf('e:%d\nf:%d\ng:%d', e,f,g);
 
             end
+            %c = 0;%toc;
+            %fprintf('run_async:%d\n waitFinish:%d\n condBranch:%d\nd:%d\ne:%d\nf:%d\ng:%d', a, b, c,d,e,f,g);
             end_t = now() * 86400;
             if end_t < end_after
                 pause(end_after - end_t);
