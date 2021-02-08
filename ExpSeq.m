@@ -31,6 +31,7 @@ classdef ExpSeq < ExpSeqBase
         cached_total_time = -1;
 
         andorconfig;
+        images;
 
         cond_seqs=struct();
         branch_funcs=struct();
