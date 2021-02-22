@@ -53,6 +53,7 @@ classdef ExpSeqBase < TimeSeq
                 self.tOffset = toffset;
                 self.config = parent_or_C.config;
                 self.topLevel = parent_or_C.topLevel;
+                self.topLevelCond = parent_or_C.topLevelCond;
                 self.C = parent_or_C.C;
                 % Add to parent
                 ns = parent_or_C.nSubSeqs + 1;

@@ -49,8 +49,11 @@ classdef TimeSeq < handle
         % A `nan` time offset is allowed during the construction representing a
         % floating step/subsequence that can be positioned later.
         tOffset = 0;
-        % The root node (the toplevel sequence).
+        % The root node (the toplevel sequence) of this particular conditional branch.
         topLevel;
+        % The root node of all conditional sequences. 
+        topLevelCond;
+        
         % This is the path from the root node, including self and not including the root.
         % This is computed lazily (see `TimeSeq::globalPath`) and is used to find the
         % closest common ancestor of two nodes (see `ExpSeqBase::offsetDiff`).
