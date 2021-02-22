@@ -32,6 +32,7 @@ classdef ExpSeq < ExpSeqBase
 
         andorconfig;
         images;
+        istoplevel=true;
 
         cond_seqs=struct();
         branch_funcs=struct();
@@ -128,7 +129,12 @@ classdef ExpSeq < ExpSeqBase
             [driver, driver_name] = initDeviceDriver(self, did);
 
             driver.initChannel(cid);
-            cur_cids = self.driver_cids(driver_name);
+            if isempty(self.topLevelCond)
+                cur_cids = self.topLevel.driver_cids(driver_name);
+            else
+                cur_cids = self.topLevelCond.driver_cids(driver_name);
+            end
+
             self.driver_cids(driver_name) = unique([cur_cids, cid]);
         end
 
@@ -424,6 +430,10 @@ classdef ExpSeq < ExpSeqBase
         %branching graph. Gives it a name which should be a string.
         function sub_seq = newPart(self,name)
             sub_seq = ExpSeq();
+            sub_seq.istoplevel=false;
+            if self.istoplevel
+                sub_seq.topLevelCond = self;
+            end
             if ~isfield(self.cond_seqs,name)
                 self.cond_seqs.(name)=sub_seq;
             else
@@ -444,6 +454,21 @@ classdef ExpSeq < ExpSeqBase
                 self.run_after_main_seq=nextseq;
             else
                 self.branch_funcs.(ending_seq)=nextseq;
+            end
+
+        end
+        function syncDriverCIDs(self,channel_name,newCIDs)
+            if isKey(self.driver_cids,channel_name)
+                self.driver_cids(channel_name)=newCIDs;
+            else
+
+            end
+            fields = fieldnames(self.cond_seqs);
+            if ~isempty(fields)
+                for i = 1:length(fields)
+                    field = fields{i};
+                    self.cond_seqs.(field).syncDriverCIDs(channel_name,newCIDs);
+                end
             end
 
         end

@@ -37,6 +37,7 @@ classdef (Sealed) TimeStep < TimeSeq
             self.tOffset = start_time;
             self.config = parent.config;
             self.topLevel = parent.topLevel;
+            self.topLevelCond = parent.topLevelCond;
             self.len = len;
             ns = parent.nSubSeqs + 1;
             parent.nSubSeqs = ns;
@@ -68,7 +69,7 @@ classdef (Sealed) TimeStep < TimeSeq
             if isnumeric(name)
                 cid = name;
             else
-                cid = translateChannel(self.topLevel, name);
+                cid = translateChannel(self.topLevel,name);
             end
             if isnumeric(pulse) || islogical(pulse)
                 if ~isscalar(pulse)

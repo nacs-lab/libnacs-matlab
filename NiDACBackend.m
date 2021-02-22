@@ -326,10 +326,19 @@ classdef NiDACBackend < PulseBackend
         end
 
         function run(self)
+            tic;
             ensureSession(self);
+            a=toc;
+            tic;
             session = self.session;
+            b=toc;
+            tic;
             queueOutputData(session, self.data);
+            c=toc;
+            tic;
             startBackground(session);
+            d=toc;
+            fprintf('a: %d\nb: %d\nc: %d\nd: %d\n',a,b,c,d)
         end
 
         function wait(self)
