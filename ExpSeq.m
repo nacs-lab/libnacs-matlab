@@ -33,6 +33,7 @@ classdef ExpSeq < ExpSeqBase
         andorconfig;
         images;
         istoplevel=true;
+        ignoreDrivers=[];
 
         cond_seqs=struct();
         branch_funcs=struct();
@@ -118,6 +119,25 @@ classdef ExpSeq < ExpSeqBase
         end
 
         function cid = translateChannel(self, name)
+            if self.istoplevel
+                cid = translateChannelReal(self,name);
+                fields = fieldnames(self.cond_seqs);
+                if ~isempty(fields)
+                    for i = 1:length(fields)
+                        field = fields{i};
+                        %Exclusively to make sure that all ExpSeqs are in
+                        %sync.
+                        identicalCID = self.cond_seqs.(field).translateChannelReal(name);
+                        if identicalCID~=cid
+                            error("Syncing of CIDs across different conditional sequences is not working as intended. Were all conditional branches initialized before adding steps to the sequence?")
+                        end
+                    end
+                end
+            else
+                cid = translateChannel(self.topLevelCond,name);
+            end
+        end
+        function cid = translateChannelReal(self,name)
             %% Convert a channel name to a channel ID.
             % A new ID is created if it does not exist yet.
             [cid, name, inited] = getChannelId(self, name);
@@ -129,11 +149,7 @@ classdef ExpSeq < ExpSeqBase
             [driver, driver_name] = initDeviceDriver(self, did);
 
             driver.initChannel(cid);
-            if isempty(self.topLevelCond)
-                cur_cids = self.topLevel.driver_cids(driver_name);
-            else
-                cur_cids = self.topLevelCond.driver_cids(driver_name);
-            end
+            cur_cids = self.topLevel.driver_cids(driver_name);
 
             self.driver_cids(driver_name) = unique([cur_cids, cid]);
         end
@@ -160,7 +176,7 @@ classdef ExpSeq < ExpSeqBase
                 field = condseqfields{i};
                 if ~isfield(self.branch_funcs,field)
                     error('Must have a specified branching behavior after running sequence %s',field);
-                elseif self.branch_funcs.(field)==-1
+                elseif isnumeric(self.branch_funcs.(field))&&self.branch_funcs.(field)==-1
                     hasEndingCommand=true;
                 end
             end
@@ -226,6 +242,11 @@ classdef ExpSeq < ExpSeqBase
                 end
             end
             check_branching_tree_complete(self,fields);
+            for i = self.ignoreDrivers
+                if isKey(self.drivers,char(i))
+                    remove(self.drivers,char(i));
+                end
+            end
         end
 
         function run_async(self)
@@ -280,8 +301,12 @@ classdef ExpSeq < ExpSeqBase
                 return;
             end
             drivers = self.drivers_sorted;
+
             for i = 1:length(drivers)
+                disp("Waiting")
+                tic;
                 wait(drivers{i, 1});
+                disp(toc)
             end
             if ~isempty(self.after_end_cbs)
                 for cb = self.after_end_cbs
@@ -301,16 +326,11 @@ classdef ExpSeq < ExpSeqBase
                 return;
             end
             start_t = now() * 86400;
-            %tic;
             run_async(self);
-            %a = toc;
             fprintf('Running @%s\n', datestr(now(), 'yyyy/mm/dd HH:MM:SS'));
             % We'll wait until this time before returning to the caller
             end_after = start_t + totalTime(self) - 5e-3;
-            %tic;
             waitFinish(self);
-            %b = toc;
-            %tic;
             if isnumeric(self.run_after_main_seq)&&self.run_after_main_seq==-1
                 state=-1;
             elseif isa(self.run_after_main_seq,'string')||isa(self.run_after_main_seq,'char')
@@ -318,30 +338,21 @@ classdef ExpSeq < ExpSeqBase
             else
                 state = self.run_after_main_seq(self);
             end
-            %d = toc;
-            %e=0;f=0;g=0;
             while ~(state ==-1)
+                % tic;
+                disp(state)
                 current_seq=self.cond_seqs.(state);
-                %tic;
                 run_real(current_seq);
-                %e = toc;
-                %tic;
                 waitFinish(current_seq);
-                %f = toc;
-                %tic;
-                if self.branch_funcs.(state)==-1
+                % sprintf("State %s: %d",string(state),toc)
+                if isnumeric(self.branch_funcs.(state))&&self.branch_funcs.(state)==-1
                     state=-1;
                 elseif isa(self.branch_funcs.(state),'char')||isa(self.branch_funcs.(state),'string')
                     state = self.branch_funcs.(state);
                 else
                     state = self.branch_funcs.(state)(self);
                 end
-                %g = toc;
-                %fprintf('e:%d\nf:%d\ng:%d', e,f,g);
-
             end
-            %c = 0;%toc;
-            %fprintf('run_async:%d\n waitFinish:%d\n condBranch:%d\nd:%d\ne:%d\nf:%d\ng:%d', a, b, c,d,e,f,g);
             end_t = now() * 86400;
             if end_t < end_after
                 pause(end_after - end_t);
@@ -433,11 +444,13 @@ classdef ExpSeq < ExpSeqBase
             sub_seq.istoplevel=false;
             if self.istoplevel
                 sub_seq.topLevelCond = self;
+            else
+                sub_seq.topLevelCond = self.topLevelCond;
             end
             if ~isfield(self.cond_seqs,name)
                 self.cond_seqs.(name)=sub_seq;
             else
-                warning('Overwriting subsequence %s in sub_seq',name);
+                error('Overwriting subsequence %s in sub_seq',name);
             end
         end
         %Adds conditional branching behavior. When generated/run, after
