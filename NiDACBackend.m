@@ -123,7 +123,9 @@ classdef NiDACBackend < PulseBackend
                 all_pulses{cid} = pulses;
             end
             self.all_pulses = all_pulses;
-            times = sortrows(times', [1, 2]);
+            if ~isempty(times)
+                times = sortrows(times', [1, 2]);
+            end
 
             % `start_tidx; end_tidx; tidx_offset`
             % `end_tidx` and `start_tidx` are zero-based and the difference
@@ -326,19 +328,19 @@ classdef NiDACBackend < PulseBackend
         end
 
         function run(self)
-            tic;
+            % tic;
             ensureSession(self);
-            a=toc;
-            tic;
+            % a=toc;
+            % tic;
             session = self.session;
-            b=toc;
-            tic;
+            % b=toc;
+            % tic;
             queueOutputData(session, self.data);
-            c=toc;
-            tic;
+            % c=toc;
+            % tic;
             startBackground(session);
-            d=toc;
-            fprintf('a: %d\nb: %d\nc: %d\nd: %d\n',a,b,c,d)
+            % d=toc;
+            % fprintf('a: %d\nb: %d\nc: %d\nd: %d\n',a,b,c,d)
         end
 
         function wait(self)

@@ -20,7 +20,7 @@ classdef(Abstract) PulseBackend < handle
     % The backend object should hold sequence specific information that's
     % needed for the target of the backend. (e.g. channels, generated data etc).
 
-    properties(Access=protected)
+    properties
         seq;
     end
 
