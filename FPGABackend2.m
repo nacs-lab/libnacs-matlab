@@ -237,13 +237,32 @@ classdef FPGABackend2 < PulseBackend
                 error('FPGA run failed');
             end
             ttl_ovr = bitand(int64(ttl_ovr), bitcmp(self.ttl_warn_mask));
-            if ttl_ovr ~= self.ttl_ovr || ~isequal(dds_ovr, self.dds_ovr)
+            if (ttl_ovr ~= self.ttl_ovr && ttl_ovr ~= 0) || ...
+               (~isequal(dds_ovr, self.dds_ovr) && ~isempty(dds_ovr))
                 state = warning('off', 'backtrace');
                 cleanup = FacyOnCleanup(@(state) warning(state), state);
-                warning('TTL override enabled: 0x%08x', ttl_ovr);
-                self.ttl_ovr = ttl_ovr;
-                warning('DDS override enabled: %s', sprintf(' 0x%x', dds_ovr));
-                self.dds_ovr = dds_ovr;
+                if ttl_ovr ~= self.ttl_ovr && ttl_ovr ~= 0
+                    warning('TTL override enabled: 0x%08x', ttl_ovr);
+                    self.ttl_ovr = ttl_ovr;
+                end
+                if ~isequal(dds_ovr, self.dds_ovr) && ~isempty(dds_ovr)
+                    msg = '';
+                    for ovr = dds_ovr
+                        typ = bitshift(ovr, -6);
+                        chn = bitand(ovr, (bitshift(uint8(1), 6) - 1));
+                        if typ == 0
+                            msg = sprintf('%s freq%d', msg, chn);
+                        elseif typ == 1
+                            msg = sprintf('%s amp%d', msg, chn);
+                        elseif typ == 2
+                            msg = sprintf('%s phase%d', msg, chn);
+                        else
+                            msg = sprintf('%s unknown%d', msg, chn);
+                        end
+                    end
+                    warning('DDS override enabled:%s', msg);
+                    self.dds_ovr = dds_ovr;
+                end
             end
         end
 

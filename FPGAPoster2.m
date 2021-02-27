@@ -41,6 +41,7 @@ classdef FPGAPoster2 < handle
                     id = r{1};
                     ttl_ovr = r{2};
                     dds_ovr = uint8(r{3});
+                    dds_ovr = dds_ovr(1:5:end);
                     return
                 end
             end
