@@ -237,7 +237,7 @@ classdef FPGABackend2 < PulseBackend
                 error('FPGA run failed');
             end
             ttl_ovr = bitand(int64(ttl_ovr), bitcmp(self.ttl_warn_mask));
-            if ttl_ovr != self.ttl_ovr || !isequal(dds_ovr, self.dds_ovr)
+            if ttl_ovr ~= self.ttl_ovr || ~isequal(dds_ovr, self.dds_ovr)
                 state = warning('off', 'backtrace');
                 cleanup = FacyOnCleanup(@(state) warning(state), state);
                 warning('TTL override enabled: 0x%08x', ttl_ovr);

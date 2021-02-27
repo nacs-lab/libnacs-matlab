@@ -53,6 +53,12 @@ classdef FPGAPoster2 < handle
             end
             cleanup.disable();
         end
+
+        function msg = prepare_msg(self, tlen, code)
+            global testcode
+            testcode = code;
+            msg = self.poster.prepare_msg(tlen, code);
+        end
         function recreate_socket(self)
             self.poster.recreate_sock();
         end
