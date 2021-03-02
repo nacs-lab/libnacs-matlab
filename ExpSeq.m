@@ -201,6 +201,11 @@ classdef ExpSeq < ExpSeqBase
                 end
                 fprintf('|');
                 populateChnMask(self, length(self.channel_names));
+                for i = self.ignoreDrivers
+                    if isKey(self.drivers,char(i))
+                        remove(self.drivers,char(i));
+                    end
+                end
                 for key = self.drivers.keys()
                     driver_name = key{:};
                     driver = self.drivers(driver_name);
@@ -242,11 +247,6 @@ classdef ExpSeq < ExpSeqBase
                 end
             end
             check_branching_tree_complete(self,fields);
-            for i = self.ignoreDrivers
-                if isKey(self.drivers,char(i))
-                    remove(self.drivers,char(i));
-                end
-            end
         end
 
         function run_async(self)
@@ -273,7 +273,9 @@ classdef ExpSeq < ExpSeqBase
                 end
             end
             for i = 1:length(drivers)
+                tic;
                 run(drivers{i});
+                disp(toc)
             end
         end
 
@@ -303,10 +305,7 @@ classdef ExpSeq < ExpSeqBase
             drivers = self.drivers_sorted;
 
             for i = 1:length(drivers)
-                disp("Waiting")
-                tic;
                 wait(drivers{i, 1});
-                disp(toc)
             end
             if ~isempty(self.after_end_cbs)
                 for cb = self.after_end_cbs
@@ -326,11 +325,14 @@ classdef ExpSeq < ExpSeqBase
                 return;
             end
             start_t = now() * 86400;
+            tic;
             run_async(self);
             fprintf('Running @%s\n', datestr(now(), 'yyyy/mm/dd HH:MM:SS'));
             % We'll wait until this time before returning to the caller
             end_after = start_t + totalTime(self) - 5e-3;
             waitFinish(self);
+            disp(toc)
+            disp("Finished Main Sequence")
             if isnumeric(self.run_after_main_seq)&&self.run_after_main_seq==-1
                 state=-1;
             elseif isa(self.run_after_main_seq,'string')||isa(self.run_after_main_seq,'char')
@@ -340,10 +342,12 @@ classdef ExpSeq < ExpSeqBase
             end
             while ~(state ==-1)
                 % tic;
-                disp(state)
                 current_seq=self.cond_seqs.(state);
+                disp(state)
+                tic;
                 run_real(current_seq);
                 waitFinish(current_seq);
+                disp(toc)
                 % sprintf("State %s: %d",string(state),toc)
                 if isnumeric(self.branch_funcs.(state))&&self.branch_funcs.(state)==-1
                     state=-1;
