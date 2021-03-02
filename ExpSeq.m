@@ -273,9 +273,9 @@ classdef ExpSeq < ExpSeqBase
                 end
             end
             for i = 1:length(drivers)
-                tic;
+                % tic;
                 run(drivers{i});
-                disp(toc)
+                % disp(toc)
             end
         end
 
@@ -341,7 +341,7 @@ classdef ExpSeq < ExpSeqBase
                 state = self.run_after_main_seq(self);
             end
             while ~(state ==-1)
-                % tic;
+                tic;
                 current_seq=self.cond_seqs.(state);
                 disp(state)
                 tic;
