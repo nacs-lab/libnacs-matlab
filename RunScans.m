@@ -130,7 +130,7 @@ m.Data(1).NumPerParamAvg = Scan.NumPerParamAvg;
 m.Data(1).CurrentSeqNum = 0;
 m.Data(1).NumPerGroup = Scan.NumPerGroup;
 
-[fname, CurrentDate, CurrentTime] = DateTimeStampFilename();
+[dname, CurrentDate, CurrentTime] = DateTimeStampDirectory();
 m.Data(1).TimeStamp = str2num(CurrentTime);
 m.Data(1).DateStamp = str2num(CurrentDate);
 file_id = [CurrentDate '_' CurrentTime];
@@ -141,9 +141,13 @@ else
     varargout{1} = file_id;
 end
 
-if exist(fname, 'file')
-    error('Filename already exists!')
+if exist(dname, 'dir')
+    error('Directory already exists!')
+else
+    mkdir(dname);
 end
+
+[fname, ~, ~] = DateTimeStampFilename(CurrentDate, CurrentTime, dname);
 
 % Save scan parameters.
 save(fname, 'Scan', '-v7.3');
