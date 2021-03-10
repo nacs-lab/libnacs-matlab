@@ -32,6 +32,10 @@ classdef ExpSeq < ExpSeqBase
 
         andorconfig;
         images;
+        csImg;
+        FillState;
+        numShifts=0;
+        sites;
         istoplevel=true;
         ignoreDrivers=[];
 
