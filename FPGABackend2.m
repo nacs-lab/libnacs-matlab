@@ -13,6 +13,9 @@
 
 classdef FPGABackend2 < PulseBackend
     % Contains everything related to the FPGA.
+    properties
+        codematlab=[];
+    end
     properties(Hidden)
         % PulseBackend properties: seq
         clock_div = 0;
@@ -113,6 +116,7 @@ classdef FPGABackend2 < PulseBackend
                 end
                 if self.seq.istoplevel
                     ttl_values = bitset(ttl_values, num_cache(cid) + 1, getDefault(self.seq, cid));
+                    % fprintf("nchn: %d\nSetting Default Value Nonzero\n",nchn)
                 else
                     ttl_values = bitset(ttl_values, num_cache(cid) + 1, 0);
                 end
@@ -159,6 +163,7 @@ classdef FPGABackend2 < PulseBackend
                 end
             end
             code = [code, 0];
+            disp(length(code))
             n_pulses_idx = length(code);
             targ = IRNode.getArg(1, ir_ctx);
             oldarg = IRNode.getArg(2, ir_ctx);
@@ -240,6 +245,7 @@ classdef FPGABackend2 < PulseBackend
                         typecast(t_len_ns, 'int32'), clock_div];
             end
             code(n_pulses_idx) = n_pulses;
+            self.codematlab = code;
             self.req = prepare_msg(self.poster, totalTime(self.seq) * 1e9, code);
         end
 

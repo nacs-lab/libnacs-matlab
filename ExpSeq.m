@@ -30,7 +30,7 @@ classdef ExpSeq < ExpSeqBase
         % The total time of the sequence is cached before generation.
         cached_total_time = -1;
 
-        andorconfig;
+        andorConfig;
         images;
         csImg;
         FillState;
@@ -345,13 +345,13 @@ classdef ExpSeq < ExpSeqBase
                 state = self.run_after_main_seq(self);
             end
             while ~(state ==-1)
-                tic;
+                % tic;
                 current_seq=self.cond_seqs.(state);
-                disp(state)
-                tic;
+                % disp(state)
+                % tic;
                 run_real(current_seq);
                 waitFinish(current_seq);
-                disp(toc)
+                % disp(toc)
                 % sprintf("State %s: %d",string(state),toc)
                 if isnumeric(self.branch_funcs.(state))&&self.branch_funcs.(state)==-1
                     state=-1;
