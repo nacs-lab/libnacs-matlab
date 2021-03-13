@@ -148,7 +148,7 @@ classdef NiDACBackend < PulseBackend
                 end
             end
             self.active_times = active_times;
-            fpgadriver = findDriver(seq, 'FPGABackend');
+            fpgadriver = findDriver(seq, 'FPGABackend2');
             enableClockOut(fpgadriver, self.CLOCK_DIVIDER, active_times(1:2, :));
         end
 

@@ -61,7 +61,7 @@ classdef USRPBackend < PulseBackend
 
         function prepare(self, ~)
             %% This should enable the FPGA backend and therefore the start trigger
-            findDriver(self.seq, 'FPGABackend');
+            findDriver(self.seq, 'FPGABackend2');
         end
 
         function generate(self, cids)
