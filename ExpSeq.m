@@ -33,7 +33,7 @@ classdef ExpSeq < ExpSeqBase
         andorConfig;
         images;
         csImg;
-        FillState;
+        Fillstate;
         numShifts=0;
         sites;
         istoplevel=true;
