@@ -25,10 +25,10 @@ classdef ExptClient < handle
             res = self.client.send_imgs(img(:)', shape);
         end
         function res = send_config(self, n_per_group, n_images_per_seq)
-            res = self.client.send_config(int32(n_per_group), int32(n_images_per_seq));
+            res = self.client.send_config(int64(n_per_group), int64(n_images_per_seq));
         end
-        function res = send_end_seq(self)
-            res = self.client.send_end_seq();
+        function res = send_end_seq(self, data)
+            res = self.client.send_end_seq(int64(data));
         end
         function result = recv_reply(self)
             cleanup = register_cleanup(self);
@@ -59,7 +59,7 @@ classdef ExptClient < handle
             self.client.recreate_sock();
         end
         function cleanup = register_cleanup(self)
-            cleanup = FacyOnCleanup(@recreate_socket, self);
+            cleanup = FacyOnCleanup(@recreate_sock, self);
         end
     end
 

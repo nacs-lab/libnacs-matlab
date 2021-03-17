@@ -35,6 +35,11 @@ class AnalysisServer(object):
         n_per_group = int.from_bytes(self.__sock.recv(), byteorder = 'little')
         n_images_per_seq = int.from_bytes(self.__sock.recv(), byteorder = 'little')
         return [n_per_group, n_images_per_seq]
+    def recv_end_seq(self):
+        timeout = 1 * 1000 # in milliseconds
+        if self.__sock.poll(timeout) == 0:
+            return
+        return int.from_bytes(self.__sock.recv(), byteorder = 'little')
     def send_go(self):
         return self.__sock.send(int(1).to_bytes(1, byteorder = 'little'))
     def send_stop(self):
