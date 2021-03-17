@@ -65,6 +65,17 @@ classdef AnalysisServer < handle
                 end
             end
         end
+        function res = recv_end_seq(self)
+            cleanup = register_cleanup(self);
+            while 1
+                data = self.server.recv_end_seq(); % python list becomes cell array
+                if data ~= py.None
+                    cleanup.disable();
+                    res = int64(data);
+                    return
+                end
+            end
+        end
         function res = send_go(self)
             res = self.server.send_go();
         end
@@ -75,7 +86,7 @@ classdef AnalysisServer < handle
             self.server.recreate_sock();
         end
         function cleanup = register_cleanup(self)
-            cleanup = FacyOnCleanup(@recreate_socket, self);
+            cleanup = FacyOnCleanup(@recreate_sock, self);
         end
     end
 
