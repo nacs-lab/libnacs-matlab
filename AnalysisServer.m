@@ -53,14 +53,14 @@ classdef AnalysisServer < handle
                 end
             end
         end
-        function [n_per_group, n_images_per_seq] = recv_config(self)
+        function [dateStamp, timeStamp] = recv_config(self)
             cleanup = register_cleanup(self);
             while 1
                 data = self.server.recv_config(); % python list becomes cell array
                 if data ~= py.None
                     cleanup.disable();
-                    n_per_group = int64(data{1});
-                    n_images_per_seq = int64(data{2});
+                    dateStamp = char(data{1});
+                    timeStamp = char(data{2});
                     return
                 end
             end
