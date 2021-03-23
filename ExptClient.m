@@ -24,8 +24,9 @@ classdef ExptClient < handle
             shape = size(img);
             res = self.client.send_imgs(img(:)', shape);
         end
-        function res = send_config(self, n_per_group, n_images_per_seq)
-            res = self.client.send_config(int64(n_per_group), int64(n_images_per_seq));
+        function res = send_config(self, dateStamp, timeStamp)
+            % date and timeStamp should be strings. 
+            res = self.client.send_config(dateStamp, timeStamp);
         end
         function res = send_end_seq(self, data)
             res = self.client.send_end_seq(int64(data));

@@ -29,11 +29,15 @@ class ExptClient(object):
         return int.from_bytes(self.__sock.recv(), byteorder = 'little')
     def send_end_seq(self, data):
         self.__sock.send_string("end_seq", zmq.SNDMORE)
-        self.__sock.send(data.to_bytes(4, byteorder='little'))
-    def send_config(self, n_per_group, n_images_per_seq):
+        return self.__sock.send(data.to_bytes(4, byteorder='little'))
+    #def send_config(self, n_per_group, n_images_per_seq):
+        #self.__sock.send_string("config", zmq.SNDMORE)
+        #self.__sock.send(n_per_group.to_bytes(4, byteorder='little'), zmq.SNDMORE)
+        #self.__sock.send(n_images_per_seq.to_bytes(4, byteorder='little'))
+    def send_config(self, dateStamp, timeStamp):
         self.__sock.send_string("config", zmq.SNDMORE)
-        self.__sock.send(n_per_group.to_bytes(4, byteorder='little'), zmq.SNDMORE)
-        self.__sock.send(n_images_per_seq.to_bytes(4, byteorder='little'))
+        self.__sock.send_string(dateStamp, zmq.SNDMORE)
+        return self.__sock.send_string(timeStamp)
     def wait_reply(self):
         timeout = 1 * 1000
         if self.__sock.poll(timeout) == 0:

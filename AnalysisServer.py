@@ -32,9 +32,12 @@ class AnalysisServer(object):
         timeout = 1 * 1000 # in milliseconds
         if self.__sock.poll(timeout) == 0:
             return
-        n_per_group = int.from_bytes(self.__sock.recv(), byteorder = 'little')
-        n_images_per_seq = int.from_bytes(self.__sock.recv(), byteorder = 'little')
-        return [n_per_group, n_images_per_seq]
+        #n_per_group = int.from_bytes(self.__sock.recv(), byteorder = 'little')
+        #n_images_per_seq = int.from_bytes(self.__sock.recv(), byteorder = 'little')
+        #return [n_per_group, n_images_per_seq]
+        dateStamp = self.__sock.recv_string();
+        timeStamp = self.__sock.recv_string();
+        return [dateStamp, timeStamp]
     def recv_end_seq(self):
         timeout = 1 * 1000 # in milliseconds
         if self.__sock.poll(timeout) == 0:
