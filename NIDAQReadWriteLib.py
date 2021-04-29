@@ -5,8 +5,7 @@ from nidaqmx import stream_writers as writers
 from nidaqmx import stream_readers as readers
 import numpy as np
 import time
-import sys,code,time,scipy,pickle
-import matplotlib.pyplot as plt
+import sys,code,time,pickle
 from concurrent.futures import ThreadPoolExecutor
 
 def doAThing():
