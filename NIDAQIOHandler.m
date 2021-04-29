@@ -1,4 +1,4 @@
-classdef NIDAQIOHandler
+classdef NIDAQIOHandler < handle
     %Created by Avery Parr in September 2020. Based on NIDAQUSBWrapper.m
     %code.
 
@@ -87,9 +87,9 @@ classdef NIDAQIOHandler
             res=self;
         end
         function newvolts = aoVoltage(self,v,varargin)
-            if abs(v)>5
-                v=sign(v)*5;
-            end
+            % if abs(v)>5
+            %     v=sign(v)*5;
+            % end
             if ~isempty(varargin)
                 channelSettings = varargin{1};
                 if isa(channelSettings,'struct')
