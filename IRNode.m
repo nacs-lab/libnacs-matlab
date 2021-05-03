@@ -361,24 +361,6 @@ classdef IRNode < handle
         function res = gammaln(a)
             res = IRNode(IRNode.OPCall, {IRNode.FNlgamma, a});
         end
-        function res = besselj0(a)
-            res = IRNode(IRNode.OPCall, {IRNode.FNj0, a});
-        end
-        function res = besselj1(a)
-            res = IRNode(IRNode.OPCall, {IRNode.FNj1, a});
-        end
-        function res = besselj(a, b)
-            res = IRNode(IRNode.OPCall, {IRNode.FNjn, a, b});
-        end
-        function res = bessely0(a)
-            res = IRNode(IRNode.OPCall, {IRNode.FNy0, a});
-        end
-        function res = bessely1(a)
-            res = IRNode(IRNode.OPCall, {IRNode.FNy1, a});
-        end
-        function res = bessely(a, b)
-            res = IRNode(IRNode.OPCall, {IRNode.FNyn, a, b});
-        end
         function res = max(a, b)
             % Note: this version returns a double for integer/logical input
             %       which is different from the MATLAB behavior
