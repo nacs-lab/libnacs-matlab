@@ -1,68 +1,68 @@
 classdef XYZBFieldComp < handle
     %Intended to compensate for changing magnetic fields within an
-    %experiment. 
+    %experiment.
     properties(Constant)
         defaultXSettings=struct("serialNumRead",32290082,"serialNumWrite",32290082,...
-            "devNumRead",0,"devNumWrite",0,"inputChannel","ai0",...
-            "outputChannel","ao0","triggerChannel","PFI0","bTrigger",0);
+                                "devNumRead",0,"devNumWrite",0,"inputChannel","ai0",...
+                                "outputChannel","ao0","triggerChannel","PFI0","bTrigger",0);
         defaultYSettings=struct("serialNumread",32290073,"serialNumWrite",32290073,...
-            "devNumRead",1,"devNumWrite",1,"inputChannel","ai0",...
-            "outputChannel","ao0","triggerChannel","PFI0","bTrigger",0);
+                                "devNumRead",1,"devNumWrite",1,"inputChannel","ai0",...
+                                "outputChannel","ao0","triggerChannel","PFI0","bTrigger",0);
         defaultZSettings=struct("serialNumread",32290073,"serialNumWrite",32290073,...
-            "devnumRead",1,"devNumWrite",1,"inputChannel","ai1",...
-            "outputChannel","ao1","triggerChannel","PFI1","bTrigger",0);
+                                "devnumRead",1,"devNumWrite",1,"inputChannel","ai1",...
+                                "outputChannel","ao1","triggerChannel","PFI1","bTrigger",0);
     end
     properties
         sampleRate=1000; %1/s
         sampleTime=0.3; %s
         waitTime=5; %s
         lastReadTime=0; %
-        
+
         serNumX;
         serNumY;
         serNumZ;
-        
+
         lastVX = 0;
         lastVY = 0;
         lastVZ = 0;
-        
+
         %linear conversion factors between input and output voltages and
         %the B fields (in mG) they represent. Calibrated.
         inputVoltageToBConversion=1;
         outputVoltageToBConversion=1;
-        
+
         desiredBX = 0; %mG
         desiredBY = 0;
         desiredBZ = 0;
-        
+
         MAXIMUM_COMP=30 %mG
-        
+
         recentlySetUp=0;
-        
+
         NIDAQX;
         NIDAQY;
         NIDAQZ;
     end
-    
+
     methods
         function res = readAndCompensate(self)
             if self.recentlySetUp
                 recentBXList=self.NIDAQX.getLastVoltages()/self.inputVoltageToBConversion;
                 recentBYList=self.NIDAQY.getLastVoltages()/self.inputVoltageToBConversion;
                 recentBZList=self.NIDAQZ.getLastVoltages()/self.inputVoltageToBConversion;
-                
+
                 newVX = self.getOptimalOutputVoltage(mean(recentBXList),self.desiredBX,self.lastVX);
                 newVY = self.getOptimalOutputVoltage(mean(recentBYList),self.desiredBY,self.lastVY);
                 newVZ = self.getOptimalOutputVoltage(mean(recentBZList),self.desiredBZ,self.lastVZ);
-                
+
                 self.lastVX = self.NIDAQX.aoVoltage(newVX);
                 self.lastVY = self.NIDAQY.aoVoltage(newVY);
                 self.lastVZ = self.NIDAQZ.aoVoltage(newVZ);
-                
+
                 res=self;
             end
         end
-        
+
         function outputVoltage = getOptimalOutputVoltage(self,CurrentBField,desiredBField,currentVoltage)
             deltaB=desiredBField-CurrentBField;
             if abs(deltaB)>self.MAXIMUM_COMP
@@ -77,7 +77,7 @@ classdef XYZBFieldComp < handle
                 outputVoltage=0;
             end
         end
-        
+
         function res = initializeCompensation(self)
             if self.testRecent()
                 self.lastReadTime=now;
@@ -85,7 +85,7 @@ classdef XYZBFieldComp < handle
                 self.NIDAQX=self.NIDAQX.asyncAcquire(self.sampleRate,self.sampleTime);
                 self.NIDAQY=self.NIDAQY.asyncAcquire(self.sampleRate,self.sampleTime);
                 self.NIDAQZ=self.NIDAQZ.asyncAcquire(self.sampleRate,self.sampleTime);
-            end 
+            end
             res = self;
         end
         function shouldTest = testRecent(self)
@@ -131,7 +131,7 @@ classdef XYZBFieldComp < handle
             end
             res = self;
         end
-        
+
         function self = XYZBFieldComp(settings)
             if isa(settings,"struct")
                 if isfield(settings,"sampleRate")
@@ -198,7 +198,7 @@ classdef XYZBFieldComp < handle
                 self.NIDAQZ=NIDAQIOHandler.get(self.serNumZ,self.serNumZ,self.defaultZSettings);
             end
         end
-        
+
     end
     methods(Static)
         function res = get(settings,serNumX,serNumY,serNumZ)
@@ -209,8 +209,7 @@ classdef XYZBFieldComp < handle
         end
         function dropAll()%Delete connection from memory
             remove(XYZBFieldComp.cache, keys(XYZBFieldComp.cache));
-        end    
-        
+        end
+
     end
 end
-
