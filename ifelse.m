@@ -1,4 +1,4 @@
-%% Copyright (c) 2018-2018, Yichao Yu <yyc1992@gmail.com>
+%% Copyright (c) 2018-2021, Yichao Yu <yyc1992@gmail.com>
 %
 % This library is free software; you can redistribute it and/or
 % modify it under the terms of the GNU Lesser General Public
@@ -12,18 +12,10 @@
 % License along with this library.
 
 function res = ifelse(cond, v1, v2)
-    if isscalar(cond)
-        % This case is needed for constant condition when `v1` or `v2` are `IRNode`s
-        if cond
-            res = v1;
-        else
-            res = v2;
-        end
-        return;
+    % Scalar only. This should still work when `v1` or `v2` are `SeqVal`s.
+    if cond
+        res = v1;
+    else
+        res = v2;
     end
-    if isa(v1, 'IRNode') || isa(v2, 'IRNode')
-        error('Non-scalar condition unsupported for IRNode inputs.');
-    end
-    res = v2;
-    res(cond) = v1(cond);
 end
