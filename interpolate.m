@@ -1,4 +1,4 @@
-%% Copyright (c) 2018-2018, Yichao Yu <yyc1992@gmail.com>
+%% Copyright (c) 2018-2021, Yichao Yu <yyc1992@gmail.com>
 %
 % This library is free software; you can redistribute it and/or
 % modify it under the terms of the GNU Lesser General Public
@@ -13,6 +13,18 @@
 
 function y = interpolate(x, x0, x1, vals)
     dx = x1 - x0;
+    if isa(x, 'SeqVal')
+        y = SeqVal(SeqVal.OPInterp, {x, x0, dx, vals}, x.ctx);
+        return;
+    end
+    if isa(x0, 'SeqVal')
+        y = SeqVal(SeqVal.OPInterp, {x, x0, dx, vals}, x0.ctx);
+        return;
+    end
+    if isa(dx, 'SeqVal')
+        y = SeqVal(SeqVal.OPInterp, {x, x0, dx, vals}, dx.ctx);
+        return;
+    end
     x = x - x0;
     y = zeros(size(x));
     nv = length(vals);
