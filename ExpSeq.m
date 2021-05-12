@@ -27,8 +27,6 @@ classdef ExpSeq < ExpSeqBase
         % Drivers sorted in the order they should be run and waited.
         drivers_sorted;
         generated = false;
-        % The total time of the sequence is cached before generation.
-        cached_total_time = -1;
 
         %% Channel management:
         % The channel name used when the channel is first added, indexed by channel ID.
@@ -93,16 +91,6 @@ classdef ExpSeq < ExpSeqBase
                                                     'ValueType', 'double');
         end
 
-        function res = totalTime(self)
-            % Note that this total time does not account for the timing
-            % difference caused by output managers.
-            if self.cached_total_time > 0
-                res = self.cached_total_time;
-                return;
-            end
-            res = totalTime@ExpSeqBase(self);
-        end
-
         function addTTLMgr(self, chn, off_delay, on_delay, ...
                            skip_time, min_time, off_val)
             if ~exist('off_val', 'var')
@@ -149,7 +137,6 @@ classdef ExpSeq < ExpSeqBase
                 if ~exist('preserve', 'var')
                     preserve = 0;
                 end
-                self.cached_total_time = totalTime(self);
                 if self.config.maxLength > 0 && totalTime(self) > self.config.maxLength
                     error('Sequence length %f exceeds max sequence length of maxLength=%f', ...
                           totalTime(self), self.config.maxLength);
