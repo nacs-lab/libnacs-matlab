@@ -37,6 +37,7 @@ classdef (Sealed) TimeStep < TimeSeq
             self.tOffset = start_time;
             self.config = parent.config;
             self.topLevel = parent.topLevel;
+            self.root = parent.root;
             self.len = len;
             ns = parent.nSubSeqs + 1;
             parent.nSubSeqs = ns;

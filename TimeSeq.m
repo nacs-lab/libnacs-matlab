@@ -1,4 +1,4 @@
-%% Copyright (c) 2014-2018, Yichao Yu <yyc1992@gmail.com>
+%% Copyright (c) 2014-2021, Yichao Yu <yyc1992@gmail.com>
 %
 % This library is free software; you can redistribute it and/or
 % modify it under the terms of the GNU Lesser General Public
@@ -49,8 +49,10 @@ classdef TimeSeq < handle
         % A `nan` time offset is allowed during the construction representing a
         % floating step/subsequence that can be positioned later.
         tOffset = 0;
-        % The root node (the toplevel sequence).
+        % The toplevel sequence.
         topLevel;
+        % The root node (the basic sequence).
+        root;
         % This is the path from the root node, including self and not including the root.
         % This is computed lazily (see `TimeSeq::globalPath`) and is used to find the
         % closest common ancestor of two nodes (see `ExpSeqBase::offsetDiff`).
