@@ -1,4 +1,4 @@
-%% Copyright (c) 2014-2018, Yichao Yu <yyc1992@gmail.com>
+%% Copyright (c) 2014-2021, Yichao Yu <yyc1992@gmail.com>
 %
 % This library is free software; you can redistribute it and/or
 % modify it under the terms of the GNU Lesser General Public
@@ -64,6 +64,9 @@ classdef ExpSeq < ExpSeqBase
         % Callback to be called (without argument) after the sequence finishes
         after_end_cbs = {};
 
+        seq_ctx;
+        time_scale = 1e12; % TODO load from config
+
         %% IR stuff
         % For dealing with code generation within the sequence.
         ir_ctx;
@@ -84,6 +87,7 @@ classdef ExpSeq < ExpSeqBase
             self.drivers = containers.Map();
             self.driver_cids = containers.Map();
             self.cid_cache = containers.Map('KeyType', 'char', 'ValueType', 'double');
+            self.seq_ctx = SeqContext();
             self.ir_ctx = IRContext();
             self.disabled_channels = containers.Map('KeyType', 'char', ...
                                                     'ValueType', 'double');
