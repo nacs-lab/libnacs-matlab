@@ -11,7 +11,7 @@
 % You should have received a copy of the GNU Lesser General Public
 % License along with this library.
 
-classdef ExpSeq < ExpSeqBase
+classdef ExpSeq < RootSeq
     %% `ExpSeq` is the object representing the entire experimental sequence (root node).
     % In additional to other properties and APIs provided for manipulating the
     % tree structure (timing APIs in `ExpSeqBase`), this contains global information
@@ -63,6 +63,7 @@ classdef ExpSeq < ExpSeqBase
         after_end_cbs = {};
 
         seq_ctx;
+        basic_seqs = {};
         time_scale = 1e12; % TODO load from config
 
         %% IR stuff
@@ -79,6 +80,7 @@ classdef ExpSeq < ExpSeqBase
             % As top-level `ExpSeq`.
             self.config = SeqConfig.get(1);
             self.topLevel = self;
+            self.root = self;
             C = struct();
             consts = self.config.consts;
             fields = fieldnames(consts);
@@ -106,6 +108,11 @@ classdef ExpSeq < ExpSeqBase
             self.ir_ctx = IRContext();
             self.disabled_channels = containers.Map('KeyType', 'char', ...
                                                     'ValueType', 'double');
+            self.bseq_id = 1;
+        end
+
+        function bseq = newBasicSeq(self)
+            bseq = BasicSeq(self);
         end
 
         function addTTLMgr(self, chn, off_delay, on_delay, ...
@@ -364,12 +371,6 @@ classdef ExpSeq < ExpSeqBase
                 end
             end
             res = checkChannelDisabled(self.config, name);
-        end
-    end
-
-    methods(Access=protected)
-        function t = globalPath(self)
-            t = {};
         end
     end
 

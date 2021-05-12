@@ -11,27 +11,18 @@
 % You should have received a copy of the GNU Lesser General Public
 % License along with this library.
 
-classdef SubSeq < ExpSeqBase
-    % Sub sequence of another sequence
-    % This is a thin wrapper around `ExpSeqBase` to implement the constructor.
+classdef BasicSeq < RootSeq
+    %% `BasicSeq` is a non top-level root sequence.
+    % This is a thin wrapper around `RootSeq` for the constructor.
     methods
-        function self = SubSeq(parent, toffset)
-            % Set offset and cache some shared properties
-            % from its parent for fast lookup.
-            self.parent = parent;
-            self.tOffset = toffset;
+        function self = BasicSeq(parent)
             self.config = parent.config;
-            self.topLevel = parent.topLevel;
-            self.root = parent.root;
+            self.topLevel = parent;
+            self.root = self;
             self.C = parent.C;
-            self.G = parent.G;
             % Add to parent
-            ns = parent.nSubSeqs + 1;
-            parent.nSubSeqs = ns;
-            if ns > length(parent.subSeqs)
-                parent.subSeqs{round(ns * 1.3) + 8} = [];
-            end
-            parent.subSeqs{ns} = self;
+            parent.basic_seqs{end + 1} = self;
+            self.bseq_id = length(parent.basic_seqs) + 1;
         end
     end
 end
