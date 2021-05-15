@@ -1,4 +1,4 @@
-% Copyright (c) 2014-2018, Yichao Yu <yyc1992@gmail.com>
+% Copyright (c) 2014-2021, Yichao Yu <yyc1992@gmail.com>
 %
 % This library is free software; you can redistribute it and/or
 % modify it under the terms of the GNU Lesser General Public
@@ -38,7 +38,7 @@ classdef ExpSeqBase < TimeSeq
         subSeqs = {[], [], [], [], [], []};
         nSubSeqs = 0;
     end
-    properties(SetAccess = private, Hidden)
+    properties(SetAccess=protected, Hidden)
         % This is the nested struct (`DynProp`) that contains global constant
         % and scan parameters. See `ScanGroup` for more detail.
         C; % ::DynProp
@@ -50,51 +50,10 @@ classdef ExpSeqBase < TimeSeq
     end
 
     methods
-        function self = ExpSeqBase(parent_or_C, toffset)
-            if exist('toffset', 'var')
-                % As sub sequence: set offset and cache some shared properties
-                % from its parent for fast lookup.
-                self.parent = parent_or_C;
-                self.tOffset = toffset;
-                self.config = parent_or_C.config;
-                self.topLevel = parent_or_C.topLevel;
-                self.C = parent_or_C.C;
-                self.G = parent_or_C.G;
-                % Add to parent
-                ns = parent_or_C.nSubSeqs + 1;
-                parent_or_C.nSubSeqs = ns;
-                if ns > length(parent_or_C.subSeqs)
-                    parent_or_C.subSeqs{round(ns * 1.3) + 8} = [];
-                end
-                parent_or_C.subSeqs{ns} = self;
-                return;
-            end
-            % As top-level `ExpSeq`.
-            self.config = SeqConfig.get(1);
-            self.topLevel = self;
-            C = struct();
-            consts = self.config.consts;
-            fields = fieldnames(consts);
-            for i = 1:length(fields)
-                fn = fields{i};
-                C.(fn) = consts.(fn);
-            end
-            if exist('parent_or_C', 'var')
-                % Allow parameters to overwrite consts in config
-                fields = fieldnames(parent_or_C);
-                for i = 1:length(fields)
-                    fn = fields{i};
-                    C.(fn) = parent_or_C.(fn);
-                end
-            end
-            self.C = DynProps(C);
-            self.G = self.config.G;
-        end
-
         %% API's to add steps and subsequences.
 
         % These functions creates sub node in the sequence DAG
-        % which can be either a step (`TimeStep`) or a subsequence (`ExpSeqBase`).
+        % which can be either a step (`TimeStep`) or a subsequence (`SubSeq`).
         % (For simplicity, we may call both of these steps below.)
         %
         % The steps are created relative to a certain reference point,
@@ -108,14 +67,14 @@ classdef ExpSeqBase < TimeSeq
         %     B. A specific `TimePoint`: `addAt`.
         %
         % All the functions use the same syntax to specify the type of
-        % the step to be added (`TimeStep` or `ExpSeqBase`),
+        % the step to be added (`TimeStep` or `SubSeq`),
         % the parameter to construct the step (length for `TimeStep` or
-        % callback with arbitrary arguments for `ExpSeqBase`),
+        % callback with arbitrary arguments for `SubSeq`),
         % and the offset relative to the reference point for each function.
         % (The offset cannot be specified for `addFloating`).
         % This is handled by `addStepReal` and the allowed arguments conbinations are,
         %
-        % 1. To construct a subsequence (`ExpSeqBase`), a callback is always required.
+        % 1. To construct a subsequence (`SubSeq`), a callback is always required.
         %    (The callback can be a function handle, a class, or any callable,
         %    i.e. indexable non-numerical and non-logical object).
         %    Therefore, to construct a subsequence the arguments are,
@@ -133,10 +92,10 @@ classdef ExpSeqBase < TimeSeq
         % Is is also forbidden for `addFloating` since it doesn't really make much sense.
         function step = addStep(self, first_arg, varargin)
             %% The most basic timing API. Add a step (`TimeStep`) or
-            % subsequence (`ExpSeqBase`) and forward the current time based
+            % subsequence (`SubSeq`) and forward the current time based
             % on the length of the added step.
             % The length for this purpose is the length for `TimeStep` and
-            % `curTime` for `ExpSeqBase`. Same as the definition for `TimePoint`.
+            % `curTime` for `SubSeq`. Same as the definition for `TimePoint`.
             [step, end_time] = addStepReal(self, false, self.curTime, first_arg, varargin{:});
             if end_time < self.curTime
                 error('Going back in time not allowed.');
@@ -492,9 +451,9 @@ classdef ExpSeqBase < TimeSeq
         end
 
         function [step, end_time] = addCustomStep(self, start_time, cb, varargin)
-            %% Add a subsequence by creating a child `ExpSeqBase` node and populating
+            %% Add a subsequence by creating a child `SubSeq` node and populating
             % it using the callback passed in.
-            step = ExpSeqBase(self, start_time);
+            step = SubSeq(self, start_time);
             % Create the step
             cb(step, varargin{:});
             end_time = start_time + step.curTime;
