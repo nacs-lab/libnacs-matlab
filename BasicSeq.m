@@ -20,6 +20,8 @@ classdef BasicSeq < RootSeq
             self.topLevel = parent;
             self.root = self;
             self.C = parent.C;
+            self.zero_time = SeqTime.zero(self);
+            self.curSeqTime = self.zero_time;
             % Add to parent
             parent.basic_seqs{end + 1} = self;
             self.bseq_id = length(parent.basic_seqs) + 1;

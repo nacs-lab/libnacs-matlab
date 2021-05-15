@@ -18,6 +18,7 @@ classdef SubSeq < ExpSeqBase
         function self = SubSeq(parent, toffset)
             % Set offset and cache some shared properties
             % from its parent for fast lookup.
+            % `toffset` should be a `SeqTime`
             self.parent = parent;
             self.tOffset = toffset;
             self.config = parent.config;
@@ -25,6 +26,8 @@ classdef SubSeq < ExpSeqBase
             self.root = parent.root;
             self.C = parent.C;
             self.G = parent.G;
+            self.curSeqTime = SeqTime.zero(self);
+            self.latest_seq = parent.latest_seq;
             % Add to parent
             ns = parent.nSubSeqs + 1;
             parent.nSubSeqs = ns;

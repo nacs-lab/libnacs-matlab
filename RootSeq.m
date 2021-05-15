@@ -19,9 +19,11 @@ classdef RootSeq < ExpSeqBase
         bseq_id;
         norders = 0;
         orders = {};
-        endtimes = {};
         default_target = [];
         branches = struct('cond', {}, 'target', {}, 'id', {});
+    end
+    properties(Hidden)
+        zero_time;
     end
 
     methods
@@ -57,9 +59,6 @@ classdef RootSeq < ExpSeqBase
         function addEqual(self, time1, time2)
             addOrder(self, SeqTime.NonNeg, time1, time2);
             addOrder(self, SeqTime.NonNeg, time2, time1);
-        end
-        function addEndTime(self, time)
-            self.endtimes{end + 1} = time;
         end
     end
 end
