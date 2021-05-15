@@ -1,4 +1,4 @@
-%% Copyright (c) 2014-2018, Yichao Yu <yyc1992@gmail.com>
+%% Copyright (c) 2014-2021, Yichao Yu <yyc1992@gmail.com>
 %
 % This library is free software; you can redistribute it and/or
 % modify it under the terms of the GNU Lesser General Public
@@ -30,7 +30,7 @@ classdef (Sealed) TimeStep < TimeSeq
         function self = TimeStep(parent, start_time, len)
             % These fields are in `TimeSeq`.
             % However, they are not initialized in `TimeSeq` constructor
-            % to isolate the handling of `ExpSeq` to `ExpSeqBase`
+            % to isolate the handling of `ExpSeqBase` subclasses
             % and to reduce function call overhead...
             self.is_step = true;
             self.parent = parent;

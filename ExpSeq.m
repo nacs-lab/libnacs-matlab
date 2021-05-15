@@ -75,13 +75,30 @@ classdef ExpSeq < ExpSeqBase
     end
 
     methods
-        function self = ExpSeq(varargin)
-            if nargin > 1
-                error('Too many arguments for ExpSeq.');
-            elseif nargin == 1 && ~isstruct(varargin{1})
-                error('Constant input must be a struct.');
+        function self = ExpSeq(C_ovr)
+            % As top-level `ExpSeq`.
+            self.config = SeqConfig.get(1);
+            self.topLevel = self;
+            C = struct();
+            consts = self.config.consts;
+            fields = fieldnames(consts);
+            for i = 1:length(fields)
+                fn = fields{i};
+                C.(fn) = consts.(fn);
             end
-            self = self@ExpSeqBase(varargin{:});
+            if exist('C_ovr', 'var')
+                if ~isstruct(C_ovr)
+                    error('Constant input must be a struct.');
+                end
+                % Allow parameters to overwrite consts in config
+                fields = fieldnames(C_ovr);
+                for i = 1:length(fields)
+                    fn = fields{i};
+                    C.(fn) = C_ovr.(fn);
+                end
+            end
+            self.C = DynProps(C);
+            self.G = self.config.G;
             self.drivers = containers.Map();
             self.driver_cids = containers.Map();
             self.cid_cache = containers.Map('KeyType', 'char', 'ValueType', 'double');
