@@ -109,6 +109,8 @@ classdef ExpSeq < RootSeq
             self.disabled_channels = containers.Map('KeyType', 'char', ...
                                                     'ValueType', 'double');
             self.bseq_id = 1;
+            self.zero_time = SeqTime.zero(self);
+            self.curSeqTime = self.zero_time;
         end
 
         function bseq = newBasicSeq(self)

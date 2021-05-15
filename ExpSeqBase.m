@@ -27,16 +27,22 @@ classdef ExpSeqBase < TimeSeq
     % All of the API's ensure that the current time can only be forwarded.
     % This makes it easy to infer the timing of the sequence when reading the code.
 
-    properties
+    properties(SetAccess=protected, GetAccess=?TimeSeq)
         % This is length of the current (sub)sequence (not including background sequences)
         % and is also where sub sequences and time steps are added to by default.
-        curTime = 0;
+        curSeqTime;
     end
     properties(Hidden)
         % Subnodes in the tree. Only non-empty ones matters.
         % The preallocation here makes constructing a normal sequence slightly faster.
         subSeqs = {[], [], [], [], [], []};
         nSubSeqs = 0;
+        % This is the flag that records if all the parents (recursively)
+        % have the `totallen_after_parent` flag set.
+        % In general, whenever we set the `totallen_after_parent` to `true`,
+        % we have to set it for all the parents recursively as well.
+        % However, once we did that we don't have to do it again if nothing else changed.
+        latest_seq = true;
     end
     properties(SetAccess=protected, Hidden)
         % This is the nested struct (`DynProp`) that contains global constant
@@ -90,23 +96,25 @@ classdef ExpSeqBase < TimeSeq
         % Note that the offset is not allowed for `addStep`
         % to prevent `curSeqTime` from going backward.
         % Is is also forbidden for `addFloating` since it doesn't really make much sense.
-        function step = addStep(self, first_arg, varargin)
+        function step = addStep(self, varargin)
             %% The most basic timing API. Add a step (`TimeStep`) or
             % subsequence (`SubSeq`) and forward the current time based
             % on the length of the added step.
             % The length for this purpose is the length for `TimeStep` and
-            % `curTime` for `SubSeq`. Same as the definition for `TimePoint`.
-            [step, end_time] = addStepReal(self, false, self.curTime, first_arg, varargin{:});
-            if end_time < self.curTime
-                error('Going back in time not allowed.');
+            % `curSeqTime` for `SubSeq`. Same as the definition for `TimePoint`.
+            [step, end_time] = addStepReal(self, false, self.curSeqTime, varargin{:});
+            self.curSeqTime = end_time;
+            step.end_after_parent = false;
+            if step.is_step
+                step.totallen_after_parent = false;
             end
-            self.curTime = end_time;
+            self.end_after_parent = true;
         end
 
         function step = addBackground(self, varargin)
             %% Add a background step or subsequence
             % (same as `addStep` without forwarding current time).
-            step = addStepReal(self, true, self.curTime, varargin{:});
+            step = addStepReal(self, true, self.curSeqTime, varargin{:});
         end
 
         function step = addFloating(self, varargin)
@@ -119,6 +127,8 @@ classdef ExpSeqBase < TimeSeq
             %% Add a step or subsequence at a specific time point.
             % The standard arguments for creating the step or subsequence comes after
             % the time point.
+            % FIXME: Not sure what to do when adding something at a different time
+            % in a disabled subsequence.
             step = addStepReal(self, true, getTimePointOffset(self, tp), varargin{:});
         end
 
@@ -128,19 +138,31 @@ classdef ExpSeqBase < TimeSeq
 
         function self = wait(self, t)
             %% Forward current time.
-            if t < 0
+            if isnumeric(t) && t < 0
                 error('Wait time cannot be negative.');
             end
-            self.curTime = self.curTime + t;
+            self.curSeqTime = create(self.curSeqTime, SeqTime.NonNeg, ...
+                                     round(t * self.topLevel.time_scale));
+            self.end_after_parent = true;
+            while ~self.latest_seq
+                self.totallen_after_parent = true;
+                self.latest_seq = true;
+                self = self.parent;
+                if isempty(self)
+                    break;
+                end
+            end
         end
 
         function self = waitAll(self)
             %% Wait for everything that have been currently added to finish.
             % This is the recursive version of `waitBackground`.
-            self.curTime = totalTime(self);
+            self.curSeqTime = waitAllTime(self, true);
+            self.end_after_parent = true;
         end
 
         function self = waitFor(self, steps, offset)
+            % `offset` is in real unit and not scaled.
             %% Wait for all the steps or subsequences within `steps` with an offset.
             % It is allowed to wait for steps or subsequences that are not a child
             % of `self`. It is also allowed to wait for floating sequence provided
@@ -148,8 +170,18 @@ classdef ExpSeqBase < TimeSeq
             % and the offset between `self` and the step to be waited for is well defined).
             if ~exist('offset', 'var')
                 offset = 0;
+                hasoffset = false;
+                nonnegoffset = true;
+            elseif isnumeric(offset)
+                hasoffset = offset ~= 0;
+                nonnegoffset = offset >= 0;
+            else
+                hasoffset = true;
+                nonnegoffset = false;
             end
-            t = self.curTime;
+            t = self.curSeqTime;
+            tval = getVal(t);
+            has_other_parent = false;
             for step = steps
                 if iscell(step)
                     % Deal with MATLAB cell array indexing weirdness....
@@ -166,52 +198,94 @@ classdef ExpSeqBase < TimeSeq
                 step_toffset = real_step.tOffset;
                 if isnan(step_toffset)
                     error('Cannot get offset of floating sequence.');
-                elseif real_step.is_step
-                    tstep = step_toffset + real_step.len + offset;
-                else
-                    tstep = step_toffset + real_step.curTime + offset;
                 end
                 if real_step.parent ~= self
-                    tstep = tstep + offsetDiff(self, real_step.parent);
+                    step_toffset = combine(offsetDiff(self, real_step.parent), ...
+                                           step_toffset);
+                    has_other_parent = true;
                 end
-                if tstep > t
-                    t = tstep;
+                assert(step_toffset.seq == self);
+                if real_step.is_step
+                    tstep = create(step_toffset, SeqTime.Pos, round(real_step.len));
+                else
+                    tstep = combine(step_toffset, real_step.curSeqTime);
+                end
+                if hasoffset
+                    tstep = create(tstep, SeqTime.Unknown, ...
+                                   round(offset * self.topLevel.time_scale));
+                end
+                if nonnegoffset && real_step.parent == self
+                    real_step.end_after_parent = false;
+                    if real_step.is_step
+                        real_step.totallen_after_parent = false;
+                    end
+                end
+                new_tval = max(tval, getVal(tstep));
+                new_t = create(SeqTime.zero(self), SeqTime.NonNeg, new_tval);
+                addOrder(self.root, SeqTime.NonNeg, tstep, new_t);
+                addOrder(self.root, SeqTime.NonNeg, t, new_t);
+                tval = new_tval;
+                t = new_t;
+            end
+            self.curSeqTime = t;
+            self.end_after_parent = true;
+            if ~self.latest_seq && (has_other_parent || isa(offset, 'SeqVal') || offset > 0)
+                while ~self.latest_seq
+                    self.totallen_after_parent = true;
+                    self.latest_seq = true;
+                    self = self.parent;
+                    if isempty(self)
+                        break;
+                    end
                 end
             end
-            self.curTime = t;
         end
 
         function self = waitBackground(self)
             %% Wait for background steps that are added directly to this sequence
             % to finish. See also `waitAll`.
-            function checkBackgroundTime(sub_seq)
+            t = self.curSeqTime;
+            tval = getVal(t);
+            for i = 1:self.nSubSeqs
+                sub_seq = self.subSeqs{i};
+                step_toffset = sub_seq.tOffset;
+                if ~sub_seq.end_after_parent
+                    continue;
+                end
+                if isnan(step_toffset)
+                    error('Cannot get offset of floating sequence.');
+                end
                 if sub_seq.is_step
-                    len = sub_seq.len;
+                    tstep = create(step_toffset, SeqTime.Pos, round(sub_seq.len));
                 else
-                    len = sub_seq.curTime;
+                    tstep = combine(step_toffset, sub_seq.curSeqTime);
                 end
-                sub_cur = sub_seq.tOffset + len;
-                if isnan(sub_cur)
-                    error('Cannot wait for background with floating sub sequences.');
-                end
-                if sub_cur > self.curTime
-                    self.curTime = sub_cur;
-                end
+                sub_seq.end_after_parent = false;
+                new_tval = max(tval, getVal(tstep));
+                new_t = create(SeqTime.zero(self), SeqTime.NonNeg, new_tval);
+                addOrder(self.root, SeqTime.NonNeg, tstep, new_t);
+                addOrder(self.root, SeqTime.NonNeg, t, new_t);
+                tval = new_tval;
+                t = new_t;
             end
-            subSeqForeach(self, @checkBackgroundTime);
+            self.curSeqTime = t;
+            self.end_after_parent = true;
         end
 
         %% Other helper functions.
 
         function step = add(self, name, pulse)
             %% Convenient shortcut for adding a single pulse in a step.
-            if ~isnumeric(pulse) && ~islogical(pulse)
+            if ~isnumeric(pulse) && ~islogical(pulse) && ~isa(pulse, 'SeqVal')
                 error('Use addStep to add a ramp pulse.');
             end
-            % The 10us here is just a placeholder.
+            % The time (2 ticks) here is just a placeholder.
             % The exact length doesn't really matter except for total sequence length
-            step = addStepReal(self, true, self.curTime, 1e-6); % addBackground
+            step = addStepReal(self, true, self.curSeqTime, ...
+                               2 / self.topLevel.time_scale); % addBackground
             add(step, name, pulse);
+            step.end_after_parent = false;
+            step.totallen_after_parent = false;
         end
 
         function res = alignEnd(self, seq1, seq2, offset)
@@ -224,64 +298,78 @@ classdef ExpSeqBase < TimeSeq
             if ~isnan(seq1.tOffset) || ~isnan(seq2.tOffset)
                 error('alignEnd requires two floating sequences as inputs.');
             end
+            assert(seq1.parent == self);
+            assert(seq2.parent == self);
+            has_time1 = false;
             if seq1.is_step
-                len1 = seq1.len;
+                len1 = round(seq1.len);
             else
-                len1 = seq1.curTime;
+                has_time1 = true;
+                time1 = seq1.curSeqTime;
+                len1 = getVal(time1);
             end
+            has_time2 = false;
             if seq2.is_step
-                len2 = seq2.len;
+                len2 = round(seq2.len);
             else
-                len2 = seq2.curTime;
+                has_time2 = true;
+                time2 = seq2.curSeqTime;
+                len2 = getVal(time2);
             end
-            if len1 > len2
-                seq1.setTime(endTime(self), 0, offset);
-                seq2.setEndTime(endTime(seq1));
+            len = max(len1, len2);
+            curtime = self.curSeqTime;
+            if ~isnumeric(offset) || offset ~= 0
+                curtime = create(curtime, SeqTime.Unknown, ...
+                                 round(offset * self.topLevel.time_scale));
+            end
+            endtime = create(curtime, SeqTime.NonNeg, len);
+            start1 = create(endtime, SeqTime.Unknown, -len1);
+            seq1.tOffset = start1;
+            addOrder(self.root, SeqTime.NonNeg, curtime, start1);
+            if has_time1
+                addEqual(self.root, endtime, time1);
             else
-                seq2.setTime(endTime(self), 0, offset);
-                seq1.setEndTime(endTime(seq2));
+                addEqual(self.root, endtime, create(start1, SeqTime.NonNeg, len1));
+            end
+            start2 = create(endtime, SeqTime.Unknown, -len2);
+            seq2.tOffset = start2;
+            addOrder(self.root, SeqTime.NonNeg, curtime, start2);
+            if has_time2
+                addEqual(self.root, endtime, time2);
+            else
+                addEqual(self.root, endtime, create(start2, SeqTime.NonNeg, len2));
             end
             res = {seq1, seq2};
         end
 
+        function res = curTime(self)
+            res = getVal(self.curSeqTime) / self.topLevel.time_scale;
+        end
+
         function res = totalTime(self)
-            res = 0;
-            for i = 1:self.nSubSeqs
-                sub_seq = self.subSeqs{i};
-                if sub_seq.is_step
-                    sub_end = sub_seq.len + sub_seq.tOffset;
-                else
-                    sub_end = totalTime(sub_seq) + sub_seq.tOffset;
-                end
-                if sub_end > res
-                    res = sub_end;
-                end
-            end
-            if isnan(res)
-                error('Cannot get total time with floating sub sequence.');
-            end
-            if res < self.curTime
-                res = self.curTime;
-            end
+            res = totalTimeRaw(self) / self.topLevel.time_scale;
         end
 
         function tdiff = getTimePointOffset(self, time)
-            % Compute the offset of a `TimePoint` relative to current sequence
+            % Compute the offset of a `TimePoint` relative to current sequence.
+            % Returns a `SeqTime` that's suitable in the current sequence.
             if ~isa(time, 'TimePoint')
                 error('`TimePoint` expected.');
             end
             other = time.seq;
             tdiff = offsetDiff(self, other);
-            offset = time.offset;
-            if time.anchor ~= 0
+            tdiff = create(tdiff, SeqTime.Unknown, ...
+                           round(time.offset * self.topLevel.time_scale));
+            if ~isnumeric(time.anchor) || time.anchor ~= 0
                 if other.is_step
-                    len = other.len;
+                    tdiff = create(tdiff, SeqTime.Unknown, round(other.len * time.anchor));
+                elseif isnumeric(time.anchor) && time.anchor == 1
+                    tdiff = combine(tdiff, other.curSeqTime);
                 else
-                    len = other.curTime;
+                    tdiff = create(tdiff, SeqTime.Unknown, ...
+                                   round(getVal(other.curSeqTime) * time.anchor));
                 end
-                offset = offset + len * time.anchor;
             end
-            tdiff = tdiff + offset;
         end
     end
 
@@ -304,13 +392,15 @@ classdef ExpSeqBase < TimeSeq
 
         function res = offsetDiff(self, step)
             %% Compute the offset different starting from the lowest common ancestor
-            % This reduce rounding error and make it possible to support floating sequence
-            % in the common ancestor.
+            % This make it possible to support floating sequence in the common ancestor.
+            % Return the term differences so that the caller
+            % can take advantage of the sturcture of the offset and the signs of the terms.
+            res = SeqTime.zero(self);
             self_path = globalPath(self);
             other_path = globalPath(step);
             nself = length(self_path);
             nother = length(other_path);
-            res = 0;
+            has_neg = false;
             for i = 1:max(nself, nother)
                 if i <= nself
                     self_ele = self_path{i};
@@ -319,28 +409,74 @@ classdef ExpSeqBase < TimeSeq
                         if self_ele == other_ele
                             continue;
                         end
-                        res = res + other_ele.tOffset - self_ele.tOffset;
+                        other_offset = other_ele.tOffset;
+                        if isnan(other_offset)
+                            error('Cannot compute offset different for floating sequence');
+                        end
+                        res = combine(res, other_offset);
+                        self_offset = self_ele.tOffset;
+                        if isnan(self_offset)
+                            error('Cannot compute offset different for floating sequence');
+                        end
+                        if ~iszero(self_offset)
+                            has_neg = true;
+                            res = create(res, SeqTime.Unknown, -getVal(self_offset));
+                        end
                     else
-                        res = res - self_ele.tOffset;
+                        self_offset = self_ele.tOffset;
+                        if isnan(self_offset)
+                            error('Cannot compute offset different for floating sequence');
+                        end
+                        if ~iszero(self_offset)
+                            has_neg = true;
+                            res = create(res, SeqTime.Unknown, -getVal(self_offset));
+                        end
                     end
                 else
                     other_ele = other_path{i};
-                    res = res + other_ele.tOffset;
+                    other_offset = other_ele.tOffset;
+                    if isnan(other_offset)
+                        error('Cannot compute offset different for floating sequence');
+                    end
+                    res = combine(res, other_offset);
                 end
             end
-            if isnan(res)
-                error('Cannot compute offset different for floating sequence');
+            if has_neg
+                if isempty(step.tOffset)
+                    addEqual(self.root, step.zero_time, res);
+                else
+                    addEqual(self.root, step.tOffset, res);
+                end
+            end
+        end
+
+        function [res, curtime_only] = totalTimeRaw(self)
+            res = getVal(self.curSeqTime);
+            curtime_only = true;
+            for i = 1:self.nSubSeqs
+                sub_seq = self.subSeqs{i};
+                if ~sub_seq.totallen_after_parent
+                    continue;
+                end
+                if sub_seq.is_step
+                    sub_end = sub_seq.len;
+                else
+                    [sub_end, sub_curtime_only] = totalTimeRaw(sub_seq);
+                    if sub_curtime_only && ~sub_seq.end_after_parent
+                        continue;
+                    end
+                end
+                if isnan(sub_seq.tOffset)
+                    error('Cannot get total time with floating sub sequence.');
+                end
+                sub_end = sub_end + getVal(sub_seq.tOffset);
+                curtime_only = false;
+                res = max(res, sub_end);
             end
         end
     end
 
     methods(Access=protected)
-        function subSeqForeach(self, func)
-            for i = 1:self.nSubSeqs
-                func(self.subSeqs{i});
-            end
-        end
-
         function res = appendPulses(self, cid, res, toffset)
             %% Push pulse information (time, length, pulse function) within this subsequence
             % to `res` with a global time offset of `toffset` for the channel `cid`.
@@ -362,6 +498,49 @@ classdef ExpSeqBase < TimeSeq
                 else
                     res = appendPulses(sub_seq, cid, res, seq_toffset);
                 end
+            end
+        end
+
+        function t = waitAllTime(self, setflag)
+            %% Returns a time that waits for everything to finish.
+            t = self.curSeqTime;
+            tval = getVal(t);
+            for i = 1:self.nSubSeqs
+                sub_seq = self.subSeqs{i};
+                if ~sub_seq.totallen_after_parent
+                    continue;
+                end
+                step_toffset = sub_seq.tOffset;
+                if isnan(step_toffset)
+                    error('Cannot get offset of floating sequence.');
+                end
+                if sub_seq.is_step
+                    tstep = create(step_toffset, SeqTime.Pos, round(sub_seq.len));
+                else
+                    subt = waitAllTime(sub_seq, false);
+                    sub_seq.latest_seq = false;
+                    % Handle background subsequence that has already been waited for.
+                    % If we know the child's `curSeqTime` doesn't end after us
+                    % and the total time is the same as its `curSeqTime`
+                    % we can simply ignore it.
+                    if ~sub_seq.end_after_parent && subt == sub_seq.curSeqTime
+                        if setflag
+                            sub_seq.totallen_after_parent = false;
+                        end
+                        continue;
+                    end
+                    tstep = combine(step_toffset, subt);
+                end
+                if setflag
+                    sub_seq.totallen_after_parent = false;
+                    sub_seq.end_after_parent = false;
+                end
+                new_tval = max(tval, getVal(tstep));
+                new_t = create(SeqTime.zero(self), SeqTime.NonNeg, new_tval);
+                addOrder(self.root, SeqTime.NonNeg, tstep, new_t);
+                addOrder(self.root, SeqTime.NonNeg, t, new_t);
+                tval = new_tval;
+                t = new_t;
             end
         end
 
@@ -403,21 +582,22 @@ classdef ExpSeqBase < TimeSeq
             % for creating time step or subsequence. (See comments above).
             % `curtime` is the reference time point (`nan` for `addFloating`)
             % The step constructed and the end time are returned.
-            if ~isnumeric(first_arg)
-                % If first arg is not a number, assume to be a callback for subsequence.
+            if ~isnumeric(first_arg) && ~isa(first_arg, 'SeqVal')
+                % If first arg is not a value, assume to be a callback for subsequence.
                 [step, end_time] = addCustomStep(self, curtime, first_arg, varargin{:});
             elseif isempty(varargin)
                 % If we only have one numerical argument it must be a simple time step.
-                if first_arg <= 0
-                    error('Length of time step must be positive.');
-                end
                 start_time = curtime;
-                len = first_arg;
-                curtime = curtime + len;
+                len = first_arg * self.topLevel.time_scale;
+                if isnan(curtime)
+                    curtime = nan;
+                else
+                    curtime = create(curtime, SeqTime.Pos, round(len));
+                end
                 step = TimeStep(self, start_time, len);
                 end_time = curtime;
-            elseif isnumeric(varargin{1})
-                % If we only have two numerical argument it must be a simple time step
+            elseif isnumeric(varargin{1}) || isa(varargin{1}, 'SeqVal')
+                % If we only have two value argument it must be a simple time step
                 % with custom offset.
                 if length(varargin) > 1
                     % Only two arguments allowed in this case.
@@ -431,12 +611,11 @@ classdef ExpSeqBase < TimeSeq
                 end
                 offset = varargin{1};
                 assert(~isnan(curtime));
-                end_offset = offset + first_arg;
-                if first_arg <= 0
-                    error('Length of time step must be positive.');
-                end
-                step = TimeStep(self, offset + curtime, first_arg);
-                end_time = end_offset + curtime;
+                curtime = create(curtime, SeqTime.Unknown, ...
+                                 round(offset * self.topLevel.time_scale));
+                len = first_arg * self.topLevel.time_scale;
+                step = TimeStep(self, curtime, len);
+                end_time = create(curtime, SeqTime.Pos, round(len));
             else
                 % Number followed by a callback: subsequence with offset.
                 if ~allow_offset
@@ -446,7 +625,23 @@ classdef ExpSeqBase < TimeSeq
                         error('addStep with time offset not allowed.');
                     end
                 end
-                [step, end_time] = addCustomStep(self, curtime + first_arg, varargin{:});
+                if ~self.latest_seq
+                    self.totallen_after_parent = true;
+                    self.latest_seq = true;
+                    parent = self.parent
+                    while ~parent.latest_seq
+                        parent.totallen_after_parent = true;
+                        parent.latest_seq = true;
+                        parent = parent.parent;
+                        if isempty(parent)
+                            break;
+                        end
+                    end
+                end
+                assert(~isnan(curtime));
+                curtime = create(curtime, SeqTime.Unknown, ...
+                                 round(first_arg * self.topLevel.time_scale));
+                [step, end_time] = addCustomStep(self, curtime, varargin{:});
             end
         end
 
@@ -456,7 +651,13 @@ classdef ExpSeqBase < TimeSeq
             step = SubSeq(self, start_time);
             % Create the step
             cb(step, varargin{:});
-            end_time = start_time + step.curTime;
+            step.latest_seq = false;
+            if isnan(start_time)
+                end_time = nan;
+            else
+                assert(start_time.seq == self);
+                end_time = combine(start_time, step.curSeqTime);
+            end
         end
     end
 end

@@ -45,10 +45,14 @@ classdef TimeSeq < handle
         % Points to parent node, or empty for root node.
         parent;
         % The time offset of this node within the parent node.
-        % After the whole sequence is constructed, all of the time offsets must be finite.
-        % A `nan` time offset is allowed during the construction representing a
-        % floating step/subsequence that can be positioned later.
-        tOffset = 0;
+        % This is in general a SeqTime, which represents the time as a multiple of
+        % the sequence time unit. There are two special cases:
+        % 1. empty array
+        %    This happens for steps/subsequences that starts at the beginning of the parent.
+        % 2. nan
+        %    This is when the step/subsequence is still floating and have not be positioned yet.
+        %    This must be eliminated before the end of sequence consturction.
+        tOffset;
         % The toplevel sequence.
         topLevel;
         % The root node (the basic sequence).
@@ -65,6 +69,17 @@ classdef TimeSeq < handle
         % AFAICT, this is faster than doing `isa` check on the objects
         % which is faster than dispatching using methods...
         is_step = false;
+    end
+
+    properties(Access=protected)
+        % Whether the end of the step/subseq ends after the `curSeqTime` of parent.
+        % For an `ExpSeqBase`, this needs to be updated if `curSeqTime` is changed.
+        end_after_parent = true;
+        % Whether the total length of the step/subseq ends after the `curSeqTime` of parent.
+        % For an `ExpSeqBase`, this needs to be updated if `curSeqTime`
+        % is changed and isn't simply waiting for an existing child
+        % or when new children are added..
+        totallen_after_parent = true;
     end
 
     methods
@@ -103,17 +118,30 @@ classdef TimeSeq < handle
             if ~isnan(self.tOffset)
                 error('Not a floating sequence.');
             end
-            tdiff = getTimePointOffset(self.parent, time) + offset;
-            if anchor ~= 0
+            tdiff = getTimePointOffset(self.parent, time);
+            tdiff = create(tdiff, SeqTime.Unknown, round(offset));
+            if ~isnumeric(anchor) || anchor ~= 0
                 if self.is_step
-                    len = self.len;
+                    len = round(self.len * anchor);
                 else
-                    len = self.curTime;
+                    len = SeqTime.getVar(self.curSeqTime);
+                    if isnumeric(anchor) && anchor == 1
+                        if ~isnumeric(len)
+                            addEqual(self.root, self.curSeqTime, tdiff);
+                        end
+                    else
+                        len = round(len * anchor);
+                    end
                 end
-                tdiff = tdiff - len * anchor;
-            end
-            if tdiff < 0
-                error('Negative time offset not allowed.');
+                tdiff2 = create(tdiff, SeqTime.Unknown, -len);
+                if isnumeric(anchor) && anchor == 1
+                    if ~self.is_step
+                        addEqual(self.root, tdiff, self.curSeqTime);
+                    elseif ~isnumeric(len)
+                        addEqual(self.root, tdiff, create(tdiff2, SeqTime.NonNeg, len));
+                    end
+                end
+                tdiff = tdiff2;
             end
             self.tOffset = tdiff;
         end
