@@ -61,10 +61,6 @@ classdef TimeSeq < handle
         % This is computed lazily (see `TimeSeq::globalPath`) and is used to find the
         % closest common ancestor of two nodes (see `ExpSeqBase::offsetDiff`).
         global_path = {};
-        % This is a boolean array storing whether the sequence contain pulses for
-        % each channel. The array is indexed by the channel ID.
-        % The field is computed and cached before generation starts (see `ExpSeq::generate`).
-        chn_mask;
         % A LLVM style flag for type checking.
         % AFAICT, this is faster than doing `isa` check on the objects
         % which is faster than dispatching using methods...

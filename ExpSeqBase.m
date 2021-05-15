@@ -497,30 +497,6 @@ classdef ExpSeqBase < TimeSeq
     end
 
     methods(Access=protected)
-        function res = appendPulses(self, cid, res, toffset)
-            %% Push pulse information (time, length, pulse function) within this subsequence
-            % to `res` with a global time offset of `toffset` for the channel `cid`.
-            % The information is pushed to `res` as new 3-row columns (see below).
-            % `res` is passed in from the caller to minimize allocation.
-            % Called by `ExpSeq::getPulse`.
-            subSeqs = self.subSeqs;
-            for i = 1:self.nSubSeqs
-                sub_seq = subSeqs{i};
-                if ~sub_seq.chn_mask(cid)
-                    % fast path
-                    continue;
-                end
-                seq_toffset = sub_seq.tOffset + toffset;
-                % The following code is manually inlined for TimeStep.
-                % since function call is super slow...
-                if sub_seq.is_step
-                    res(1:3, end + 1) = {seq_toffset, sub_seq.len, sub_seq.pulses{cid}};
-                else
-                    res = appendPulses(sub_seq, cid, res, seq_toffset);
-                end
-            end
-        end
-
         function t = waitAllTime(self, setflag)
             %% Returns a time that waits for everything to finish.
             t = self.curSeqTime;
@@ -562,37 +538,6 @@ classdef ExpSeqBase < TimeSeq
                 tval = new_tval;
                 t = new_t;
             end
-        end
-
-        function res = populateChnMask(self, nchn)
-            % Make sure `chn_mask` has enough elements (so no bounds checks needed later)
-            % and contains the correct mask for whether each channels are used in this
-            % subsequence. Called after construction and before generation to speed up
-            % the tree traversal during generation.
-            res = false(1, nchn);
-            subSeqs = self.subSeqs;
-            for i = 1:self.nSubSeqs
-                sub_seq = subSeqs{i};
-                if isnan(sub_seq.tOffset)
-                    error('Sub sequence still floating');
-                end
-                % The following code is manually inlined for TimeStep.
-                % since function call is super slow...
-                if sub_seq.is_step
-                    subseq_pulses = sub_seq.pulses;
-                    sub_res = false(1, nchn);
-                    for j = 1:length(subseq_pulses)
-                        if ~isempty(subseq_pulses{j})
-                            sub_res(j) = true;
-                            res(j) = true;
-                        end
-                    end
-                    sub_seq.chn_mask = sub_res;
-                else
-                    res = res | populateChnMask(sub_seq, nchn);
-                end
-            end
-            self.chn_mask = res;
         end
     end
 
