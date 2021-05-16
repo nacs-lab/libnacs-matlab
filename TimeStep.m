@@ -24,10 +24,12 @@ classdef (Sealed) TimeStep < TimeSeq
         pulses = {[], [], [], [], [], [], [], []};
         % The length of the step
         len;
+        % The length without accounting for the condition
+        rawLen;
     end
 
     methods
-        function self = TimeStep(parent, start_time, len)
+        function self = TimeStep(parent, start_time, len, cond)
             % These fields are in `TimeSeq`.
             % However, they are not initialized in `TimeSeq` constructor
             % to isolate the handling of `ExpSeqBase` subclasses
@@ -39,7 +41,9 @@ classdef (Sealed) TimeStep < TimeSeq
             self.config = parent.config;
             self.topLevel = parent.topLevel;
             self.root = parent.root;
-            self.len = len;
+            self.rawLen = len;
+            self.cond = cond;
+            self.len = ifelse(self.cond, len, 0);
             ns = parent.nSubSeqs + 1;
             parent.nSubSeqs = ns;
             if ns > length(parent.subSeqs)
@@ -112,11 +116,83 @@ classdef (Sealed) TimeStep < TimeSeq
             if ctx.collect_dbg_info
                 ctx.obj_backtrace{id + 1} = dbstack('-completenames', 1);
             end
-            self.pulses{cid} = Pulse(id, pulse, true);
+            self.pulses{cid} = Pulse(id, pulse, self.cond);
+        end
+
+        function self = addConditional(self, cid, pulse, cond)
+            % This is very similar to `TimeStep::add` but creating
+            % a common function to call adds measureable overhead in MATLAB...
+            %% Add a pulse on a channel to the step.
+            % The input channel ID can be provided as a string, which will be
+            % translated and converted to the channel ID, or it can be
+            % given as the channel ID (number) directly. (See `TimeSeq::translateChannel`)
+            % The pulse can be
+            %
+            % * A value (constant or variable)
+            %
+            %     Output the value at the beginning of the step.
+            %
+            % * A subclass of `IRPulse` (deprecated)
+            %
+            %     The `calcValue` method will be used to compute the output value.
+            %
+            % * Or an arbitrary callable object/function handle.
+            %
+            %     The object will be called to compute the output value.
+            if isnumeric(cond)
+                cond = cond ~= 0;
+            end
+            toplevel = self.topLevel;
+            if ~isnumeric(cid)
+                cid = translateChannel(toplevel, cid);
+            end
+            if cid > length(self.pulses)
+                % Minimize resizing
+                self.pulses{cid + 5} = [];
+            end
+            ctx = toplevel.seq_ctx;
+            if isnumeric(pulse) || islogical(pulse)
+                if ~isscalar(pulse)
+                    error('Pulse cannot be a non-scalar value.');
+                end
+                pulse = double(pulse);
+            elseif isa(pulse, 'SeqVal')
+                % pass through
+            elseif isa(pulse, 'IRPulse')
+                pulse = calcValue(pulse, ctx.arg0 / toplevel.time_scale, ...
+                                  self.rawLen / toplevel.time_scale, ctx.arg1);
+            else
+                % Treat as function/callable
+                narg = nargin(pulse);
+                if narg == 1
+                    pulse = pulse(ctx.arg0 / toplevel.time_scale);
+                elseif narg == 2
+                    pulse = pulse(ctx.arg0 / toplevel.time_scale, ...
+                                  self.rawLen / toplevel.time_scale);
+                else
+                    pulse = pulse(ctx.arg0 / toplevel.time_scale, ...
+                                  self.rawLen / toplevel.time_scale, ctx.arg1);
+                end
+            end
+            % Inlined implementation of `SeqContext::nextObjID` for hot path
+            id = ctx.obj_counter;
+            ctx.obj_counter = id + 1;
+            if ctx.collect_dbg_info
+                ctx.obj_backtrace{id + 1} = dbstack('-completenames', 1);
+            end
+            self.pulses{cid} = Pulse(id, pulse, self.cond & cond);
         end
 
         function res = totalTime(self)
             res = self.len / self.topLevel.time_scale;
+        end
+
+        function sign = lengthSign(self)
+            if islogical(self.cond) && self.cond
+                sign = SeqTime.Pos;
+            else
+                sign = SeqTime.NonNeg;
+            end
         end
     end
 end

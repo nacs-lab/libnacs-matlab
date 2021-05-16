@@ -67,7 +67,8 @@ classdef TimeSeq < handle
         is_step = false;
     end
 
-    properties(Access=protected)
+    properties(Access={?TimeSeq,?ConditionalWrapper})
+        cond = true;
         % Whether the end of the step/subseq ends after the `curSeqTime` of parent.
         % For an `ExpSeqBase`, this needs to be updated if `curSeqTime` is changed.
         end_after_parent = true;
@@ -79,6 +80,10 @@ classdef TimeSeq < handle
     end
 
     methods
+        function res = getCondition(self)
+            res = self.cond;
+        end
+
         %%
         % Translate from channel name to channel ID.
         % This is just a wrapper for `ExpSeq::translateChannel`.
@@ -134,7 +139,7 @@ classdef TimeSeq < handle
                     if ~self.is_step
                         addEqual(self.root, tdiff, self.curSeqTime);
                     elseif ~isnumeric(len)
-                        addEqual(self.root, tdiff, create(tdiff2, SeqTime.NonNeg, len));
+                        addEqual(self.root, tdiff, create(tdiff2, lengthSign(self), len));
                     end
                 end
                 tdiff = tdiff2;
