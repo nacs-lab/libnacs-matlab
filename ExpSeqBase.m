@@ -27,7 +27,9 @@ classdef ExpSeqBase < TimeSeq
     % All of the API's ensure that the current time can only be forwarded.
     % This makes it easy to infer the timing of the sequence when reading the code.
 
-    properties(SetAccess=protected, GetAccess=?TimeSeq)
+    % Explicitly granting access to ourselves seems to be equivalent to `protected` here.
+    properties(SetAccess={?ExpSeqBase,?ConditionalWrapper}, ...
+               GetAccess={?TimeSeq,?ConditionalWrapper})
         % This is length of the current (sub)sequence (not including background sequences)
         % and is also where sub sequences and time steps are added to by default.
         curSeqTime;
@@ -102,7 +104,7 @@ classdef ExpSeqBase < TimeSeq
             % on the length of the added step.
             % The length for this purpose is the length for `TimeStep` and
             % `curSeqTime` for `SubSeq`. Same as the definition for `TimePoint`.
-            [step, end_time] = addStepReal(self, false, self.curSeqTime, varargin{:});
+            [step, end_time] = addStepReal(self, true, false, self.curSeqTime, varargin{:});
             self.curSeqTime = end_time;
             step.end_after_parent = false;
             if step.is_step
@@ -114,13 +116,13 @@ classdef ExpSeqBase < TimeSeq
         function step = addBackground(self, varargin)
             %% Add a background step or subsequence
             % (same as `addStep` without forwarding current time).
-            step = addStepReal(self, true, self.curSeqTime, varargin{:});
+            step = addStepReal(self, true, true, self.curSeqTime, varargin{:});
         end
 
         function step = addFloating(self, varargin)
             %% Add a floating step or subsequence
             % The time is not fixed and will be determined later.
-            step = addStepReal(self, false, nan, varargin{:});
+            step = addStepReal(self, true, false, nan, varargin{:});
         end
 
         function step = addAt(self, tp, varargin)
@@ -129,7 +131,7 @@ classdef ExpSeqBase < TimeSeq
             % the time point.
             % FIXME: Not sure what to do when adding something at a different time
             % in a disabled subsequence.
-            step = addStepReal(self, true, getTimePointOffset(self, tp), varargin{:});
+            step = addStepReal(self, true, true, getTimePointOffset(self, tp), varargin{:});
         end
 
         %% Wait API's
@@ -138,11 +140,22 @@ classdef ExpSeqBase < TimeSeq
 
         function self = wait(self, t)
             %% Forward current time.
-            if isnumeric(t) && t < 0
-                error('Wait time cannot be negative.');
+            if isnumeric(t)
+                if t < 0
+                    if islogical(self.cond) && self.cond
+                        % Only throw the error at this time if we know that the
+                        % wait is definitely enabled. Otherwise leave it to the runtime.
+                        error('Wait time cannot be negative.');
+                    end
+                elseif t == 0
+                    return;
+                end
+            end
+            if islogical(self.cond) && ~self.cond
+                return;
             end
             self.curSeqTime = create(self.curSeqTime, SeqTime.NonNeg, ...
-                                     round(t * self.topLevel.time_scale));
+                                     ifelse(self.cond, round(t * self.topLevel.time_scale), 0));
             self.end_after_parent = true;
             while ~self.latest_seq
                 self.totallen_after_parent = true;
@@ -179,6 +192,8 @@ classdef ExpSeqBase < TimeSeq
                 hasoffset = true;
                 nonnegoffset = false;
             end
+            % FIXME: I wonder what's the best thing to do if we are waiting
+            % for something that is at a different time in a disabled subsequence.
             t = self.curSeqTime;
             tval = getVal(t);
             has_other_parent = false;
@@ -206,7 +221,7 @@ classdef ExpSeqBase < TimeSeq
                 end
                 assert(step_toffset.seq == self);
                 if real_step.is_step
-                    tstep = create(step_toffset, SeqTime.Pos, round(real_step.len));
+                    tstep = create(step_toffset, lengthSign(real_step), round(real_step.len));
                 else
                     tstep = combine(step_toffset, real_step.curSeqTime);
                 end
@@ -256,7 +271,7 @@ classdef ExpSeqBase < TimeSeq
                     error('Cannot get offset of floating sequence.');
                 end
                 if sub_seq.is_step
-                    tstep = create(step_toffset, SeqTime.Pos, round(sub_seq.len));
+                    tstep = create(step_toffset, lengthSign(sub_seq), round(sub_seq.len));
                 else
                     tstep = combine(step_toffset, sub_seq.curSeqTime);
                 end
@@ -272,6 +287,15 @@ classdef ExpSeqBase < TimeSeq
             self.end_after_parent = true;
         end
 
+        %% Condition
+        function res = conditional(self, cond, cb)
+            res = ConditionalWrapper(self, cond);
+            if exist('cb', 'var')
+                assert(~isnumeric(cb) && ~islogical(cb) && ~isa(cb, 'SeqVal'));
+                res = addStep(res, cb);
+            end
+        end
+
         %% Other helper functions.
 
         function step = add(self, name, pulse)
@@ -281,7 +305,7 @@ classdef ExpSeqBase < TimeSeq
             end
             % The time (2 ticks) here is just a placeholder.
             % The exact length doesn't really matter except for total sequence length
-            step = addStepReal(self, true, self.curSeqTime, ...
+            step = addStepReal(self, true, true, self.curSeqTime, ...
                                2 / self.topLevel.time_scale); % addBackground
             add(step, name, pulse);
             step.end_after_parent = false;
@@ -304,7 +328,7 @@ classdef ExpSeqBase < TimeSeq
                 error('Requires at least one sequence to align');
             else
                 subseqs = varargin{1:end - 1};
-                offset = round(varargin{end} * self.topLevel.time_scale);
+                offset = ifelse(self.cond, round(varargin{end} * self.topLevel.time_scale), 0);
                 hasoffset = ~isnumeric(offset) || offset ~= 0;
             end
             nsubseqs = length(subseqs);
@@ -321,8 +345,10 @@ classdef ExpSeqBase < TimeSeq
                 assert(subseq.parent == self);
                 if subseq.is_step
                     len = round(subseq.len);
-                    sign = SeqTime.Pos;
-                    maxsign = SeqTime.Pos;
+                    sign = lengthSign(subseq);
+                    if sign == SeqTime.Pos
+                        maxsign = SeqTime.Pos;
+                    end
                 else
                     time = subseq.curSeqTime;
                     times{i} = time;
@@ -511,7 +537,7 @@ classdef ExpSeqBase < TimeSeq
                     error('Cannot get offset of floating sequence.');
                 end
                 if sub_seq.is_step
-                    tstep = create(step_toffset, SeqTime.Pos, round(sub_seq.len));
+                    tstep = create(step_toffset, lengthSign(sub_seq), round(sub_seq.len));
                 else
                     subt = waitAllTime(sub_seq, false);
                     sub_seq.latest_seq = false;
@@ -541,26 +567,26 @@ classdef ExpSeqBase < TimeSeq
         end
     end
 
-    methods(Access=private)
-        function [step, end_time] = addStepReal(self, allow_offset, curtime, first_arg, varargin)
+    methods(Access=?ConditionalWrapper)
+        function [step, end_time] = addStepReal(self, cond, allow_offset, curtime, ...
+                                                first_arg, varargin)
+            cond = self.cond & cond;
             %% This is the function that handles the standard arguments
             % for creating time step or subsequence. (See comments above).
             % `curtime` is the reference time point (`nan` for `addFloating`)
             % The step constructed and the end time are returned.
             if ~isnumeric(first_arg) && ~isa(first_arg, 'SeqVal')
                 % If first arg is not a value, assume to be a callback for subsequence.
-                [step, end_time] = addCustomStep(self, curtime, first_arg, varargin{:});
+                [step, end_time] = addCustomStep(self, cond, curtime, first_arg, varargin{:});
             elseif isempty(varargin)
                 % If we only have one numerical argument it must be a simple time step.
-                start_time = curtime;
                 len = first_arg * self.topLevel.time_scale;
+                step = TimeStep(self, curtime, len, cond);
                 if isnan(curtime)
-                    curtime = nan;
+                    end_time = nan;
                 else
-                    curtime = create(curtime, SeqTime.Pos, round(len));
+                    end_time = create(curtime, lengthSign(step), round(step.len));
                 end
-                step = TimeStep(self, start_time, len);
-                end_time = curtime;
             elseif isnumeric(varargin{1}) || isa(varargin{1}, 'SeqVal')
                 % If we only have two value argument it must be a simple time step
                 % with custom offset.
@@ -577,10 +603,10 @@ classdef ExpSeqBase < TimeSeq
                 offset = varargin{1};
                 assert(~isnan(curtime));
                 curtime = create(curtime, SeqTime.Unknown, ...
-                                 round(offset * self.topLevel.time_scale));
+                                 ifelse(cond, round(offset * self.topLevel.time_scale), 0));
                 len = first_arg * self.topLevel.time_scale;
-                step = TimeStep(self, curtime, len);
-                end_time = create(curtime, SeqTime.Pos, round(len));
+                step = TimeStep(self, curtime, len, cond);
+                end_time = create(curtime, lengthSign(step), round(step.len));
             else
                 % Number followed by a callback: subsequence with offset.
                 if ~allow_offset
@@ -605,15 +631,15 @@ classdef ExpSeqBase < TimeSeq
                 end
                 assert(~isnan(curtime));
                 curtime = create(curtime, SeqTime.Unknown, ...
-                                 round(first_arg * self.topLevel.time_scale));
-                [step, end_time] = addCustomStep(self, curtime, varargin{:});
+                                 ifelse(cond, round(first_arg * self.topLevel.time_scale), 0));
+                [step, end_time] = addCustomStep(self, cond, curtime, varargin{:});
             end
         end
 
-        function [step, end_time] = addCustomStep(self, start_time, cb, varargin)
+        function [step, end_time] = addCustomStep(self, cond, start_time, cb, varargin)
             %% Add a subsequence by creating a child `SubSeq` node and populating
             % it using the callback passed in.
-            step = SubSeq(self, start_time);
+            step = SubSeq(self, start_time, cond);
             % Create the step
             cb(step, varargin{:});
             step.latest_seq = false;
@@ -622,6 +648,36 @@ classdef ExpSeqBase < TimeSeq
             else
                 assert(start_time.seq == self);
                 end_time = combine(start_time, step.curSeqTime);
+            end
+        end
+
+        function waitWithCondition(self, cond, t)
+            %% Forward current time.
+            if isnumeric(t)
+                if t < 0
+                    if islogical(self.cond) && self.cond && islogical(cond) && cond
+                        % Only throw the error at this time if we know that the
+                        % wait is definitely enabled. Otherwise leave it to the runtime.
+                        error('Wait time cannot be negative.');
+                    end
+                elseif t == 0
+                    return;
+                end
+            end
+            if (islogical(self.cond) && ~self.cond) || (islogical(cond) && ~cond)
+                return;
+            end
+            self.curSeqTime = create(self.curSeqTime, SeqTime.NonNeg, ...
+                                     ifelse(self.cond & cond, ...
+                                            round(t * self.topLevel.time_scale), 0));
+            self.end_after_parent = true;
+            while ~self.latest_seq
+                self.totallen_after_parent = true;
+                self.latest_seq = true;
+                self = self.parent;
+                if isempty(self)
+                    break;
+                end
             end
         end
     end

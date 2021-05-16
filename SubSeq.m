@@ -15,12 +15,13 @@ classdef SubSeq < ExpSeqBase
     % Sub sequence of another sequence
     % This is a thin wrapper around `ExpSeqBase` to implement the constructor.
     methods
-        function self = SubSeq(parent, toffset)
+        function self = SubSeq(parent, toffset, cond)
             % Set offset and cache some shared properties
             % from its parent for fast lookup.
             % `toffset` should be a `SeqTime`
             self.parent = parent;
             self.tOffset = toffset;
+            self.cond = cond;
             self.config = parent.config;
             self.topLevel = parent.topLevel;
             self.root = parent.root;
