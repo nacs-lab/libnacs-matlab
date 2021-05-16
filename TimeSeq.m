@@ -156,6 +156,18 @@ classdef TimeSeq < handle
             end
             setTime(self, time, 1, offset);
         end
+
+        function g = newGlobal(self, varargin)
+            g = newGlobalReal(self.topLevel, false, varargin{:});
+        end
+
+        function g = newPersistGlobal(self, varargin)
+            g = newGlobalReal(self.topLevel, true, varargin{:});
+        end
+
+        function assignGlobal(self, g, val)
+            assignGlobal(self.root, g, val);
+        end
     end
 
     methods(Access=protected)
