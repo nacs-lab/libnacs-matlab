@@ -17,6 +17,7 @@ classdef RootSeq < ExpSeqBase
     % This may be a top level sequence or a basic sequence.
     properties(Access=protected)
         bseq_id;
+        assigns = struct('val', {}, 'id', {});
         norders = 0;
         orders = {};
         default_target = [];
@@ -27,6 +28,12 @@ classdef RootSeq < ExpSeqBase
     end
 
     methods
+        function assignGlobal(self, g, val)
+            assert(isa(g, 'SeqVal') && g.head == SeqVal.HGlobal);
+            id = nextObjID(self.topLevel.seq_ctx);
+            self.assigns(g.args{1} + 1) = struct('val', val, 'id', id);
+        end
+
         function condBranch(self, cond, target)
             assert(isempty(target) || isa(target, 'RootSeq'));
             id = nextObjID(self.topLevel.seq_ctx);
@@ -44,6 +51,17 @@ classdef RootSeq < ExpSeqBase
             end
             prefix = repmat(' ', 1, indent);
             res = [prefix sprintf('BS%d:\n', self.bseq_id)];
+            if ~isempty(self.assigns)
+                res = [res prefix '  Assigns:' char(10)];
+                for i = 1:length(self.assigns)
+                    assign = self.assigns(i).val;
+                    if isempty(assign)
+                        continue;
+                    end
+                    res = [res prefix sprintf('    g(%d) = ', i) ...
+                               SeqVal.toString(assign) char(10)];
+                end
+            end
             if self.norders ~= 0
                 res = [res prefix '  Time orders:' char(10)];
                 for i = 1:self.norders

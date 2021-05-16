@@ -42,6 +42,7 @@ classdef ExpSeq < RootSeq
         seq_ctx;
         basic_seqs = {};
         time_scale = 1e12; % TODO load from config
+        globals = struct('id', {}, 'persist', {}, 'init_val', {});
     end
 
     properties(Constant, Access=private)
@@ -162,6 +163,20 @@ classdef ExpSeq < RootSeq
             for i = 1:length(self.basic_seqs)
                 res = [res char(10) char(10) toString(self.basic_seqs{i}, indent)];
             end
+        end
+    end
+
+    methods(Access=?TimeSeq)
+        function g = newGlobalReal(self, persist, type, init_val)
+            if ~exist('init_val', 'var')
+                init_val = 0;
+            end
+            if ~exist('type', 'var')
+                type = SeqVal.TypeFloat64;
+            end
+            [g, id] = newGlobal(self.seq_ctx, type);
+            self.globals(end + 1) = struct('id', id, 'persist', persist, ...
+                                           'init_val', double(init_val));
         end
     end
 
