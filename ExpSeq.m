@@ -39,6 +39,9 @@ classdef ExpSeq < RootSeq
         default_override = false(0);
         default_override_val = [];
 
+        ttl_managers = struct('chn', {}, 'off_delay', {}, 'on_delay', {}, ...
+                              'skip_time', {}, 'min_time', {}, 'off_val', {});
+
         seq_ctx;
         basic_seqs = {};
         time_scale = 1e12; % TODO load from config
@@ -93,7 +96,13 @@ classdef ExpSeq < RootSeq
             if ~exist('off_val', 'var')
                 off_val = false;
             end
-            % TODO
+            % Only translate the name at this time since we don't want to assigned
+            % a channel ID, (and therefore mark them used and initializing them)
+            % just because we've specified the properties of these channels.
+            chn = translateChannel(self.config, chn);
+            self.ttl_managers(end + 1) = struct('chn', chn, 'off_delay', off_delay, ...
+                                                'on_delay', on_delay, 'skip_time', skip_time, ...
+                                                'min_time', min_time, 'off_val', off_val);
         end
 
         function cid = translateChannel(self, name)
