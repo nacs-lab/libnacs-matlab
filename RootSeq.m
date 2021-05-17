@@ -25,6 +25,7 @@ classdef RootSeq < ExpSeqBase
     end
     properties(Hidden)
         zero_time;
+        measures = struct('time', {}, 'chn', {}, 'id', {});
     end
 
     methods
