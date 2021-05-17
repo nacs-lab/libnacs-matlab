@@ -296,6 +296,16 @@ classdef ExpSeqBase < TimeSeq
             end
         end
 
+        %% Measure
+        function res = addMeasure(self, chn)
+            seq_ctx = self.topLevel.seq_ctx;
+            [res, id] = newMeasure(seq_ctx);
+            if ~isnumeric(chn)
+                chn = translateChannel(self.topLevel, chn);
+            end
+            self.root.measures(end + 1) = struct('time', self.curSeqTime, 'chn', chn, 'id', id);
+        end
+
         %% Other helper functions.
 
         function step = add(self, name, pulse)
@@ -433,6 +443,19 @@ classdef ExpSeqBase < TimeSeq
             end
             for i = 1:self.nSubSeqs
                 res = [res char(10) toString(self.subSeqs{i}, indent + 2)];
+            end
+            for i = 1:length(self.root.measures)
+                measure = self.root.measures(i);
+                time = measure.time;
+                chn = measure.chn;
+                if time.seq ~= self
+                    continue;
+                end
+                res = [res char(10) prefix ...
+                           sprintf('  Measure(id=%d, val=m(%d), chn%d(%s))', ...
+                                   measure.id, measure.id, ...
+                                   chn, channelName(self.topLevel, chn)) ...
+                           ' @ ' toString(time)];
             end
             res = [res char(10) prefix '  curSeqTime: ' toString(self.curSeqTime)];
         end
