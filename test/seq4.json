@@ -1,0 +1,101 @@
+[
+    // [version <0>: 1B]
+    0,
+    // [nnodes: 4B]
+    7, 0, 0, 0,
+    // [[[OpCode: 1B][[ArgType: 1B][NodeArg: 1-8B] x narg] /
+    //   [OpCode <Interp>: 1B][[ArgType: 1B][NodeArg: 1-8B] x 3][data_id: 4B]] x nnodes]
+    // 1
+    3, // mul
+    5, 0, 0, 0, 0, // g(0)
+    2, 0, 0, 0, 0, 0, 0, 16, 64,
+    // 2
+    3, // mul
+    3, 1, 0, 0, 0, // node(1)
+    2, 0, 0, 0, 0, 0, 64, -113, 64,
+    // 3
+    44, // rint
+    3, 2, 0, 0, 0, // node(2)
+    // 4
+    1, // add
+    2, 0, 0, 0, 0, 0, -120, -77, 64,
+    3, 3, 0, 0, 0, // node(3)
+    // 5
+    45, // max
+    3, 3, 0, 0, 0, // node(3)
+    3, 4, 0, 0, 0, // node(4)
+    // 6
+    50, // identity
+    2, 0, 0, 0, 0, 0, 0, 0, 0,
+    // 7
+    50, // identity
+    2, 0, 0, 0, 0, 0, -120, -77, 64,
+    // [nchns: 4B][[chnname: non-empty NUL-terminated string] x nchns]
+    0, 0, 0, 0,
+    // [ndefvals: 4B][[chnid: 4B][Type: 1B][value: 1-8B] x ndefvals]
+    0, 0, 0, 0,
+    // [nslots: 4B][[Type: 1B] x nslots]
+    1, 0, 0, 0,
+    3,
+    // [nnoramp: 4B][[chnid: 4B] x nnoramp]
+    0, 0, 0, 0,
+    // [nbasicseqs: 4B][[Basic Sequence] x nbasicseqs]
+    1, 0, 0, 0,
+    // [ntimes: 4B][[sign: 1B][id: 4B][delta_node: 4B][prev_id: 4B] x ntimes]
+    5, 0, 0, 0,
+    // 1
+    1, // sign
+    1, 0, 0, 0, // id
+    5, 0, 0, 0, // delta_node
+    0, 0, 0, 0, // prev_id
+    // 2
+    0, // sign
+    0, 0, 0, 0, // id
+    6, 0, 0, 0, // delta_node
+    1, 0, 0, 0, // prev_id
+    // 3
+    1, // sign
+    0, 0, 0, 0, // id
+    3, 0, 0, 0, // delta_node
+    0, 0, 0, 0, // prev_id
+    // 4
+    0, // sign
+    0, 0, 0, 0, // id
+    7, 0, 0, 0, // delta_node
+    3, 0, 0, 0, // prev_id
+    // 5
+    0, // sign
+    0, 0, 0, 0, // id
+    6, 0, 0, 0, // delta_node
+    3, 0, 0, 0, // prev_id
+    // [nendtimes: 4B][[time_id: 4B] x nendtimes]
+    1, 0, 0, 0,
+    2, 0, 0, 0,
+    // [ntimeorders: 4B][[sign: 1B][id: 4B][before_id: 4B][after_id: 4B] x ntimeorders]
+    2, 0, 0, 0,
+    // 1
+    1, // sign
+    2, 0, 0, 0, // id
+    4, 0, 0, 0, // before_id
+    2, 0, 0, 0, // after_id
+    // 2
+    1, // sign
+    3, 0, 0, 0, // id
+    5, 0, 0, 0, // before_id
+    2, 0, 0, 0, // after_id
+    // [noutputs: 4B][[id: 4B][time_id: 4B][len: 4B][val: 4B][cond: 4B][chn: 4B] x noutputs]
+    0, 0, 0, 0,
+    // [nmeasures: 4B][[id: 4B][time_id: 4B][chn: 4B] x nmeasures]
+    0, 0, 0, 0,
+    // [nassigns: 4B][[assign_id: 4B][global_id: 4B][val: 4B] x nassigns]
+    0, 0, 0, 0,
+    // [nbranches: 4B][[branch_id: 4B][target_id: 4B][cond: 4B] x nbranches]
+    0, 0, 0, 0,
+    // [default_target: 4B]
+    0, 0, 0, 0,
+    // [ndatas: 4B][[ndouble: 4B][data: 8B x ndouble] x ndatas]
+    0, 0, 0, 0,
+    // [nbackenddatas: 4B][[device_name: NUL-terminated string]
+    //                     [size: 4B][data: size B] x nbackenddatas]
+    0, 0, 0, 0
+]

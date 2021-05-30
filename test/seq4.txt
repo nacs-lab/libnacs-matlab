@@ -1,0 +1,9 @@
+BS1:
+  Time orders:
+    round(g(0) * 4 * 1000)/nn + 5000 <= max(round(g(0) * 4 * 1000), 5000 + round(g(0) * 4 * 1000))/nn
+    round(g(0) * 4 * 1000)/nn <= max(round(g(0) * 4 * 1000), 5000 + round(g(0) * 4 * 1000))/nn
+  Branches:
+    default: end
+  ExpSeq()
+    Step(len=5000) @ round(g(0) * 4 * 1000)/nn
+    curSeqTime: max(round(g(0) * 4 * 1000), 5000 + round(g(0) * 4 * 1000))/nn
