@@ -1,0 +1,155 @@
+[
+    // [version <0>: 1B]
+    0,
+    // [nnodes: 4B]
+    // [[[OpCode: 1B][[ArgType: 1B][NodeArg: 1-8B] x narg] /
+    //   [OpCode <Interp>: 1B][[ArgType: 1B][NodeArg: 1-8B] x 3][data_id: 4B]] x nnodes]
+    15, 0, 0, 0,
+    // 1
+    3, // mul
+    5, 0, 0, 0, 0, // g(0)
+    2, 0, 0, 0, 0, 0, 64, -113, 64,
+    // 2
+    44, // rint
+    3, 1, 0, 0, 0, // node(1)
+    // 3
+    5, // cmplt
+    4, 4, 0, 0, 0, // m(4)
+    2, 0, 0, 0, 0, 0, 0, 0, 0,
+    // 4
+    49, // select
+    3, 3, 0, 0, 0, // node(1)
+    2, 0, 0, 0, 0, 0, -112, -86, 64,
+    2, 0, 0, 0, 0, 0, 0, 0, 0,
+    // 5
+    50, // identity
+    2, 0, 0, 0, 0, 0, -8, -79, 64,
+    // 6
+    50, // identity
+    2, 0, 0, 0, 0, 0, 0, 0, 0,
+    // 7
+    50, // identity
+    2, 0, 0, 0, 0, 0, 64, -113, 64,
+    // 8
+    50, // identity
+    2, 0, 0, 0, 0, 0, 0, 16, 64,
+    // 9
+    50, // identity
+    2, 0, 0, 0, 0, 0, 0, 89, 64,
+    // 10
+    50, // identity
+    2, -102, -103, -103, -103, -103, 25, 89, 64,
+    // 11
+    50, // identity
+    2, 0, 0, 0, 0, 0, 0, -16, -65,
+    // 12
+    50, // identity
+    2, 0, 0, 0, 0, 0, -112, -86, 64,
+    // 13
+    50, // identity
+    2, 0, 0, 0, 0, 0, -64, -110, 64,
+    // 14
+    4, // div
+    6, 0, 0, 0, 0, // arg(0)
+    2, 0, 0, 0, 0, 0, 64, -113, 64,
+    // 15
+    2, // sub
+    3, 14, 0, 0, 0, // node(14)
+    2, 102, 102, 102, 102, 102, 102, 2, 64,
+    // [nchns: 4B][[chnname: non-empty NUL-terminated string] x nchns]
+    4, 0, 0, 0,
+    68, 101, 118, 105, 99, 101, 49, 47, 67, 72, 49, 0,
+    68, 101, 118, 105, 99, 101, 49, 47, 67, 72, 53, 0,
+    68, 101, 118, 105, 99, 101, 50, 47, 67, 72, 51, 0,
+    68, 101, 118, 105, 99, 101, 50, 47, 67, 72, 53, 0,
+    // [ndefvals: 4B][[chnid: 4B][Type: 1B][value: 1-8B] x ndefvals]
+    0, 0, 0, 0,
+    // [nslots: 4B][[Type: 1B] x nslots]
+    1, 0, 0, 0,
+    3,
+    // [nnoramp: 4B][[chnid: 4B] x nnoramp]
+    0, 0, 0, 0,
+    // [nbasicseqs: 4B][[Basic Sequence] x nbasicseqs]
+    1, 0, 0, 0,
+    // [ntimes: 4B][[sign: 1B][id: 4B][delta_node: 4B][prev_id: 4B] x ntimes]
+    7, 0, 0, 0,
+    // 1
+    1, // sign
+    3, 0, 0, 0, // id
+    2, 0, 0, 0, // delta_node
+    0, 0, 0, 0, // prev_id
+    // 2
+    1, // sign
+    5, 0, 0, 0, // id
+    4, 0, 0, 0, // delta_node
+    1, 0, 0, 0, // prev_id
+    // 3
+    0, // sign
+    0, 0, 0, 0, // id
+    5, 0, 0, 0, // delta_node
+    2, 0, 0, 0, // prev_id
+    // 4
+    0, // sign
+    0, 0, 0, 0, // id
+    6, 0, 0, 0, // delta_node
+    0, 0, 0, 0, // prev_id
+    // 5
+    0, // sign
+    0, 0, 0, 0, // id
+    7, 0, 0, 0, // delta_node
+    0, 0, 0, 0, // prev_id
+    // 6
+    0, // sign
+    0, 0, 0, 0, // id
+    12, 0, 0, 0, // delta_node
+    2, 0, 0, 0, // prev_id
+    // 7
+    0, // sign
+    0, 0, 0, 0, // id
+    12, 0, 0, 0, // delta_node
+    1, 0, 0, 0, // prev_id
+    // [nendtimes: 4B][[time_id: 4B] x nendtimes]
+    1, 0, 0, 0,
+    3, 0, 0, 0,
+    // [ntimeorders: 4B][[sign: 1B][id: 4B][before_id: 4B][after_id: 4B] x ntimeorders]
+    0, 0, 0, 0,
+    // [noutputs: 4B][[id: 4B][time_id: 4B][len: 4B][val: 4B][cond: 4B][chn: 4B] x noutputs]
+    3, 0, 0, 0,
+    // 1
+    0, 0, 0, 0, // id
+    4, 0, 0, 0, // time_id
+    7, 0, 0, 0, // len
+    8, 0, 0, 0, // val
+    0, 0, 0, 0, // cond
+    1, 0, 0, 0, // chn
+    // 2
+    2, 0, 0, 0, // id
+    5, 0, 0, 0, // time_id
+    10, 0, 0, 0, // len
+    11, 0, 0, 0, // val
+    0, 0, 0, 0, // cond
+    3, 0, 0, 0, // chn
+    // 3
+    6, 0, 0, 0, // id
+    6, 0, 0, 0, // time_id
+    13, 0, 0, 0, // len
+    15, 0, 0, 0, // val
+    0, 0, 0, 0, // cond
+    2, 0, 0, 0, // chn
+    // [nmeasures: 4B][[id: 4B][time_id: 4B][chn: 4B] x nmeasures]
+    1, 0, 0, 0,
+    4, 0, 0, 0, // id
+    7, 0, 0, 0, // time_id
+    4, 0, 0, 0, // chn
+    // [nassigns: 4B][[assign_id: 4B][global_id: 4B][val: 4B] x nassigns]
+    0, 0, 0, 0,
+    // [nbranches: 4B][[branch_id: 4B][target_id: 4B][cond: 4B] x nbranches]
+    0, 0, 0, 0,
+    // [default_target: 4B]
+    0, 0, 0, 0,
+    // [ndatas: 4B][[ndouble: 4B][data: 8B x ndouble] x ndatas]
+    0, 0, 0, 0,
+    // [nbackenddatas: 4B][[device_name: NUL-terminated string]
+    //                     [size: 4B][data: size B] x nbackenddatas]
+    0, 0, 0, 0
+]

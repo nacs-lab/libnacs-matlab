@@ -1,0 +1,6 @@
+BS1:
+  Branches:
+    default: end
+  ExpSeq()
+    Step(len=5000) @ round(g(0) * 4 * 1000)/nn
+    curSeqTime: round(g(0) * 4 * 1000)/nn

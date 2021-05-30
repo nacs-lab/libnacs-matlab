@@ -1,0 +1,28 @@
+BS1:
+  Time orders:
+    round(g(0) * 0.2 * 1000)/p + 400 <= max(round(g(0) * 0.2 * 1000), 400 + round(g(0) * 0.2 * 1000))/nn
+    round(g(0) * 0.2 * 1000)/p <= max(round(g(0) * 0.2 * 1000), 400 + round(g(0) * 0.2 * 1000))/nn
+  Branches:
+    default: end
+  ExpSeq()
+    Step(len=2) @ 0
+      chn1(Device2/CH2): Pulse(id=0, val=g(0) + 2)
+    SubSeq() @ 0
+      Step(len=g(0) * 0.2 * 1000) @ 0
+        chn1(Device2/CH2): Pulse(id=3, val=3.4)
+        chn2(Device3/CH1): Pulse(id=4, val=arg(0) / 1000 * 5 - m(1))
+      Step(len=2) @ round(g(0) * 0.2 * 1000)/p
+        chn1(Device2/CH2): Pulse(id=5, val=0)
+        chn2(Device3/CH1): Pulse(id=6, val=0)
+      Measure(id=1, val=m(1), chn1(Device2/CH2)) @ 0
+      curSeqTime: round(g(0) * 0.2 * 1000)/p
+    SubSeq() @ round(g(0) * 0.2 * 1000)/p
+      Step(len=400) @ round(g(0) * 0.2 * 1000)/p
+        chn1(Device2/CH2): Pulse(id=8, val=3.4)
+        chn2(Device3/CH1): Pulse(id=9, val=arg(0) / 1000 * 5 - m(7))
+      Step(len=2) @ round(g(0) * 0.2 * 1000)/p + 400
+        chn1(Device2/CH2): Pulse(id=10, val=0)
+        chn2(Device3/CH1): Pulse(id=11, val=0)
+      Measure(id=7, val=m(7), chn1(Device2/CH2)) @ round(g(0) * 0.2 * 1000)/p
+      curSeqTime: round(g(0) * 0.2 * 1000)/p + 400
+    curSeqTime: max(round(g(0) * 0.2 * 1000), 400 + round(g(0) * 0.2 * 1000))/nn
