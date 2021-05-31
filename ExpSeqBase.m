@@ -195,6 +195,12 @@ classdef ExpSeqBase < TimeSeq
                 else
                     real_step = step;
                 end
+                if self == real_step
+                    error('Cannot wait for the sequence itself.');
+                end
+                if checkParent(self, real_step)
+                    error('Cannot wait for parent sequence.');
+                end
                 step_toffset = real_step.tOffset;
                 if isnan(step_toffset)
                     error('Cannot get offset of floating sequence.');
@@ -314,6 +320,24 @@ classdef ExpSeqBase < TimeSeq
                 offset = offset + len * time.anchor;
             end
             tdiff = tdiff + offset;
+        end
+    end
+
+    methods(Access=private)
+        function res = checkParent(self, other)
+            if isempty(other.parent)
+                res = true;
+                return;
+            end
+            self = self.parent;
+            while ~isempty(self)
+                if self == other
+                    res = true;
+                    return;
+                end
+                self = self.parent;
+            end
+            res = false;
         end
     end
 

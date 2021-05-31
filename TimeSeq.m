@@ -42,8 +42,8 @@ classdef TimeSeq < handle
     properties(Hidden)
         % This is a `SeqConfig` that contains global config loaded from `expConfig`.
         config;
-        % Points to parent node, or `0` for root node.
-        parent = 0;
+        % Points to parent node, or empty for root node.
+        parent;
         % The time offset of this node within the parent node.
         % After the whole sequence is constructed, all of the time offsets must be finite.
         % A `nan` time offset is allowed during the construction representing a
