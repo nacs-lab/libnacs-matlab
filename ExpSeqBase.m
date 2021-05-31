@@ -97,13 +97,6 @@ classdef ExpSeqBase < TimeSeq
         %     A. Current time of this (sub)sequence,
         %        in which case one decide whether the current time should be updated.
         %         a. Yes: `addStep`
-        %
-        %             Note that the restriction that `curTime` cannot be decreased applies
-        %             so the end of the step added this way must not be before the
-        %             previous `curTime`. An error will be thrown if the time offset
-        %             specified is too negative and cause this to happen.
-        %             (The state of the sequence is unspecified after the error is thrown.)
-        %
         %         b. No: `addBackground`
         %     B. A specific `TimePoint`: `addAt`.
         %
@@ -128,13 +121,16 @@ classdef ExpSeqBase < TimeSeq
         %    `(len[, offset=0])`. `len` in must be positive.
         %
         % In both cases, the step constructed will be returned.
+        % Note that the offset is not allowed for `addStep`
+        % to prevent `curSeqTime` from going backward.
+        % Is is also forbidden for `addFloating` since it doesn't really make much sense.
         function step = addStep(self, first_arg, varargin)
             %% The most basic timing API. Add a step (`TimeStep`) or
             % subsequence (`ExpSeqBase`) and forward the current time based
             % on the length of the added step.
             % The length for this purpose is the length for `TimeStep` and
             % `curTime` for `ExpSeqBase`. Same as the definition for `TimePoint`.
-            [step, end_time] = addStepReal(self, self.curTime, first_arg, varargin{:});
+            [step, end_time] = addStepReal(self, false, self.curTime, first_arg, varargin{:});
             if end_time < self.curTime
                 error('Going back in time not allowed.');
             end
@@ -144,20 +140,21 @@ classdef ExpSeqBase < TimeSeq
         function step = addBackground(self, first_arg, varargin)
             %% Add a background step or subsequence
             % (same as `addStep` without forwarding current time).
-            step = addStepReal(self, self.curTime, first_arg, varargin{:});
+            step = addStepReal(self, true, self.curTime, first_arg, varargin{:});
         end
 
         function step = addFloating(self, first_arg, varargin)
             %% Add a floating step or subsequence
             % The time is not fixed and will be determined later.
-            step = addStepReal(self, nan, first_arg, varargin{:});
+            step = addStepReal(self, false, nan, first_arg, varargin{:});
         end
 
         function res = addAt(self, tp, first_arg, varargin)
             %% Add a step or subsequence at a specific time point.
             % The standard arguments for creating the step or subsequence comes after
             % the time point.
-            step = addStepReal(self, getTimePointOffset(self, tp), first_arg, varargin{:});
+            step = addStepReal(self, true, getTimePointOffset(self, tp), ...
+                               first_arg, varargin{:});
         end
 
         %% Wait API's
@@ -405,7 +402,7 @@ classdef ExpSeqBase < TimeSeq
     end
 
     methods(Access=private)
-        function [step, end_time] = addStepReal(self, curtime, first_arg, varargin)
+        function [step, end_time] = addStepReal(self, allow_offset, curtime, first_arg, varargin)
             %% This is the function that handles the standard arguments
             % for creating time step or subsequence. (See comments above).
             % `curtime` is the reference time point (`nan` for `addFloating`)
@@ -429,10 +426,15 @@ classdef ExpSeqBase < TimeSeq
                 if length(varargin) > 1
                     % Only two arguments allowed in this case.
                     error('Too many arguments to create a time step.');
-                elseif isnan(curtime)
-                    error('Floating time step with time offset not allowed.');
+                elseif ~allow_offset
+                    if isnan(curtime)
+                        error('Floating time step with time offset not allowed.');
+                    else
+                        error('addStep with time offset not allowed.');
+                    end
                 end
                 offset = varargin{1};
+                assert(~isnan(curtime));
                 end_offset = offset + first_arg;
                 if first_arg <= 0
                     error('Length of time step must be positive.');
@@ -441,8 +443,12 @@ classdef ExpSeqBase < TimeSeq
                 end_time = end_offset + curtime;
             else
                 % Number followed by a callback: subsequence with offset.
-                if isnan(curtime)
-                    error('Floating time step with time offset not allowed.');
+                if ~allow_offset
+                    if isnan(curtime)
+                        error('Floating time step with time offset not allowed.');
+                    else
+                        error('addStep with time offset not allowed.');
+                    end
                 end
                 [step, end_time] = addCustomStep(self, curtime + first_arg, varargin{:});
             end
