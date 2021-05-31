@@ -163,7 +163,10 @@ classdef FPGABackend2 < PulseBackend
 
                 for j = 1:size(pulses, 1)
                     pulse_obj = pulses{j, 3};
-                    t_start = pulses{j, 1} + SEQ_DELAY;
+                    t_start = pulses{j, 1};
+                    if t_start ~= 0
+                        t_start = pulses{j, 1} + SEQ_DELAY;
+                    end
                     nc = length(code);
                     if isnumeric(pulse_obj) || islogical(pulse_obj)
                         val = pulse_obj;
