@@ -37,6 +37,44 @@ classdef RootSeq < ExpSeqBase
             assert(isempty(target) || isa(target, 'RootSeq'));
             self.default_target = target;
         end
+
+        function res = toString(self, indent)
+            if ~exist('indent', 'var')
+                indent = 0;
+            end
+            prefix = repmat(' ', 1, indent);
+            res = [prefix sprintf('BS%d:\n', self.bseq_id)];
+            if self.norders ~= 0
+                res = [res prefix '  Time orders:' char(10)];
+                for i = 1:self.norders
+                    order = self.orders{i};
+                    if order{2} == SeqTime.Pos
+                        op = ' < ';
+                    else
+                        op = ' <= ';
+                    end
+                    res = [res prefix '    ' toString(order{3}) op ...
+                               toString(order{4}) char(10)];
+                end
+            end
+            res = [res prefix '  Branches:' char(10)];
+            for i = 1:length(self.branches)
+                br = self.branches(i);
+                if isempty(br.target)
+                    target = 'end';
+                else
+                    target = sprintf('BS%d', br.target.bseq_id);
+                end
+                res = [res prefix '    ' SeqVal.toString(br.cond) ': ' target char(10)];
+            end
+            if isempty(self.default_target)
+                target = 'end';
+            else
+                target = sprintf('BS%d', self.default_target.bseq_id);
+            end
+            res = [res prefix '    default: ' target char(10)];
+            res = [res toString@ExpSeqBase(self, indent + 2)];
+        end
     end
 
     methods(Access=protected)

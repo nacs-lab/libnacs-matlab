@@ -417,6 +417,25 @@ classdef ExpSeqBase < TimeSeq
                 end
             end
         end
+
+        function res = toString(self, indent)
+            if ~exist('indent', 'var')
+                indent = 0;
+            end
+            prefix = repmat(' ', 1, indent);
+            if islogical(self.cond) && self.cond
+                res = [prefix class(self) '()'];
+            else
+                res = [prefix class(self)  '(cond=' SeqVal.toString(self.cond) ')'];
+            end
+            if ~isempty(self.parent)
+                res = [res ' @ ' toString(self.tOffset)];
+            end
+            for i = 1:self.nSubSeqs
+                res = [res char(10) toString(self.subSeqs{i}, indent + 2)];
+            end
+            res = [res char(10) prefix '  curSeqTime: ' toString(self.curSeqTime)];
+        end
     end
 
     methods(Access=private)
