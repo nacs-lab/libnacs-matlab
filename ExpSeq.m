@@ -578,6 +578,10 @@ classdef ExpSeq < ExpSeqBase
             end
             orig_name = name;
             name = translateChannel(self.config, name);
+            if isKey(self.cid_cache, name)
+                cid = self.cid_cache(name);
+                return;
+            end
             cid = length(self.channel_names) + 1;
             self.channel_names{cid} = name;
             % This makes sure that disableChannel
