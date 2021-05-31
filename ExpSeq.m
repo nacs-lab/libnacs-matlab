@@ -153,6 +153,16 @@ classdef ExpSeq < RootSeq
             end
             res = checkChannelDisabled(self.config, name);
         end
+
+        function res = toString(self, indent)
+            if ~exist('indent', 'var')
+                indent = 0;
+            end
+            res = toString@RootSeq(self, indent);
+            for i = 1:length(self.basic_seqs)
+                res = [res char(10) char(10) toString(self.basic_seqs{i}, indent)];
+            end
+        end
     end
 
     methods(Access=private)

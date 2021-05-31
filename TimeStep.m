@@ -194,5 +194,30 @@ classdef (Sealed) TimeStep < TimeSeq
                 sign = SeqTime.NonNeg;
             end
         end
+
+        function res = toString(self, indent)
+            if ~exist('indent', 'var')
+                indent = 0;
+            end
+            prefix = repmat(' ', 1, indent);
+            prefix2 = repmat(' ', 1, indent + 2);
+            if islogical(self.cond) && self.cond
+                res = [prefix 'Step(len=' SeqVal.toString(self.rawLen) ')'];
+            else
+                res = [prefix 'Step(len=' SeqVal.toString(self.rawLen) ', cond=' ...
+                              SeqVal.toString(self.cond) ')'];
+            end
+            res = [res ' @ ' toString(self.tOffset)];
+            pulses = self.pulses;
+            for i = 1:length(pulses)
+                pulse = pulses{i};
+                if isempty(pulse)
+                    continue;
+                end
+                res = [res char(10) prefix2 ...
+                           sprintf('chn%d(%s): ', i, channelName(self.topLevel, i)) ...
+                           toString(pulse)];
+            end
+        end
     end
 end
