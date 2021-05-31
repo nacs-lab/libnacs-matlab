@@ -559,7 +559,7 @@ classdef ExpSeq < ExpSeqBase
                     return;
                 end
             end
-            res = checkChannelDisabled(self.config);
+            res = checkChannelDisabled(self.config, name);
         end
     end
 
