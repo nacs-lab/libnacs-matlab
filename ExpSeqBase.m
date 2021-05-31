@@ -125,10 +125,7 @@ classdef ExpSeqBase < TimeSeq
         %    arguments to populate the subsequence.
         % 2. To construct a `TimeStep`, one need to specify only the length.
         %    Since the offset is rarely used, the arguments to construct a `TimeStep` is,
-        %    `(len[, offset=0])`. Since `len` in general must be positive, a special case
-        %    is when a single negative number is given. The `len` will then be interpreted
-        %    as the offset as well as the negative of the length
-        %    (e.g. `(-5)` represent a step of length `5` and offset `-5`).
+        %    `(len[, offset=0])`. `len` in must be positive.
         %
         % In both cases, the step constructed will be returned.
         function step = addStep(self, first_arg, varargin)
@@ -169,6 +166,9 @@ classdef ExpSeqBase < TimeSeq
 
         function self = wait(self, t)
             %% Forward current time.
+            if t < 0
+                error('Wait time cannot be negative.');
+            end
             self.curTime = self.curTime + t;
         end
 
@@ -416,18 +416,11 @@ classdef ExpSeqBase < TimeSeq
             elseif isempty(varargin)
                 % If we only have one numerical argument it must be a simple time step.
                 if first_arg <= 0
-                    if isnan(curtime)
-                        error('Floating time step with time offset not allowed.');
-                    elseif first_arg == 0
-                        error('Length of time step must be positive.');
-                    end
-                    start_time = first_arg + curtime;
-                    len = -first_arg;
-                else
-                    start_time = curtime;
-                    len = first_arg;
-                    curtime = curtime + len;
+                    error('Length of time step must be positive.');
                 end
+                start_time = curtime;
+                len = first_arg;
+                curtime = curtime + len;
                 step = TimeStep(self, start_time, len);
                 end_time = curtime;
             elseif isnumeric(varargin{1})
