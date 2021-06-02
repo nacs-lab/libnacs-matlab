@@ -99,11 +99,13 @@ classdef ExpSeq < ExpSeqBase
             res = totalTime@ExpSeqBase(self);
         end
 
-        function mgr = addOutputMgr(self, chn, cls, varargin)
-            %% Add an output manager for the channel
-            % See `output_manager` above.
+        function addTTLMgr(self, chn, off_delay, on_delay, ...
+                           skip_time, min_time, off_val)
+            if ~exist('off_val', 'var')
+                off_val = false;
+            end
             chn = translateChannel(self, chn);
-            mgr = cls(self, chn, varargin{:});
+            mgr = TTLMgr(self, chn, off_delay, on_delay, skip_time, min_time, off_val);
             self.output_manager{chn} = mgr;
         end
 
