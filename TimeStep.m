@@ -67,7 +67,7 @@ classdef (Sealed) TimeStep < TimeSeq
             %
             %     Output the value at the beginning of the step.
             %
-            % * A subclass of `PulseBase` (deprecated)
+            % * A subclass of `IRPulse` (deprecated)
             %
             %     The `calcValue` method will be used to compute the output value.
             %
@@ -90,7 +90,7 @@ classdef (Sealed) TimeStep < TimeSeq
                 pulse = double(pulse);
             elseif isa(pulse, 'SeqVal')
                 % pass through
-            elseif isa(pulse, 'PulseBase')
+            elseif isa(pulse, 'IRPulse')
                 pulse = calcValue(pulse, ctx.arg0 / toplevel.time_scale, ...
                                   self.rawLen / toplevel.time_scale, ctx.arg1);
             else

@@ -11,16 +11,10 @@
 % You should have received a copy of the GNU Lesser General Public
 % License along with this library.
 
-classdef IRPulse < PulseBase
-    %% Pulses that can be uniquely identified by the `id`.
-    % This can speed up IR generation since the caller can use the ID to cache
-    % the result for repeatedly used pulses.
-    properties
-        id;
-    end
+classdef IRPulse < handle
     methods
         function self = IRPulse(id)
-            self.id = id;
+            % For compatibility only.
         end
     end
 end
