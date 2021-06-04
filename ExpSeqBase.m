@@ -137,24 +137,23 @@ classdef ExpSeqBase < TimeSeq
             self.curTime = end_time;
         end
 
-        function step = addBackground(self, first_arg, varargin)
+        function step = addBackground(self, varargin)
             %% Add a background step or subsequence
             % (same as `addStep` without forwarding current time).
-            step = addStepReal(self, true, self.curTime, first_arg, varargin{:});
+            step = addStepReal(self, true, self.curTime, varargin{:});
         end
 
-        function step = addFloating(self, first_arg, varargin)
+        function step = addFloating(self, varargin)
             %% Add a floating step or subsequence
             % The time is not fixed and will be determined later.
-            step = addStepReal(self, false, nan, first_arg, varargin{:});
+            step = addStepReal(self, false, nan, varargin{:});
         end
 
-        function res = addAt(self, tp, first_arg, varargin)
+        function step = addAt(self, tp, varargin)
             %% Add a step or subsequence at a specific time point.
             % The standard arguments for creating the step or subsequence comes after
             % the time point.
-            step = addStepReal(self, true, getTimePointOffset(self, tp), ...
-                               first_arg, varargin{:});
+            step = addStepReal(self, true, getTimePointOffset(self, tp), varargin{:});
         end
 
         %% Wait API's
