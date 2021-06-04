@@ -244,7 +244,7 @@ classdef ExpSeqBase < TimeSeq
             end
             % The 10us here is just a placeholder.
             % The exact length doesn't really matter except for total sequence length
-            step = addBackground(self, 1e-6);
+            step = addStepReal(self, true, self.curTime, 1e-6); % addBackground
             add(step, name, pulse);
         end
 
