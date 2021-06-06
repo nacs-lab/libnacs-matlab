@@ -565,6 +565,61 @@ classdef ExpSeqBase < TimeSeq
     end
 
     methods(Access=protected)
+        function res = collectSerializedPulses(self, res)
+            % Push serialization of pulses within this subsequence to `res`.
+            % `res` is passed in from the caller to minimize allocation.
+            % `mask` specify the channels that are enabled.
+            subSeqs = self.subSeqs;
+            toplevel = self.topLevel;
+            seq_ctx = toplevel.seq_ctx;
+            cid_map = toplevel.cid_map;
+            root = self.root;
+            for i = 1:self.nSubSeqs
+                sub_seq = subSeqs{i};
+                % The following code is manually inlined for TimeStep.
+                % since function call is super slow...
+                if ~sub_seq.is_step
+                    res = collectSerializedPulses(sub_seq, res);
+                    continue;
+                end
+                % [id: 4B][time_id: 4B][len: 4B][val: 4B][cond: 4B][chn: 4B]
+                pulses = sub_seq.pulses;
+                npulses = length(pulses);
+                if npulses == 0
+                    continue;
+                end
+                time_id = getTimeID(root, sub_seq.tOffset);
+                len_id = uint32(getValID(seq_ctx, sub_seq.rawLen));
+                for chn = 1:npulses
+                    pulse = pulses{chn};
+                    % Note that `chn` may be out of bound for `cid_map`.
+                    if isempty(pulse)
+                        continue;
+                    end
+                    cid = cid_map(chn);
+                    if cid == 0
+                        continue;
+                    end
+                    if islogical(pulse.cond)
+                        if ~pulse.cond
+                            continue;
+                        end
+                        cond_id = uint32(0);
+                    else
+                        cond_id = uint32(getValID(seq_ctx, pulse.cond));
+                    end
+                    id = uint32(pulse.id);
+                    val_id = uint32(getValID(seq_ctx, pulse.val));
+                    res{end + 1} = [typecast(id, 'int8'), ...
+                                    typecast(time_id, 'int8'), ...
+                                    typecast(len_id, 'int8'), ...
+                                    typecast(val_id, 'int8'), ...
+                                    typecast(cond_id, 'int8'), ...
+                                    typecast(cid, 'int8')];
+                end
+            end
+        end
+
         function t = waitAllTime(self, setflag)
             %% Returns a time that waits for everything to finish.
             t = self.curSeqTime;
@@ -605,6 +660,29 @@ classdef ExpSeqBase < TimeSeq
                 addOrder(self.root, SeqTime.NonNeg, t, new_t);
                 tval = new_tval;
                 t = new_t;
+            end
+        end
+
+        function res = collectEndTime(self, res)
+            root = self.root;
+            if self.end_after_parent
+                res{end + 1} = typecast(getTimeID(root, self.curSeqTime), 'int8');
+            end
+            for i = 1:self.nSubSeqs
+                sub_seq = self.subSeqs{i};
+                if ~sub_seq.totallen_after_parent
+                    continue;
+                end
+                step_toffset = sub_seq.tOffset;
+                if isnan(step_toffset)
+                    error('Sub sequence still floating');
+                end
+                if sub_seq.is_step
+                    sub_time = create(step_toffset, lengthSign(sub_seq), round(sub_seq.len));
+                    res{end + 1} = typecast(getTimeID(root, sub_time), 'int8');
+                else
+                    res = collectEndTime(sub_seq, res);
+                end
             end
         end
     end

@@ -32,6 +32,9 @@ classdef ExpSeq < RootSeq
         cid_cache;
         % Locally disabled channels
         disabled_channels;
+        % Map from original channel ID to channel ID with disabled channel taken into account.
+        % Disabled channels have ID 0.
+        cid_map;
 
         %% Output related:
         % Whether the default has been overwritten and the new default value.
@@ -173,6 +176,105 @@ classdef ExpSeq < RootSeq
                 res = [res char(10) char(10) toString(self.basic_seqs{i}, indent)];
             end
         end
+
+        function res = serialize(self)
+            % Format:
+            %   [version <0>: 1B]
+            %   [nnodes: 4B]
+            %   [[[OpCode: 1B][[ArgType: 1B][NodeArg: 1-8B] x narg] /
+            %     [OpCode <Interp>: 1B][[ArgType: 1B][NodeArg: 1-8B] x 3][data_id: 4B]] x nnodes]
+            %   [nchns: 4B][[chnname: non-empty NUL-terminated string] x nchns]
+            %   [ndefvals: 4B][[chnid: 4B][Type: 1B][value: 1-8B] x ndefvals]
+            %   [nslots: 4B][[Type: 1B] x nslots]
+            %   [nnoramp: 4B][[chnid: 4B] x nnoramp]
+            %   [nbasicseqs: 4B][[Basic Sequence] x nbasicseqs]
+            %   [ndatas: 4B][[ndouble: 4B][data: 8B x ndouble] x ndatas]
+            %   [nbackenddatas: 4B][[device_name: NUL-terminated string]
+            %                       [size: 4B][data: size B] x nbackenddatas]
+
+            nchns = length(self.channel_names);
+            % [nchns: 4B]
+            chn_serialized = int8([]);
+            cid_map = zeros(1, nchns, 'uint32');
+            cid = 1;
+            for i = 1:nchns
+                % [chnname: non-empty NUL-terminated string]
+                chnname = self.channel_names{i};
+                if checkChannelDisabled(self, chnname)
+                    continue;
+                end
+                cid_map(i) = cid;
+                cid = cid + 1;
+                assert(~isempty(chnname));
+                chn_serialized = [chn_serialized int8(chnname) int8(0)];
+            end
+            chn_serialized = [typecast(uint32(cid - 1), 'int8'), chn_serialized];
+            self.cid_map = cid_map;
+
+            ndefvals = 0;
+            defval_serialized = int8([]);
+            for i = 1:nchns
+                cid = cid_map(i);
+                if cid == 0
+                    continue;
+                end
+                % [chnid: 4B][Type: 1B][value: 1-8B]
+                defval = getDefault(self, i);
+                assert(islogical(defval) || isnumeric(defval));
+                assert(isscalar(defval));
+                if defval == 0
+                    continue;
+                end
+                if islogical(defval)
+                    assert(defval);
+                    defval_serialized = [defval_serialized, ...
+                                         typecast(cid, 'int8'), ...
+                                         int8(SeqVal.TypeBool), int8(1)];
+                elseif isa(defval, 'int32')
+                    defval_serialized = [defval_serialized, ...
+                                         typecast(cid, 'int8'), ...
+                                         int8(SeqVal.TypeInt32), typecast(defval, 'int8')];
+                else
+                    defval = double(defval);
+                    defval_serialized = [defval_serialized, ...
+                                         typecast(cid, 'int8'), ...
+                                         int8(SeqVal.TypeFloat64), typecast(defval, 'int8')];
+                end
+                ndefvals = ndefvals + 1;
+            end
+            % [ndefvals: 4B]
+            defval_serialized = [typecast(uint32(ndefvals), 'int8') defval_serialized];
+
+            % [nbasicseqs: 4B][[Basic Sequence] x nbasicseqs]
+            nbasicseqs = length(self.basic_seqs) + 1;
+            bseqs = cell(1, nbasicseqs);
+            bseqs{1} = serializeBSeq(self);
+            for i = 2:nbasicseqs
+                bseqs{i} = serializeBSeq(self.basic_seqs{i - 1});
+            end
+            bseqs_serialized = [typecast(uint32(nbasicseqs), 'int8') bseqs{:}];
+
+            % [nbackenddatas: 4B][[device_name: NUL-terminated string]
+            %                     [size: 4B][data: size B] x nbackenddatas]
+            backenddata_serailized = serializeBackendData(self);
+
+            seq_ctx = self.seq_ctx;
+            % [version <0>: 1B]
+            % [nnodes: 4B]
+            % [[[OpCode: 1B][[ArgType: 1B][NodeArg: 1-8B] x narg] /
+            %   [OpCode <Interp>: 1B][[ArgType: 1B][NodeArg: 1-8B] x 3][data_id: 4B]] x nnodes]
+            % [nchns: 4B][[chnname: non-empty NUL-terminated string] x nchns]
+            % [ndefvals: 4B][[chnid: 4B][Type: 1B][value: 1-8B] x ndefvals]
+            % [nslots: 4B][[Type: 1B] x nslots]
+            % [nnoramp: 4B][[chnid: 4B] x nnoramp]
+            % [nbasicseqs: 4B][[Basic Sequence] x nbasicseqs]
+            % [ndatas: 4B][[ndouble: 4B][data: 8B x ndouble] x ndatas]
+            % [nbackenddatas: 4B][[device_name: NUL-terminated string]
+            %                     [size: 4B][data: size B] x nbackenddatas]
+            res = [int8(0), nodeSerialized(seq_ctx), chn_serialized, defval_serialized, ...
+                   globalSerialized(seq_ctx), int8([0, 0, 0, 0]), bseqs_serialized, ...
+                   dataSerialized(seq_ctx), backenddata_serailized];
+        end
     end
 
     methods(Access=?TimeSeq)
@@ -190,6 +292,63 @@ classdef ExpSeq < RootSeq
     end
 
     methods(Access=private)
+        function res = serializeBackendData(self)
+            % [nbackenddatas: 4B][[device_name: NUL-terminated string]
+            %                     [size: 4B][data: size B] x nbackenddatas]
+            if isempty(self.ttl_managers)
+                res = int8([0, 0, 0, 0]);
+                return;
+            end
+            device_ttl_managers = containers.Map();
+            cid_map = self.cid_map;
+            for i = 1:length(self.ttl_managers)
+                ttl_manager = self.ttl_managers(i);
+                chnname = ttl_manager.chn;
+                [devname, subname] = strtok(chnname, '/');
+                if isempty(devname) || isempty(subname)
+                    error('Invalid channel name "%s"', chnname);
+                end
+                if ~isKey(self.cid_cache, chnname)
+                    continue;
+                end
+                cid = cid_map(self.cid_cache(chnname));
+                off_delay = int32(ttl_manager.off_delay * self.time_scale);
+                on_delay = int32(ttl_manager.on_delay * self.time_scale);
+                skip_time = int32(ttl_manager.skip_time * self.time_scale);
+                min_time = int32(ttl_manager.min_time * self.time_scale);
+                off_val = ttl_manager.off_val ~= 0;
+                ttl_mgr_serialized = [typecast(cid, 'int8'), ... % [chn_id: 4B]
+                                      typecast(off_delay, 'int8'), ... % [off_delay: 4B]
+                                      typecast(on_delay, 'int8'), ... % [on_delay: 4B]
+                                      typecast(skip_time, 'int8'), ... % [skip_time: 4B]
+                                      typecast(min_time, 'int8'), ... % [min_time: 4B]
+                                      int8(off_val), ... % [off_val: 1B]
+                                     ];
+                if isKey(device_ttl_managers, devname)
+                    tmp = device_ttl_managers(devname);
+                    tmp{end + 1} = ttl_mgr_serialized;
+                    device_ttl_managers(devname) = tmp;
+                else
+                    device_ttl_managers(devname) = {ttl_mgr_serialized};
+                end
+            end
+            % [nbackenddatas: 4B]
+            res = typecast(int32(length(device_ttl_managers)), 'int8');
+            devs = keys(device_ttl_managers);
+            for i = 1:length(devs)
+                devname = devs{i};
+                ttl_mgr = device_ttl_managers(devname);
+                % [magic <"ZYNQZYNQ">: 8B]
+                % [version <0>: 1B]
+                % [nttl_mgrs: 1B][[chn_id: 4B][off_delay: 4B][on_delay: 4B]
+                %                 [skip_time: 4B][min_time: 4B][off_val: 1B] x nttl_mgrs]
+                dev_serialized = [int8('ZYNQZYNQ'), int8(0), ...
+                                  int8(length(ttl_mgr)), ttl_mgr{:}];
+                % [device_name: NUL-terminated string][size: 4B][data: size B]
+                res = [res, int8(devname), int8(0), ...
+                       typecast(int32(length(dev_serialized)), 'int8'), dev_serialized];
+            end
+        end
         function cid = getChannelId(self, name)
             if isKey(self.cid_cache, name)
                 cid = self.cid_cache(name);
