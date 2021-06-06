@@ -288,58 +288,78 @@ classdef ExpSeqBase < TimeSeq
             step.totallen_after_parent = false;
         end
 
-        function res = alignEnd(self, seq1, seq2, offset)
-            %% Make sure that `seq1` and `seq2` ends at the same time and the longer
+        function subseqs = alignEnd(self, varargin)
+            % Make sure that the input sequences end at the same time and the longest
             % one of which started `offset` after the current time of this sequence.
-            % Return the input steps as a cell array.
-            if ~exist('offset', 'var')
+            % (Does not modify current time).
+            % Return the input sequences/steps as a cell array.
+            if isempty(varargin)
+                error('Requires at least one sequence to align');
+            end
+            if isa(varargin{end}, 'TimeSeq')
+                subseqs = varargin;
                 offset = 0;
-            end
-            if ~isnan(seq1.tOffset) || ~isnan(seq2.tOffset)
-                error('alignEnd requires two floating sequences as inputs.');
-            end
-            assert(seq1.parent == self);
-            assert(seq2.parent == self);
-            has_time1 = false;
-            if seq1.is_step
-                len1 = round(seq1.len);
+                hasoffset = false;
+            elseif length(varargin) == 1
+                error('Requires at least one sequence to align');
             else
-                has_time1 = true;
-                time1 = seq1.curSeqTime;
-                len1 = getVal(time1);
+                subseqs = varargin{1:end - 1};
+                offset = round(varargin{end} * self.topLevel.time_scale);
+                hasoffset = ~isnumeric(offset) || offset ~= 0;
             end
-            has_time2 = false;
-            if seq2.is_step
-                len2 = round(seq2.len);
-            else
-                has_time2 = true;
-                time2 = seq2.curSeqTime;
-                len2 = getVal(time2);
+            nsubseqs = length(subseqs);
+            maxlen = [];
+            lens = cell(1, nsubseqs);
+            maxsign = SeqTime.NonNeg;
+            signs = zeros(1, nsubseqs);
+            times = cell(1, nsubseqs);
+            for i = 1:nsubseqs
+                subseq = subseqs{i};
+                if ~isnan(subseq.tOffset)
+                    error('alignEnd requires floating sequences as inputs.');
+                end
+                assert(subseq.parent == self);
+                if subseq.is_step
+                    len = round(subseq.len);
+                    sign = SeqTime.Pos;
+                    maxsign = SeqTime.Pos;
+                else
+                    time = subseq.curSeqTime;
+                    times{i} = time;
+                    len = getVal(time);
+                    sign = SeqTime.NonNeg;
+                end
+                if isempty(maxlen)
+                    maxlen = len;
+                else
+                    maxlen = max(maxlen, len);
+                end
+                lens{i} = len;
+                signs(i) = sign;
             end
-            len = max(len1, len2);
             curtime = self.curSeqTime;
-            if ~isnumeric(offset) || offset ~= 0
-                curtime = create(curtime, SeqTime.Unknown, ...
-                                 round(offset * self.topLevel.time_scale));
+            if hasoffset
+                curtime = create(curtime, SeqTime.Unknown, offset); % curtime + offset
             end
-            endtime = create(curtime, SeqTime.NonNeg, len);
-            start1 = create(endtime, SeqTime.Unknown, -len1);
-            seq1.tOffset = start1;
-            addOrder(self.root, SeqTime.NonNeg, curtime, start1);
-            if has_time1
-                addEqual(self.root, endtime, time1);
-            else
-                addEqual(self.root, endtime, create(start1, SeqTime.NonNeg, len1));
+            endtime = create(curtime, maxsign, maxlen); % curtime + maxlen
+            for i = 1:nsubseqs
+                subseq = subseqs{i};
+                len = lens{i};
+                starttime = create(endtime, SeqTime.Unknown, -len); % endtime - len
+                subseq.tOffset = starttime;
+                if nsubseqs > 1
+                    addOrder(self.root, SeqTime.NonNeg, curtime, starttime);
+                    time = times{i};
+                    if isempty(time)
+                        % starttime + len
+                        if ~isnumeric(len)
+                            addEqual(self.root, endtime, create(starttime, signs(i), len));
+                        end
+                    else
+                        addEqual(self.root, endtime, time);
+                    end
+                end
             end
-            start2 = create(endtime, SeqTime.Unknown, -len2);
-            seq2.tOffset = start2;
-            addOrder(self.root, SeqTime.NonNeg, curtime, start2);
-            if has_time2
-                addEqual(self.root, endtime, time2);
-            else
-                addEqual(self.root, endtime, create(start2, SeqTime.NonNeg, len2));
-            end
-            res = {seq1, seq2};
         end
 
         function res = curTime(self)
