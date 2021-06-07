@@ -200,7 +200,7 @@ classdef ExpSeqBase < TimeSeq
                 step_toffset = real_step.tOffset;
                 if isnan(step_toffset)
                     error('Cannot get offset of floating sequence.');
-                elseif isa(real_step, 'TimeStep')
+                elseif real_step.is_step
                     tstep = step_toffset + real_step.len + offset;
                 else
                     tstep = step_toffset + real_step.curTime + offset;
@@ -219,7 +219,7 @@ classdef ExpSeqBase < TimeSeq
             %% Wait for background steps that are added directly to this sequence
             % to finish. See also `waitAll`.
             function checkBackgroundTime(sub_seq)
-                if ~isa(sub_seq, 'ExpSeqBase')
+                if sub_seq.is_step
                     len = sub_seq.len;
                 else
                     len = sub_seq.curTime;
@@ -258,12 +258,12 @@ classdef ExpSeqBase < TimeSeq
             if ~isnan(seq1.tOffset) || ~isnan(seq2.tOffset)
                 error('alignEnd requires two floating sequences as inputs.');
             end
-            if ~isa(seq1, 'ExpSeqBase')
+            if seq1.is_step
                 len1 = seq1.len;
             else
                 len1 = seq1.curTime;
             end
-            if ~isa(seq2, 'ExpSeqBase')
+            if seq2.is_step
                 len2 = seq2.len;
             else
                 len2 = seq2.curTime;
@@ -282,7 +282,7 @@ classdef ExpSeqBase < TimeSeq
             res = 0;
             for i = 1:self.nSubSeqs
                 sub_seq = self.subSeqs{i};
-                if isa(sub_seq, 'TimeStep')
+                if sub_seq.is_step
                     sub_end = sub_seq.len + sub_seq.tOffset;
                 else
                     sub_end = totalTime(sub_seq) + sub_seq.tOffset;
@@ -308,7 +308,7 @@ classdef ExpSeqBase < TimeSeq
             tdiff = offsetDiff(self, other);
             offset = time.offset;
             if time.anchor ~= 0
-                if ~isa(other, 'ExpSeqBase')
+                if other.is_step
                     len = other.len;
                 else
                     len = other.curTime;
@@ -391,7 +391,7 @@ classdef ExpSeqBase < TimeSeq
                 seq_toffset = sub_seq.tOffset + toffset;
                 % The following code is manually inlined for TimeStep.
                 % since function call is super slow...
-                if isa(sub_seq, 'TimeStep')
+                if sub_seq.is_step
                     res(1:3, end + 1) = {seq_toffset, sub_seq.len, sub_seq.pulses{cid}};
                 else
                     res = appendPulses(sub_seq, cid, res, seq_toffset);
@@ -413,7 +413,7 @@ classdef ExpSeqBase < TimeSeq
                 end
                 % The following code is manually inlined for TimeStep.
                 % since function call is super slow...
-                if isa(sub_seq, 'TimeStep')
+                if sub_seq.is_step
                     subseq_pulses = sub_seq.pulses;
                     sub_res = false(1, nchn);
                     for j = 1:length(subseq_pulses)

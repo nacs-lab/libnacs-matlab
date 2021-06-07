@@ -32,6 +32,7 @@ classdef (Sealed) TimeStep < TimeSeq
             % However, they are not initialized in `TimeSeq` constructor
             % to isolate the handling of `ExpSeq` to `ExpSeqBase`
             % and to reduce function call overhead...
+            self.is_step = true;
             self.parent = parent;
             self.tOffset = start_time;
             self.config = parent.config;

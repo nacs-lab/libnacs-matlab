@@ -59,6 +59,10 @@ classdef TimeSeq < handle
         % each channel. The array is indexed by the channel ID.
         % The field is computed and cached before generation starts (see `ExpSeq::generate`).
         chn_mask;
+        % A LLVM style flag for type checking.
+        % AFAICT, this is faster than doing `isa` check on the objects
+        % which is faster than dispatching using methods...
+        is_step = false;
     end
 
     methods
@@ -99,7 +103,7 @@ classdef TimeSeq < handle
             end
             tdiff = getTimePointOffset(self.parent, time) + offset;
             if anchor ~= 0
-                if ~isa(self, 'ExpSeqBase')
+                if self.is_step
                     len = self.len;
                 else
                     len = self.curTime;
