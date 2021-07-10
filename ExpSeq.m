@@ -47,7 +47,7 @@ classdef ExpSeq < RootSeq
 
         seq_ctx;
         basic_seqs = {};
-        time_scale = 1e12; % TODO load from config
+        time_scale = 1e12;
         globals = struct('id', {}, 'persist', {}, 'init_val', {});
     end
 
@@ -79,6 +79,7 @@ classdef ExpSeq < RootSeq
                     C.(fn) = C_ovr.(fn);
                 end
             end
+            self.time_scale = SeqManager.tick_per_sec();
             self.C = DynProps(C);
             self.G = self.config.G;
             self.cid_cache = containers.Map('KeyType', 'char', 'ValueType', 'double');
