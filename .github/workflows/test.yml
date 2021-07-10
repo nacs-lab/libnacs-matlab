@@ -23,6 +23,7 @@ jobs:
         release: ${{matrix.release}}
 
     - name: Test
-      uses: matlab-actions/run-command@v1
+      uses: matlab-actions/run-tests@v1
       with:
-        command: addpath('test'), runtests
+        source-folder: .
+        select-by-folder: test
