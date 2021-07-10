@@ -24,6 +24,11 @@ classdef RootSeq < ExpSeqBase
         branches = struct('cond', {}, 'target', {}, 'id', {});
 
         time_serialized = {};
+
+        %% Basic sequence callbacks
+        before_bseq_cbs = {};
+        after_bseq_cbs = {};
+        after_branch_cbs = {};
     end
     properties(Hidden)
         zero_time;
@@ -121,6 +126,33 @@ classdef RootSeq < ExpSeqBase
             end
             res = [res prefix '    default: ' target char(10)];
             res = [res toString@ExpSeqBase(self, indent + 2)];
+        end
+
+        function self = regBeforeBSeq(self, cb)
+            %% Register a callback function that will be executed before
+            % the basic sequence runs.
+            % The callbacks will be called in the order they are registerred
+            % with the sequence as the argument.
+            self.before_bseq_cbs{end + 1} = cb;
+        end
+
+        function self = regAfterBSeq(self, cb)
+            %% Register a callback function that will be executed after
+            % the basic sequence ends.
+            % The callbacks will be called in the order they are registerred
+            % with the sequence as the argument.
+            self.after_bseq_cbs{end + 1} = cb;
+        end
+
+        function self = regAfterBranch(self, cb)
+            %% Register a callback function that will be executed after
+            % the branch target (including termination) has been determined.
+            % This will run right before the before basic sequence callback
+            % of the next sequence or the global after end callbacks
+            % if the whole sequence is finished.
+            % The callbacks will be called in the order they are registerred
+            % with the sequence as the argument.
+            self.after_branch_cbs{end + 1} = cb;
         end
     end
 
