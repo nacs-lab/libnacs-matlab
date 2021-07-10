@@ -55,10 +55,14 @@ classdef SeqConfig < handle
             consts = struct();
             warnUnusedScan = true;
             disableChannel = SeqConfig.getDisableChannelSetter(m_disabledChannels);
+            configFile = [];
 
             % Run script which loads the empty maps.
             expConfig();
 
+            if ~isempty(configFile)
+                SeqManager.load_config_file(configFile);
+            end
             self.niClocks = niClocks;
             self.niStart = niStart;
             self.consts = consts;
