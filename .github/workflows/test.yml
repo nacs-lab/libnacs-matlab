@@ -11,12 +11,16 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
+      matrix:
+        release: [R2020a, R2020b, R2021a, latest]
 
     steps:
     - uses: actions/checkout@v2
 
     - name: Install MATLAB
       uses: matlab-actions/setup-matlab@v1
+      with:
+        release: ${{matrix.release}}
 
     - name: Test
       uses: matlab-actions/run-command@v1
