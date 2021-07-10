@@ -22,19 +22,13 @@ classdef SeqConfig < handle
         name_map;
     end
     properties
-        pulseDrivers;
         channelAlias;
         defaultVals;
         consts;
         disabledChannels;
 
-        fpgaUrls;
-        fpgaTTLWarningMask;
-        usrpUrls;
-
         niClocks;
         niStart;
-        maxLength;
         warnUnusedScan;
 
         % Global context. See `ExpSeqBase::G`.
@@ -51,10 +45,6 @@ classdef SeqConfig < handle
             end
             self.name_map = containers.Map();
             % Create empty maps
-            fpgaUrls = containers.Map();
-            fpgaTTLWarningMask = containers.Map();
-            usrpUrls = containers.Map();
-            pulseDrivers = containers.Map();
             channelAlias = containers.Map();
             defaultVals = containers.Map();
             % Channel prefix to be disabled
@@ -63,20 +53,15 @@ classdef SeqConfig < handle
             niClocks = containers.Map();
             niStart = containers.Map();
             consts = struct();
-            maxLength = 0;
             warnUnusedScan = true;
             disableChannel = SeqConfig.getDisableChannelSetter(m_disabledChannels);
 
             % Run script which loads the empty maps.
             expConfig();
 
-            self.fpgaUrls = fpgaUrls;
-            self.fpgaTTLWarningMask = fpgaTTLWarningMask;
-            self.usrpUrls = usrpUrls;
             self.niClocks = niClocks;
             self.niStart = niStart;
             self.consts = consts;
-            self.maxLength = maxLength;
             self.warnUnusedScan = warnUnusedScan;
 
             for key = keys(channelAlias)
@@ -92,14 +77,6 @@ classdef SeqConfig < handle
                 end
             end
             self.channelAlias = channelAlias;
-
-            for key = keys(pulseDrivers)
-                key = key{:};
-                if ~ischar(pulseDrivers(key))
-                    error('pulseDrivers should be a string');
-                end
-            end
-            self.pulseDrivers = pulseDrivers;
 
             self.defaultVals = containers.Map();
             for key = keys(defaultVals)
