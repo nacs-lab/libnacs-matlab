@@ -138,10 +138,10 @@ classdef TestScanGroup < matlab.unittest.TestCase
             end
             g3().name = 'a long string';
             test.verifyEqual(g3.nseq(), 12);
-            isequaln(g3.getseq(6), struct('a', 1, 'b', 2, 'c', 1, 'd', 1, 'name', 'a long string'));
+            test.verifyEqual(g3.getseq(6), struct('a', 1, 'b', 2, 'c', 1, 'd', 1, 'name', 'a long string'));
             g3(4) = struct('c', 5, 'd', 10);
             test.verifyEqual(g3.nseq(), 7);
-            isequaln(g3.getseq(6), struct('a', 1, 'b', 2, 'c', 5, 'd', 10, 'name', 'a long string'));
+            test.verifyEqual(g3.getseq(6), struct('a', 1, 'b', 2, 'c', 5, 'd', 10, 'name', 'a long string'));
 
             rp = runp(g);
             g.runp().a = 3;
