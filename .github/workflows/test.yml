@@ -27,3 +27,8 @@ jobs:
       with:
         source-folder: .
         select-by-folder: test
+        code-coverage-cobertura: coverage.xml
+
+    - uses: codecov/codecov-action@v1
+      with:
+        file: coverage.xml
