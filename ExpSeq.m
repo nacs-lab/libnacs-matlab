@@ -49,6 +49,10 @@ classdef ExpSeq < RootSeq
         basic_seqs = {};
         time_scale = 1e12;
         globals = struct('id', {}, 'persist', {}, 'init_val', {});
+
+        %% Whole sequence callbacks
+        before_start_cbs = {};
+        after_end_cbs = {};
     end
 
     properties(Constant, Access=private)
@@ -275,6 +279,22 @@ classdef ExpSeq < RootSeq
             res = [int8(0), nodeSerialized(seq_ctx), chn_serialized, defval_serialized, ...
                    globalSerialized(seq_ctx), int8([0, 0, 0, 0]), bseqs_serialized, ...
                    dataSerialized(seq_ctx), backenddata_serailized];
+        end
+
+        function self = regBeforeStart(self, cb)
+            %% Register a callback function that will be executed before
+            % the sequence runs.
+            % The callbacks will be called in the order they are registerred
+            % with the sequence as the argument.
+            self.before_start_cbs{end + 1} = cb;
+        end
+
+        function self = regAfterEnd(self, cb)
+            %% Register a callback function that will be executed after
+            % the sequence ends.
+            % The callbacks will be called in the order they are registerred
+            % with the sequence as the argument.
+            self.after_end_cbs{end + 1} = cb;
         end
     end
 
