@@ -685,6 +685,13 @@ classdef ExpSeqBase < TimeSeq
                 end
             end
         end
+
+        function releaseGeneration(self)
+            %% Free resources that's only needed at generation time
+            self.curSeqTime = [];
+            self.subSeqs = {};
+            self.nSubSeqs = 0;
+        end
     end
 
     methods(Access=?ConditionalWrapper)
