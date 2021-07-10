@@ -53,6 +53,10 @@ classdef ExpSeq < RootSeq
         %% Whole sequence callbacks
         before_start_cbs = {};
         after_end_cbs = {};
+
+        %% Runtime
+        pyseq;
+        ni_channels;
     end
 
     properties(Constant, Access=private)
@@ -296,6 +300,23 @@ classdef ExpSeq < RootSeq
             % with the sequence as the argument.
             self.after_end_cbs{end + 1} = cb;
         end
+
+        function generate(self, preserve)
+            %% Called after the sequence is fully constructed.
+            if isempty(self.pyseq)
+                if ~exist('preserve', 'var')
+                    preserve = 0;
+                end
+                self.pyseq = SeqManager.create_sequence(serialize(self));
+                ni_channel_info = get_nidaq_channel_info(self.pyseq, 'NiDAQ'); % Hardcode name
+                self.ni_channels = cellfun(@(x) struct('chn', double(x{1}), ...
+                                                       'dev', char(x{2})), ...
+                                           cell(ni_channel_info));
+                if ~preserve
+                    releaseGeneration(self);
+                end
+            end
+        end
     end
 
     methods(Access=?TimeSeq)
@@ -309,6 +330,25 @@ classdef ExpSeq < RootSeq
             [g, id] = newGlobal(self.seq_ctx, type);
             self.globals(end + 1) = struct('id', id, 'persist', persist, ...
                                            'init_val', double(init_val));
+        end
+    end
+
+    methods(Access=protected)
+        function releaseGeneration(self)
+            releaseGeneration@RootSeq(self);
+            self.orig_channel_names = [];
+            self.channel_names = [];
+            self.cid_cache = [];
+            self.disabled_channels = [];
+            self.cid_map = [];
+
+            self.default_override = false(0);
+            self.default_override_val = [];
+
+            self.ttl_managers = [];
+            for i = 1:length(self.basic_seqs)
+                releaseGeneration(self.basic_seqs{i});
+            end
         end
     end
 

@@ -267,6 +267,15 @@ classdef RootSeq < ExpSeqBase
                    pulses_serialized, measures_serialized, assigns_serialized, ...
                    branches_serialized];
         end
+
+        function releaseGeneration(self)
+            releaseGeneration@ExpSeqBase(self);
+            self.assigns = [];
+            self.orders = [];
+            self.branches = [];
+            self.time_serialized = [];
+            self.measures = [];
+        end
     end
 
     methods(Access=?TimeSeq)
