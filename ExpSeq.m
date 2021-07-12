@@ -315,7 +315,24 @@ classdef ExpSeq < RootSeq
                 if ~preserve
                     releaseGeneration(self);
                 end
+                reset_globals(self, true);
             end
+        end
+
+        function val = get_global(self, g)
+            if isempty(self.pyseq)
+                error('Sequence must be generated before accessing globals.');
+            end
+            assert(isa(g, 'SeqVal') && g.head == SeqVal.HGlobal);
+            val = get_global(self.pyseq, uint32(g.args{1}));
+        end
+
+        function set_global(self, g, val)
+            if isempty(self.pyseq)
+                error('Sequence must be generated before accessing globals.');
+            end
+            assert(isa(g, 'SeqVal') && g.head == SeqVal.HGlobal);
+            set_global(self.pyseq, uint32(g.args{1}), double(val));
         end
     end
 
@@ -433,6 +450,16 @@ classdef ExpSeq < RootSeq
             if (cid > length(self.orig_channel_names) || ...
                 isempty(self.orig_channel_names{cid}))
                 self.orig_channel_names{cid} = orig_name;
+            end
+        end
+
+        function reset_globals(self, first)
+            for i = 1:length(self.globals)
+                g = self.globals(i);
+                if g.persist && ~first
+                    continue;
+                end
+                set_global(self.pyseq, g.id, g.init_val);
             end
         end
     end
