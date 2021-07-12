@@ -334,6 +334,82 @@ classdef ExpSeq < RootSeq
             assert(isa(g, 'SeqVal') && g.head == SeqVal.HGlobal);
             set_global(self.pyseq, uint32(g.args{1}), double(val));
         end
+
+        function next_idx = run_bseq(self, idx)
+            if isempty(self.pyseq)
+                error('Sequence must be generated before running.');
+            end
+            % Basic sequence 1 is the `ExpSeq`, the rest are in the `basic_seqs` array.
+            if idx == 1
+                bseq = self;
+            else
+                bseq = self.basic_seqs{idx - 1};
+            end
+            for cb = bseq.before_bseq_cbs
+                cb{:}(self);
+            end
+            pre_run(self.pyseq);
+            if ~isempty(self.ni_channels)
+                ni_nchns = length(self.ni_channels);
+                ni_data = double(get_nidaq_data(self.pyseq, 'NiDAQ')); % Hardcode name
+                ni_ndata = length(ni_data);
+                assert(mod(ni_ndata, ni_nchns) == 0);
+                NiDAQRunner.run(self.ni_channels, self.config.niClocks, self.config.niStart, ...
+                                reshape(ni_data, [ni_ndata / ni_nchns, ni_nchns]));
+            end
+            start(self.pyseq);
+            while ~wait(self.pyseq, 100)
+            end
+            if ~isempty(self.ni_channels)
+                NiDAQRunner.wait();
+            end
+            for cb = bseq.after_bseq_cbs
+                cb{:}(self);
+            end
+            next_idx = double(post_run(self.pyseq));
+        end
+
+        function run_real(self)
+            try
+                for cb = self.before_start_cbs
+                    cb{:}(self);
+                end
+                init_run(self.pyseq);
+                idx = 1;
+                while idx ~= 0
+                    start_t = now() * 86400;
+                    idx = run_bseq(self, idx);
+                end
+                for cb = self.after_end_cbs
+                    cb{:}(self);
+                end
+            catch E
+                reset_globals(self, false);
+                rethrow(E);
+            end
+            % Reset the globals
+            % Do this after the sequence finishes instead of before start
+            % so that we could observe values set before running the sequence.
+            reset_globals(self, false);
+            % We'll wait until this time before returning to the caller
+            end_after = start_t + cur_bseq_length(self.pyseq) / self.time_scale - 50e-3;
+            end_t = now() * 86400;
+            if end_t < end_after
+                pause(end_after - end_t);
+            end
+        end
+
+        function run(self)
+            if ExpSeq.disabled.get()
+                return;
+            end
+            if isempty(self.pyseq)
+                fprintf('Generating...\n');
+                generate(self);
+            end
+            fprintf('Running @%s\n', datestr(now(), 'yyyy/mm/dd HH:MM:SS'));
+            run_real(self);
+        end
     end
 
     methods(Access=?TimeSeq)

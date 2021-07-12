@@ -201,6 +201,7 @@ function params = runSeq(func, varargin)
             seqlist{idx} = func(arglist{idx}{:});
         end
         delete(disabler);
+        fprintf('|');
         seqlist{idx}.generate();
     end
 
@@ -237,6 +238,8 @@ function params = runSeq(func, varargin)
     end
 
     function abort = run_seq(idx, next_idx)
+        % Note that generation of sequence in parallel
+        % with the sequence run is disabled for now since it may affect branching delay.
         if CheckPauseAbort(m)
             disp('AbortRunSeq set to 1.  Stopping gracefully.');
             abort = 1;
@@ -252,19 +255,8 @@ function params = runSeq(func, varargin)
         end
         run_cb(pre_cb, idx);
         cur_seq = seqlist{idx};
-        start_t = now() * 86400;
-        run_real(cur_seq);
-        if next_idx > 0
-            prepare_seq(next_idx);
-        end
         m.Data(1).CurrentSeqNum = m.Data(1).CurrentSeqNum + 1;
-        % We'll wait until this time before returning to the caller
-        end_after = start_t + totalTime(cur_seq) - 5e-3;
-        waitFinish(cur_seq);
-        end_t = now() * 86400;
-        if end_t < end_after
-            pause(end_after - end_t);
-        end
+        run_real(cur_seq);
         run_cb(post_cb, idx);
         % If we are using NumGroup to run sequences in groups, pause every
         % NumGroup sequences.
