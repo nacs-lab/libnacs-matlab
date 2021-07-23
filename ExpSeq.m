@@ -410,6 +410,43 @@ classdef ExpSeq < RootSeq
             fprintf('Running @%s\n', datestr(now(), 'yyyy/mm/dd HH:MM:SS'));
             run_real(self);
         end
+
+        % For debug use only
+        function res = get_builder_dump(self)
+            res = get_builder_dump(self.pyseq);
+        end
+        function res = get_seq_dump(self)
+            res = get_seq_dump(self.pyseq);
+        end
+        function res = get_seq_opt_dump(self)
+            res = get_seq_opt_dump(self.pyseq);
+        end
+
+        function res = get_nidaq_channel_info(self, name)
+            if ~exist('name', 'var')
+                name = 'NiDAQ'; % Hardcode name
+            end
+            ni_channel_info = get_nidaq_channel_info(self.pyseq, name);
+            res = cellfun(@(x) struct('chn', double(x{1}), 'dev', char(x{2})), ...
+                          cell(ni_channel_info));
+        end
+        function res = get_nidaq_data(self, name)
+            if ~exist('name', 'var')
+                name = 'NiDAQ'; % Hardcode name
+            end
+            ni_nchns = length(self.ni_channels);
+            ni_data = double(get_nidaq_data(self.pyseq, name));
+            ni_ndata = length(ni_data);
+            assert(mod(ni_ndata, ni_nchns) == 0);
+            res = reshape(ni_data, [ni_ndata / ni_nchns, ni_nchns]);
+        end
+        function res = get_zynq_clock(self, name)
+            clock = get_zynq_clock(self.pyseq, name);
+            res = cellfun(@(x) struct('time', int64(x{1}), 'period', uint8(x{2})), cell(clock));
+        end
+        function res = get_zynq_bytecode(self, name)
+            res = get_zynq_bytecode(self.pyseq, name);
+        end
     end
 
     methods(Access=?TimeSeq)
