@@ -445,7 +445,9 @@ classdef ScanGroup < handle
                 elseif length(S(1).subs) == 1
                     % grp(n): Real scan
                     idx = S(1).subs{1};
-                    if ~all(idx > 0)
+                    if strcmp(idx, ':')
+                        idx = 0;
+                    elseif ~all(idx > 0)
                         % Don't allow implicitly addressing the fallback with `0`
                         % Also use the negative check to handle wierd thing like NaN...
                         error('Scan index must be positive');
@@ -481,7 +483,7 @@ classdef ScanGroup < handle
                 elseif length(S(1).subs) == 1
                     % grp(n): Real scan
                     idx = S(1).subs{1};
-                    if isequal(idx, ':')
+                    if strcmp(idx, ':')
                         idx = 0;
                     elseif ~(idx > 0)
                         % Don't allow implicitly address fallback with 0.
