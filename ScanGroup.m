@@ -1,4 +1,4 @@
-%% Copyright (c) 2018-2018, Yichao Yu <yyc1992@gmail.com>
+%% Copyright (c) 2018-2021, Yichao Yu <yyc1992@gmail.com>
 %
 % This library is free software; you can redistribute it and/or
 % modify it under the terms of the GNU Lesser General Public
@@ -94,6 +94,14 @@
 %
 %     which can be commented out as a whole easily.
 %
+% * grp.usevar(true/false[, dim])
+% * grp([n]).usevar(true/false[, dim])
+% * grp([n]).<....>.usevar(true/false[, dim])
+%
+%     By default, each scan point generates a new sequence.
+%     These functions allow the scanning to be done by reusing the same sequence
+%     but setting a global variable to differet values instead.
+%
 % All mutation on a scan (assignment and `setbase`) will make sure the scan being mutated
 % is created if it didn't exist.
 %
@@ -186,6 +194,8 @@ classdef ScanGroup < handle
                           'vars', struct('size', {}, 'params', {}));
         DEF_VARS = struct('size', 0, 'params', struct());
         DEF_SCANCACHE = struct('dirty', true, 'params', struct(), 'vars', struct());
+        DEF_USE_VAR = struct('def', 0, 'dims', [], 'field', struct());
+        EMPTY_USE_VAR = struct('def', {}, 'dims', {}, 'field', {});
     end
     properties(Access=private)
         %% we don't use class here since
@@ -218,6 +228,15 @@ classdef ScanGroup < handle
         runparam;
 
         %%
+        % For computing whether a scan should use global variable instead of normal values.
+        % All values use tri-state logic:
+        % * 0 or missing means default
+        % * -1 means not using global variable
+        % * 1 means using global variable
+        use_var_base = ScanGroup.DEF_USE_VAR;
+        use_var_scans = ScanGroup.EMPTY_USE_VAR;
+
+        %%
         % Fields below this line are caches that can be computed from the ones above
         % or book keeping information to keep these cache in sync.
 
@@ -240,6 +259,8 @@ classdef ScanGroup < handle
             obj.scans = self.scans;
             obj.base = self.base;
             obj.runparam = self.runparam();
+            obj.use_var_base = self.use_var_base;
+            obj.use_var_scans = self.use_var_scans;
         end
         function seq = getseq(self, n)
             for scani = 1:groupsize(self)
@@ -513,14 +534,21 @@ classdef ScanGroup < handle
                     end
                     if Bidx == 0
                         rscan = self.base;
+                        use_var = self.use_var_base;
                         rbase = 0; % base index
                     else
                         rscan = self.scans(Bidx);
+                        if Bidx <= length(self.use_var_scans)
+                            use_var = self.use_var_scans(Bidx);
+                        else
+                            use_var = ScanGroup.DEF_USE_VAR;
+                        end
                         rbase = getbaseidx(self, Bidx); % base index
                     end
                     if idx == 0
                         self.base.params = rscan.params;
                         self.base.vars = rscan.vars;
+                        self.use_var_base = use_var;
                         set_dirty_all(self);
                     else
                         % Call the setter function to check for loop.
@@ -529,6 +557,8 @@ classdef ScanGroup < handle
                         self.scans(idx).params = rscan.params;
                         self.scans(idx).vars = rscan.vars;
                         self.scanscache(idx).dirty = true;
+                        self.use_var_scans(idx) = use_var;
+                        self.use_var_scans(end + 1:idx - 1) = ScanGroup.DEF_USE_VAR;
                     end
                     return;
                 elseif ScanGroup.hasarray(B)
@@ -555,6 +585,9 @@ classdef ScanGroup < handle
                 return;
             end
             A = builtin('subsasgn', self, S, B);
+        end
+        function usevar(self, varargin)
+            self.use_var_base = ScanGroup.set_use_var(self.use_var_base, varargin{:});
         end
         function disp(self)
             fprintf('ScanGroup:\n');
@@ -702,6 +735,26 @@ classdef ScanGroup < handle
                     end
                     varargout{1} = val;
                     varargout{2} = dim;
+                    return;
+                end
+                if i > 1 && strcmp(S(i - 1).subs, 'usevar') && strcmp(S(i).type, '()')
+                    if i < nS
+                        error('Invalid usevar() syntax after scan.');
+                    end
+                    nargoutchk(0, 0);
+                    path = {S(1:end - 2).subs};
+                    args = S(end).subs;
+                    if idx == 0
+                        self.use_var_base = ScanGroup.set_sub_use_var(self.use_var_base, ...
+                                                                      path, args{:});
+                        return;
+                    elseif idx > length(self.scans)
+                        error('Scan %d does not exist.', idx);
+                    elseif idx > length(self.use_var_scans)
+                        self.use_var_scans(end + 1:idx) = ScanGroup.DEF_USE_VAR;
+                    end
+                    self.use_var_scans(idx) = ScanGroup.set_sub_use_var(self.use_var_scans(idx), ...
+                                                                        path, args{:});
                     return;
                 end
                 if i > 1 && strcmp(S(i - 1).subs, 'scan') && strcmp(S(i).type, '()')
@@ -1115,6 +1168,18 @@ classdef ScanGroup < handle
             % scan size ~= 1
             % consistent scan size
         end
+        function use_var = get_full_use_var(self, idx)
+            if idx == 0
+                use_var = self.use_var_base;
+                return;
+            end
+            base = get_full_use_var(self, getbaseidx(self, idx));
+            if idx > length(self.use_var_scans)
+                use_var = base;
+                return;
+            end
+            use_var = ScanGroup.merge_use_var(base, self.use_var_scans(idx));
+        end
     end
     methods(Static, Access=?ScanParam)
         function res = cat_scans(varargin)
@@ -1134,6 +1199,7 @@ classdef ScanGroup < handle
                     scan = getfullscan(grp, j);
                     scan.baseidx = 0;
                     res.scans(end + 1) = scan;
+                    res.use_var_scans(length(res.scans)) = get_full_use_var(grp, j);
                 end
             end
             self = varargin{1};
@@ -1326,6 +1392,16 @@ classdef ScanGroup < handle
             self.base = obj.base;
             self.runparam(obj.runparam);
             self.scanscache(1:length(self.scans)) = ScanGroup.DEF_SCANCACHE;
+            if isfield(obj, 'use_var_base')
+                self.use_var_base = obj.use_var_base;
+                self.use_var_scans = obj.use_var_scans;
+            else
+                % Loading old version
+                % There was no need to bump the version number since
+                % we can do this in a backward compatible way.
+                self.use_var_base = ScanGroup.DEF_USE_VAR;
+                self.use_var_scans = ScanGroup.EMPTY_USE_VAR;
+            end
         end
         function self = load_v0(obj)
             % Loading the old style scan seq
@@ -1360,6 +1436,57 @@ classdef ScanGroup < handle
                 self.scans(i) = scan;
             end
             self.scanscache(1:length(self.scans)) = ScanGroup.DEF_SCANCACHE;
+        end
+        function use_var = set_use_var(use_var, val, dim)
+            if ~exist('dim', 'var')
+                dim = 0;
+            end
+            if val ~= 0
+                val = 1;
+            else
+                val = -1;
+            end
+            if dim == 0
+                use_var.def = val;
+            else
+                use_var.dims(dim) = val;
+            end
+        end
+        function use_var = set_sub_use_var(use_var, path, varargin)
+            if isempty(path)
+                use_var = ScanGroup.set_use_var(use_var, varargin{:});
+                return;
+            end
+            field = path{1};
+            subpath = path(2:end);
+            if isfield(use_var.field, field)
+                fieldval = use_var.field.(field);
+            else
+                fieldval = ScanGroup.DEF_USE_VAR;
+            end
+            use_var.field.(field) = ScanGroup.set_sub_use_var(fieldval, subpath, varargin{:});
+        end
+        function update = merge_use_var(base, update)
+            if update.def == 0
+                update.def = base.def;
+            end
+            ndims = length(base.dims);
+            update.dims(end + 1:ndims) = 0;
+            for i = 1:ndims
+                if update.dims(i) == 0
+                    base.dims(i) = update.dims(i);
+                end
+            end
+            fields = fieldnames(base.field);
+            for i = 1:length(fields)
+                fld = fields{i};
+                val = base.field.(fld);
+                if ~isfield(update.field, fld)
+                    update.field.(fld) = val;
+                else
+                    update.field = ScanGroup.merge_use_var(val, update.field.(fld));
+                end
+            end
         end
     end
     methods(Static)
