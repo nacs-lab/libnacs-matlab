@@ -43,6 +43,8 @@ function params = runSeq(func, varargin)
     return_array = false;
     notify = [];
 
+    % Map from input parameter to the first sequence index that has that parameter
+    % (first during runtime, not necessarily first in argument order)
     seq_map = java.util.Hashtable();
     SeqConfig.cache(1);
     seq_config = SeqConfig.get();
@@ -156,6 +158,13 @@ function params = runSeq(func, varargin)
         if use_scan_tracker
             scan_tracker = ScanAccessTracker(scangroup);
         end
+        scanvariables = cell(1, nseq);
+        scanvariable_values = cell(1, nseq);
+        % Map from seqid to the first sequence index that has that ID.
+        % (first during runtime, not necessarily first in argument order)
+        % Scan points with the same ID will share the same `ExpSeq`
+        % and use global variables set to different values at runtime to do the scanning.
+        seqid_map = java.util.Hashtable();
     end
 
     % sequence number printing interval
@@ -180,14 +189,38 @@ function params = runSeq(func, varargin)
             prev_idx = get(seq_map, arg0);
             if ~isempty(prev_idx)
                 seqlist{idx} = seqlist{prev_idx};
+                if is_scangroup
+                    scanvariables{idx} = scanvariables{prev_idx};
+                    scanvariable_values{idx} = scanvariable_values{prev_idx};
+                end
                 return;
             end
             put(seq_map, arg0, idx);
         end
         disabler = ExpSeq.disable(true);
         if is_scangroup
-            s = ExpSeq(getseq(scangroup, arg0));
+            [seqid, seqparam, seqvars] = getseq_with_var(scangroup, arg0);
             remove(all_scan_index, arg0);
+            prev_idx = get(seqid_map, seqid);
+            if ~isempty(prev_idx)
+                if use_scan_tracker
+                    mark_collected(scan_tracker, arg0);
+                    if isEmpty(all_scan_index)
+                        force_check(scan_tracker);
+                    end
+                end
+                seqlist{idx} = seqlist{prev_idx};
+                scanvariables{idx} = scanvariables{prev_idx};
+                nseqvars = length(seqvars);
+                scanvariable_value = zeros(1, nseqvars);
+                for i = 1:nseqvars
+                    scanvariable_value(i) = seqvars{i}{2};
+                end
+                scanvariable_values{idx} = scanvariable_value;
+                return;
+            end
+            put(seqid_map, seqid, idx);
+            s = ExpSeq(seqparam);
             clear_accessed(s.C);
             func(s);
             if use_scan_tracker
@@ -196,7 +229,20 @@ function params = runSeq(func, varargin)
                     force_check(scan_tracker);
                 end
             end
+            nseqvars = length(seqvars);
+            scanvariable = cell(1, nseqvars);
+            scanvariable_value = zeros(1, nseqvars);
+            for i = 1:nseqvars
+                % Use persistent global since we assign to it every sequence anyway...
+                % No need to let the sequence do that.
+                seq_gv = newPersistGlobal(s);
+                subsasgn(s.C, struct('types', '.', 'subs', seqvars{i}{1}), seq_gv);
+                scanvariable{i} = seq_gv;
+                scanvariable_value(i) = seqvars{i}{2};
+            end
             seqlist{idx} = s;
+            scanvariables{idx} = scanvariable;
+            scanvariable_values{idx} = scanvariable_value;
         else
             seqlist{idx} = func(arglist{idx}{:});
         end
@@ -255,6 +301,13 @@ function params = runSeq(func, varargin)
         end
         run_cb(pre_cb, idx);
         cur_seq = seqlist{idx};
+        if is_scangroup
+            scanvariable = scanvariables{idx};
+            scanvariable_value = scanvariable_values{idx};
+            for j = 1:length(scanvariable)
+                set_global(cur_seq, scanvariable{j}, scanvariable_value(j));
+            end
+        end
         m.Data(1).CurrentSeqNum = m.Data(1).CurrentSeqNum + 1;
         run_real(cur_seq);
         run_cb(post_cb, idx);
