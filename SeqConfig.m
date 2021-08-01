@@ -61,6 +61,7 @@ classdef SeqConfig < handle
             expConfig();
 
             if ~isempty(configFile)
+                configFile = fullfile(fileparts(which('expConfig')), configFile);
                 SeqManager.load_config_file(configFile);
             end
             self.niClocks = niClocks;
