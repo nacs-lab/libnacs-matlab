@@ -444,7 +444,7 @@ classdef ExpSeq < RootSeq
         end
         function res = get_zynq_clock(self, name)
             clock = get_zynq_clock(self.pyseq, name);
-            res = cellfun(@(x) struct('time', int64(x{1}), 'period', uint8(x{2})), cell(clock));
+            res = cellfun(@(x) struct('time', int64(x{1}), 'period', int64(x{2})), cell(clock));
         end
         function res = get_zynq_bytecode(self, name)
             res = get_zynq_bytecode(self.pyseq, name);
