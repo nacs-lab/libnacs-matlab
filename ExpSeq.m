@@ -358,7 +358,7 @@ classdef ExpSeq < RootSeq
                                 reshape(ni_data, [ni_ndata / ni_nchns, ni_nchns]));
             end
             start(self.pyseq);
-            while ~wait(self.pyseq, 100)
+            while ~wait(self.pyseq, uint64(100))
             end
             if ~isempty(self.ni_channels)
                 NiDAQRunner.wait();
