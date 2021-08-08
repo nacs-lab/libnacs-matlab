@@ -415,13 +415,13 @@ classdef ExpSeq < RootSeq
 
         % For debug use only
         function res = get_builder_dump(self)
-            res = get_builder_dump(self.pyseq);
+            res = char(get_builder_dump(self.pyseq));
         end
         function res = get_seq_dump(self)
-            res = get_seq_dump(self.pyseq);
+            res = char(get_seq_dump(self.pyseq));
         end
         function res = get_seq_opt_dump(self)
-            res = get_seq_opt_dump(self.pyseq);
+            res = char(get_seq_opt_dump(self.pyseq));
         end
 
         function res = get_nidaq_channel_info(self, name)
@@ -447,7 +447,7 @@ classdef ExpSeq < RootSeq
             res = cellfun(@(x) struct('time', int64(x{1}), 'period', int64(x{2})), cell(clock));
         end
         function res = get_zynq_bytecode(self, name)
-            res = get_zynq_bytecode(self.pyseq, name);
+            res = uint8(get_zynq_bytecode(self.pyseq, name));
         end
     end
 
