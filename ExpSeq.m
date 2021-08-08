@@ -335,7 +335,7 @@ classdef ExpSeq < RootSeq
             set_global(self.pyseq, uint32(g.args{1}), double(val));
         end
 
-        function next_idx = run_bseq(self, idx)
+        function [next_idx, bseq_len] = run_bseq(self, idx)
             if isempty(self.pyseq)
                 error('Sequence must be generated before running.');
             end
@@ -366,10 +366,12 @@ classdef ExpSeq < RootSeq
             for cb = bseq.after_bseq_cbs
                 cb{:}(self);
             end
+            bseq_len = cur_bseq_length(self.pyseq);
             next_idx = double(post_run(self.pyseq));
         end
 
         function run_real(self)
+            bseq_len = 0;
             try
                 for cb = self.before_start_cbs
                     cb{:}(self);
@@ -378,7 +380,7 @@ classdef ExpSeq < RootSeq
                 idx = 1;
                 while idx ~= 0
                     start_t = now() * 86400;
-                    idx = run_bseq(self, idx);
+                    [idx, bseq_len] = run_bseq(self, idx);
                 end
                 for cb = self.after_end_cbs
                     cb{:}(self);
@@ -392,7 +394,7 @@ classdef ExpSeq < RootSeq
             % so that we could observe values set before running the sequence.
             reset_globals(self, false);
             % We'll wait until this time before returning to the caller
-            end_after = start_t + cur_bseq_length(self.pyseq) / self.time_scale - 50e-3;
+            end_after = start_t + bseq_len / self.time_scale - 50e-3;
             end_t = now() * 86400;
             if end_t < end_after
                 pause(end_after - end_t);
