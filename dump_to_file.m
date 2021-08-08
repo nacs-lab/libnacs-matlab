@@ -13,8 +13,15 @@
 
 function dump_to_file(fname, array)
     f = fopen(fname, 'w');
+    % typecast and fwrite want vector as input.
+    array = reshape(array, [1, numel(array)]);
     % Note that matlab's `fwrite` will convert the array to `uint8` in a lossy way
     % before writing. That's why we have to do the conversion ourselve.
-    fwrite(f, typecast(array, 'uint8'));
+    if ischar(array)
+        array = uint8(array);
+    else
+        array = typecast(array, 'uint8');
+    end
+    fwrite(f, array);
     fclose(f);
 end
