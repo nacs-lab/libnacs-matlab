@@ -44,12 +44,11 @@ classdef NiDAQRunner < handle
             clocks_cache = NiDAQRunner.clocks;
             triggers_cache = NiDAQRunner.triggers;
             cache_in_use = NiDAQRunner.cache_in_use;
-
             session = session_cache.get();
             if cache_in_use.get() || isempty(session) || ~isvalid(session) || ...
                ~isequaln(channels, channels_cache.get()) || ...
-               NiDAQRunner.map_equal(clocks_cache, clocks) || ...
-               NiDAQRunner.map_equal(triggers_cache, triggers)
+               ~NiDAQRunner.map_equal(clocks_cache, clocks) || ...
+               ~NiDAQRunner.map_equal(triggers_cache, triggers)
                 % Need to (re)create session.
                 delete(session);
                 session = NiDAQRunner.create_session(channels, clocks, triggers);
