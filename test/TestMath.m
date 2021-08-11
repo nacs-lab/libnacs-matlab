@@ -41,5 +41,44 @@ classdef TestMath < matlab.unittest.TestCase
             test.verifyEqual(interpolate(6, 0, 5, [0, 9, 2, 3, -10, 5]), 5);
             test.verifyEqual(interpolate(2.5, 0, 5, [0, 9, 2, 3, -10, 5]), 2.5);
         end
+        function rabiLine(test)
+            % Zero Omega
+            test.verifyEqual(rabiLine(0, 0, 0), 0);
+            test.verifyEqual(rabiLine(0, 1, 0), 0);
+            test.verifyEqual(rabiLine(1, 0, 0), 0);
+            test.verifyEqual(rabiLine(1, 1, 0), 0);
+            % Zero t
+            test.verifyEqual(rabiLine(0, 0, 0), 0);
+            test.verifyEqual(rabiLine(0, 0, 1), 0);
+            test.verifyEqual(rabiLine(1, 0, 0), 0);
+            test.verifyEqual(rabiLine(1, 0, 1), 0);
+            % Zero det (on resonance)
+            test.verifyEqual(rabiLine(0, 1, 1), sin(0.5)^2);
+            test.verifyEqual(rabiLine(0, 2, 1), sin(1)^2);
+            test.verifyEqual(rabiLine(0, 3, 1), sin(1.5)^2);
+            test.verifyEqual(rabiLine(0, 1, 1), sin(0.5)^2);
+            test.verifyEqual(rabiLine(0, 1, 2), sin(1)^2);
+            test.verifyEqual(rabiLine(0, 1, 3), sin(1.5)^2);
+            % On resonance Pi time
+            test.verifyEqual(rabiLine(0, pi, 1), 1, 'AbsTol', 1e-15);
+            test.verifyEqual(rabiLine(0, pi / 2, 2), 1, 'AbsTol', 1e-15);
+            % On resonance 2Pi time
+            test.verifyEqual(rabiLine(0, pi, 2), 0, 'AbsTol', 1e-16);
+            test.verifyEqual(rabiLine(0, pi / 2, 4), 0, 'AbsTol', 1e-16);
+            % Node at Pi time
+            test.verifyEqual(rabiLine(sqrt(3), pi, 1), 0, 'AbsTol', 1e-16);
+            test.verifyEqual(rabiLine(sqrt(3) * 2, pi / 2, 2), 0, 'AbsTol', 1e-16);
+            test.verifyEqual(rabiLine(sqrt(15), pi, 1), 0, 'AbsTol', 1e-16);
+            test.verifyEqual(rabiLine(sqrt(15) * 2, pi / 2, 2), 0, 'AbsTol', 1e-16);
+            test.verifyEqual(rabiLine(-sqrt(3), pi, 1), 0, 'AbsTol', 1e-16);
+            test.verifyEqual(rabiLine(-sqrt(3) * 2, pi / 2, 2), 0, 'AbsTol', 1e-16);
+            test.verifyEqual(rabiLine(-sqrt(15), pi, 1), 0, 'AbsTol', 1e-16);
+            test.verifyEqual(rabiLine(-sqrt(15) * 2, pi / 2, 2), 0, 'AbsTol', 1e-16);
+
+            test.verifyEqual(rabiLine(sqrt(2.5^2 - 1), pi, 1), ...
+                             0.5 * 0.16, 'AbsTol', 1e-15);
+            test.verifyEqual(rabiLine(sqrt(2.5^2 - 1) * 2, pi / 2, 2), ...
+                             0.5 * 0.16, 'AbsTol', 1e-15);
+        end
     end
 end
