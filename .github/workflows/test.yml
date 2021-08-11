@@ -29,6 +29,6 @@ jobs:
         select-by-folder: test
         code-coverage-cobertura: coverage.xml
 
-    - uses: codecov/codecov-action@v1
+    - uses: codecov/codecov-action@v2
       with:
         file: coverage.xml
