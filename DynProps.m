@@ -15,7 +15,7 @@
 % This is a class that provides an flexible API to access a nested struct with support
 % of default values.
 classdef DynProps < handle
-    properties(Hidden)
+    properties(Hidden, Access=private)
         V;
     end
     methods(Static, Access=private)
