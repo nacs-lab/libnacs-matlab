@@ -46,21 +46,37 @@ classdef TestDynProps < matlab.unittest.TestCase
             dp0 = DynProps();
             dp1 = DynProps(s);
 
+            test.verifyEqual(get_accessed(dp0), struct());
+            test.verifyEqual(get_accessed(dp1), struct());
+
             %% Pre-populated values
             test.verifyEqual(dp1.A, 1);
             test.verifyEqual(dp1.B, 2);
             test.verifyEqual(dp1.C.B, 3);
+            test.verifyEqual(get_accessed(dp1), struct('A', true, 'B', true, ...
+                                                       'C', struct('B', true)));
 
             %% Simple default values
             test.verifyEqual(dp0.A(1), 1);
             test.verifyEqual(dp0.B(2), 2);
+            test.verifyEqual(get_accessed(dp0), struct('A', true, 'B', true));
+
+            clear_accessed(dp0);
+            clear_accessed(dp1);
+            test.verifyEqual(get_accessed(dp0), struct());
+            test.verifyEqual(get_accessed(dp1), struct());
 
             %% Struct assignments
             dp0.C = struct('A', 1, 'B', 2);
             test.verifyEqual(dp0.C.A, 1);
             test.verifyEqual(dp0.C.B, 2);
+            test.verifyEqual(get_accessed(dp0), struct('C', struct('A', true, 'B', true)));
             test.verifyEqual(dp0.C(), struct('A', 1, 'B', 2));
+            test.verifyEqual(get_accessed(dp0), struct('C', true));
+            clear_accessed(dp0);
+            test.verifyEqual(get_accessed(dp0), struct());
             d0c = dp0.C(struct('C', 3));
+            test.verifyEqual(get_accessed(dp0), struct('C', true));
             test.verifyEqual(d0c.C, 3);
             test.verifyEqual(d0c, struct('A', 1, 'B', 2, 'C', 3));
             test.verifyEqual(dp0.C(), struct('A', 1, 'B', 2, 'C', 3));
@@ -82,41 +98,77 @@ classdef TestDynProps < matlab.unittest.TestCase
             test.verifyEqual(d0c4, struct('A', 1, 'B', 2, 'C', 3, 'D', 5));
             test.verifyEqual(dp0.C(), struct('A', 1, 'B', 2, 'C', 3, 'D', 5));
 
+            clear_accessed(dp0);
+            test.verifyEqual(get_accessed(dp0), struct());
             dp0.C = struct('A', 1, 'B', 2);
+            test.verifyEqual(get_accessed(dp0), struct());
             d0c = dp0.C{'C', 3};
+            test.verifyEqual(get_accessed(dp0), struct());
             test.verifyEqual(d0c.C, 3);
+            test.verifyEqual(get_accessed(dp0), struct('C', struct('C', true)));
             test.verifyEqual(d0c(), struct('A', 1, 'B', 2, 'C', 3));
+            test.verifyEqual(get_accessed(dp0), struct('C', true));
             d0c.C = 2;
+            clear_accessed(dp0);
+            test.verifyEqual(get_accessed(dp0), struct());
             test.verifyEqual(dp0.C(), struct('A', 1, 'B', 2, 'C', 2));
+            test.verifyEqual(get_accessed(dp0), struct('C', true));
             d0c.C = 3;
             d0c2 = dp0.C{'D', 4};
             test.verifyEqual(d0c2.D, 4);
             test.verifyEqual(d0c2(), struct('A', 1, 'B', 2, 'C', 3, 'D', 4));
 
+            clear_accessed(dp0);
+            test.verifyEqual(get_accessed(dp0), struct());
+
             %% Create new nested field
             dp1.D.E.F = 3;
+            test.verifyEqual(get_accessed(dp1), struct());
             test.verifyEqual(dp1.D.E.F, 3);
+            test.verifyEqual(get_accessed(dp1), struct('D', struct('E', struct('F', true))));
+
+            clear_accessed(dp1);
+            test.verifyEqual(get_accessed(dp1), struct());
 
             %% Create new nested field with default value
             test.verifyEqual(dp0.D.E.F.G(4), 4);
+            test.verifyEqual(get_accessed(dp0), ...
+                             struct('D', struct('E', struct('F', struct('G', true)))));
+            clear_accessed(dp0);
+            test.verifyEqual(get_accessed(dp0), struct());
             test.verifyEqual(dp0.D.E.F.G, 4);
+            test.verifyEqual(get_accessed(dp0), ...
+                             struct('D', struct('E', struct('F', struct('G', true)))));
+
+            clear_accessed(dp0);
+            test.verifyEqual(get_accessed(dp0), struct());
 
             %% Assign to single array element
             dp0.A(3) = 2;
+            test.verifyEqual(get_accessed(dp0), struct());
             test.verifyEqual(dp0.A, [1, 0, 2]);
+            test.verifyEqual(get_accessed(dp0), struct('A', true));
+
+            clear_accessed(dp0);
+            test.verifyEqual(get_accessed(dp0), struct());
 
             %% Reference to subfield.
             c0 = dp0.C;
             test.verifyEqual(c0.A, 1);
             test.verifyEqual(c0.B, 2);
+            test.verifyEqual(get_accessed(dp0), struct('C', struct('A', true, 'B', true)));
             test.verifyEqual(c0.A(3), 1);
             test.verifyEqual(c0.C(3), 3);
+            test.verifyEqual(get_accessed(dp0), struct('C', struct('A', true, 'B', true, ...
+                                                                   'C', true)));
             test.verifyEqual(c0.C, 3);
             c0.D = 4;
             test.verifyEqual(c0.D(3), 4);
             test.verifyEqual(c0.D, 4);
             c0.A = 2;
             test.verifyEqual(c0.A, 2);
+            test.verifyEqual(get_accessed(dp0), struct('C', struct('A', true, 'B', true, ...
+                                                                   'C', true, 'D', true)));
 
             %% Make sure mutation to the subfield reference is reflected on the original one.
             test.verifyEqual(dp0.C.A, 2);
@@ -134,7 +186,9 @@ classdef TestDynProps < matlab.unittest.TestCase
             dp = DynProps();
             dp.C.A = 2;
             c = dp.C{struct('A', 4, 'B', 3), 'C', 1};
+            test.verifyEqual(get_accessed(dp), struct());
             test.verifyEqual(c(), struct('A', 2, 'B', 3, 'C', 1));
+            test.verifyEqual(get_accessed(dp), struct('C', true));
             test.verifyEqual(dp.C(), struct('A', 2, 'B', 3, 'C', 1));
         end
 
@@ -143,20 +197,29 @@ classdef TestDynProps < matlab.unittest.TestCase
             dp.C.A = 2;
             test.verifyEqual(dp.C(struct('A', 4, 'B', 3), 'C', 1), ...
                              struct('A', 2, 'B', 3, 'C', 1));
+            test.verifyEqual(get_accessed(dp), struct('C', true));
         end
 
         function test_isfield(test)
             dp = DynProps();
             test.verifyFalse(isfield(dp, 'abc'));
             test.verifyFalse(isfield(dp.XYZ, 'abc'));
+            test.verifyEqual(get_accessed(dp), struct());
             test.verifyEqual(dp(), struct());
+            test.verifyEqual(get_accessed(dp), true);
+
+            clear_accessed(dp);
+            test.verifyEqual(get_accessed(dp), struct());
 
             dp.A = NaN;
             test.verifyFalse(isfield(dp, 'A'));
             dp.B = struct('C', NaN);
             test.verifyFalse(isfield(dp.B, 'C'));
+            test.verifyEqual(get_accessed(dp), struct());
             test.verifyEqual(dp(), struct('B', struct()));
+            test.verifyEqual(get_accessed(dp), true);
             test.verifyEqual(dp.B(), struct());
+            test.verifyEqual(get_accessed(dp), true);
             test.verifyTrue(isfield(dp, 'B'));
 
             test.verifyEqual(dp.B.C('abc'), 'abc');
@@ -168,19 +231,40 @@ classdef TestDynProps < matlab.unittest.TestCase
                                  'C', struct('X', [1, 2, 3]), 'D', NaN));
 
             test.verifyEqual(getfields(dp), struct());
+            test.verifyEqual(get_accessed(dp), struct());
             test.verifyEqual(getfields(dp, 'A', 'C'), ...
                              struct('A', struct(), 'C', struct('X', [1, 2, 3])));
+            test.verifyEqual(get_accessed(dp), struct('A', true, 'C', true));
             test.verifyEqual(getfields(dp, struct('X', 123), 'B'), ...
                              struct('B', struct(), 'X', 123));
+            test.verifyEqual(get_accessed(dp), struct('A', true, 'C', true, 'B', true));
+
+            clear_accessed(dp);
+            test.verifyEqual(get_accessed(dp), struct());
+
+            % Make sure `getfields` marks access correctly
+            % when the whole struct was already marked.
+            dp();
+            test.verifyEqual(get_accessed(dp), true);
+            test.verifyEqual(getfields(dp, 'A', 'C'), ...
+                             struct('A', struct(), 'C', struct('X', [1, 2, 3])));
+            test.verifyEqual(get_accessed(dp), true);
         end
 
         function test_fieldnames(test)
             dp = DynProps(struct('A', struct('C', NaN), 'B', 2, 'D', NaN));
             test.verifyEqual(fieldnames(dp), {'A', 'B'}');
+            test.verifyEqual(get_accessed(dp), struct());
             test.verifyEqual(fieldnames(dp()), {'A', 'B'}');
+            test.verifyEqual(get_accessed(dp), true);
+
+            clear_accessed(dp);
+            test.verifyEqual(get_accessed(dp), struct());
 
             test.verifyEqual(fieldnames(dp.A), cell(0, 1));
+            test.verifyEqual(get_accessed(dp), struct());
             test.verifyEqual(fieldnames(dp.A()), cell(0, 1));
+            test.verifyEqual(get_accessed(dp), struct('A', true));
         end
 
         function test_merge(test)
@@ -192,6 +276,7 @@ classdef TestDynProps < matlab.unittest.TestCase
                                                                  'D', ''))), ...
                              struct('A', 1, 'B', struct('C', struct('K', 4, 'M', 'abc'), ...
                                                         'D', 5)));
+            test.verifyEqual(get_accessed(dp), struct('A', struct('B', struct('C', true))));
             test.verifyEqual(dp.A.B.C(), ...
                              struct('A', 1, 'B', struct('C', struct('K', 4, 'M', 'abc'), ...
                                                         'D', 5)));
@@ -203,15 +288,20 @@ classdef TestDynProps < matlab.unittest.TestCase
             test.verifyEqual(dp.A.B.C(struct('A', 3, 'B', struct('C', struct('M', 'abc'), ...
                                                                  'D', ''))).B.C, ...
                              struct('M', 'abc'));
+            test.verifyEqual(get_accessed(dp), struct('A', struct('B', struct('C', true))));
             test.verifyEqual(dp.A.B.C(), ...
                              struct('A', 3, 'B', struct('C', struct('M', 'abc'), ...
                                                         'D', '')));
             test.verifyEqual(dp.X.Y{struct('A', 3, 'B', struct('C', struct('M', 'abc'), ...
                                                                'D', ''))}.B.F('M', 10), ...
                              struct('M', 10));
+            test.verifyEqual(get_accessed(dp), struct('A', struct('B', struct('C', true)), ...
+                                                      'X', struct('Y', struct('B', struct('F', true)))));
             test.verifyEqual(dp.X.Y(), ...
                              struct('A', 3, 'B', struct('C', struct('M', 'abc'), ...
                                                         'D', '', 'F', struct('M', 10))));
+            test.verifyEqual(get_accessed(dp), struct('A', struct('B', struct('C', true)), ...
+                                                      'X', struct('Y', true)));
 
             % The value and the key must have the same length
             % or matlab complains about too many outputs.
@@ -220,13 +310,19 @@ classdef TestDynProps < matlab.unittest.TestCase
             % and you shouldn't write code like this as usual.
             % Never expect them to care what you write or any backward capatibility.
             test.verifyEqual(dp('C', 'a').A.B.C.A, 3);
+            test.verifyEqual(get_accessed(dp), true);
+            clear_accessed(dp);
+            test.verifyEqual(get_accessed(dp), struct());
             test.verifyEqual(dp{'D', 100}.D, 100);
+            test.verifyEqual(get_accessed(dp), struct('D', true));
         end
 
         function test_struct_array(test)
             dp = DynProps();
             dp.A = struct('A', 1, 'B', {1, 2}); % Note that this is a vector of two structs
+            test.verifyEqual(get_accessed(dp), struct());
             test.verifyEqual(dp.A, struct('A', 1, 'B', {1, 2}));
+            test.verifyEqual(get_accessed(dp), struct('A', true));
         end
 
         function test_disp(test)
@@ -246,6 +342,7 @@ classdef TestDynProps < matlab.unittest.TestCase
                               '  X: nan', 10, ...
                               '  YZ: [1, 2, 3]', 10, ...
                              ]);
+            test.verifyEqual(get_accessed(dp), struct());
 
             dp = DynProps();
             dp.X.Y = 2;
@@ -276,6 +373,7 @@ classdef TestDynProps < matlab.unittest.TestCase
                                   '       T: nan', 10, ...
                                  ]);
             end
+            test.verifyEqual(get_accessed(dp), struct());
         end
     end
 end

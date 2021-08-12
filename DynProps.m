@@ -1,4 +1,4 @@
-%% Copyright (c) 2018-2018, Yichao Yu <yyc1992@gmail.com>
+%% Copyright (c) 2018-2021, Yichao Yu <yyc1992@gmail.com>
 %
 % This library is free software; you can redistribute it and/or
 % modify it under the terms of the GNU Lesser General Public
@@ -17,6 +17,14 @@
 classdef DynProps < handle
     properties(Hidden, Access=private)
         V;
+        % Record access of the nested structure in order to implement warning of unused values.
+        % Only access of value counts (i.e. read that returns a `SubProps` doesn't)
+        % This is as accurate as we can for figuring out what **actually** got used vs not.
+        %
+        % Note that if a value is overwriten before being read,
+        % we'll still mark it as accessed even though the old value might have been ignored.
+        % Hopefully this is fine for now since we mainly want to catch name errors.
+        accessed = struct();
     end
     methods(Static, Access=private)
         function [a, changed] = merge_struct(a, b, changed, undefnan)
@@ -97,6 +105,23 @@ classdef DynProps < handle
                 res{end + 1, 1} = name;
             end
         end
+        function access = mark_accessed(access, S)
+            if isempty(S)
+                access = true;
+                return;
+            elseif ~isstruct(access)
+                % Accessed already
+                return;
+            end
+            assert(strcmp(S(1).type, '.'));
+            name = S(1).subs;
+            if isfield(access, name)
+                v = access.(name);
+            else
+                v = struct();
+            end
+            access.(name) = DynProps.mark_accessed(v, S(2:end));
+        end
     end
     methods(Static)
         function res = isscalarstruct(obj)
@@ -162,6 +187,9 @@ classdef DynProps < handle
                     %% unreachable
                     return;
                 end
+                if isstruct(self.accessed)
+                    self.accessed.(arg) = true;
+                end
                 res.(arg) = DynProps.remove_nanfields(v);
             end
         end
@@ -226,6 +254,8 @@ classdef DynProps < handle
                         self.V = subsasgn(self.V, S(1:j - 1), def);
                         if strcmp(S(j).type, '{}')
                             def = SubProps(self, S(1:j - 1));
+                        else
+                            self.accessed = DynProps.mark_accessed(self.accessed, S(1:j - 1));
                         end
                         if j == nS
                             B = def;
@@ -258,6 +288,7 @@ classdef DynProps < handle
                             v = SubProps(self, S(1:i - 1));
                         else
                             v = DynProps.remove_nanfields(v);
+                            self.accessed = DynProps.mark_accessed(self.accessed, S(1:i - 1));
                         end
                         if i == nS
                             B = v;
@@ -267,6 +298,7 @@ classdef DynProps < handle
                         return;
                     otherwise
                         B = subsref(DynProps.remove_nanfields(v), S(i:end));
+                        self.accessed = DynProps.mark_accessed(self.accessed, S(1:i - 1));
                         return;
                 end
             end
@@ -274,11 +306,18 @@ classdef DynProps < handle
                 B = SubProps(self, S);
             else
                 B = v;
+                self.accessed = DynProps.mark_accessed(self.accessed, S);
             end
         end
         function A = subsasgn(self, S, B)
             A = self;
             self.V = subsasgn(self.V, S, B);
+        end
+        function accessed = get_accessed(self)
+            accessed = self.accessed;
+        end
+        function clear_accessed(self)
+            self.accessed = struct();
         end
         function disp(self)
             fprintf('DynProps:\n  %s\n', YAML.sprint(self.V, 2, true));
