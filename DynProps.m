@@ -300,8 +300,8 @@ classdef DynProps < handle
         function subdisp(self, S)
             path = ['.', strjoin({S.subs}, '.')];
             fprintf('SubProps{DynProps}: ');
-            cprintf('*magenta', '[%s]\n  ', path);
-            YAML.print(try_getfield(self, S, struct()), 2, true);
+            cprintf('*magenta', '[%s]', path);
+            fprintf("\n  %s\n", YAML.sprint(try_getfield(self, S, struct()), 2, true));
         end
         function subdisplay(self, S, name)
             if exist('name', 'var')
