@@ -38,16 +38,16 @@ classdef TestScanGroup < matlab.unittest.TestCase
             test.verifyEqual(g.scansize(1), 2);
             test.verifyEqual(g.scansize(2), 3);
             test.verifyEqual(g.nseq(), 5);
-            test.verifyEqual(g.getseq(1), struct('c', 3, 'a', 1, 'b', 2, 'd', 1));;
-            test.verifyEqual(g.getseq(2), struct('c', 3, 'a', 1, 'b', 2, 'd', 2));;
-            test.verifyEqual(g.getseq(3), struct('d', 0, 'a', 1, 'b', 2, 'c', 1));;
-            test.verifyEqual(g.getseq(4), struct('d', 0, 'a', 1, 'b', 2, 'c', 2));;
-            test.verifyEqual(g.getseq(5), struct('d', 0, 'a', 1, 'b', 2, 'c', 3));;
+            test.verifyEqual(g.getseq(1), struct('c', 3, 'a', 1, 'b', 2, 'd', 1));
+            test.verifyEqual(g.getseq(2), struct('c', 3, 'a', 1, 'b', 2, 'd', 2));
+            test.verifyEqual(g.getseq(3), struct('d', 0, 'a', 1, 'b', 2, 'c', 1));
+            test.verifyEqual(g.getseq(4), struct('d', 0, 'a', 1, 'b', 2, 'c', 2));
+            test.verifyEqual(g.getseq(5), struct('d', 0, 'a', 1, 'b', 2, 'c', 3));
 
             g(end).k.a.b.c = 2;
             test.verifyEqual(g.nseq(), 5);
             kstruct = struct('a', struct('b', struct('c', 2)));
-            test.verifyEqual(g.getseq(3), struct('d', 0, 'k', kstruct, 'a', 1, 'b', 2, 'c', 1));;
+            test.verifyEqual(g.getseq(3), struct('d', 0, 'k', kstruct, 'a', 1, 'b', 2, 'c', 1));
 
             [x, y] = g.get_scan(2).c;
             test.verifyEqual(x, [1, 2, 3]);
@@ -56,14 +56,14 @@ classdef TestScanGroup < matlab.unittest.TestCase
             g2 = [g, g];
             test.verifyEqual(g2.nseq(), 10);
             for i = 1:5
-                test.verifyEqual(g.getseq(i), g2.getseq(i));;
-                test.verifyEqual(g.getseq(i), g2.getseq(i + 5));;
+                test.verifyEqual(g.getseq(i), g2.getseq(i));
+                test.verifyEqual(g.getseq(i), g2.getseq(i + 5));
             end
 
             g3 = [g2(1), g2(2:end)];
             test.verifyEqual(g3.nseq(), 10);
             for i = 1:10
-                test.verifyEqual(g2.getseq(i), g3.getseq(i));;
+                test.verifyEqual(g2.getseq(i), g3.getseq(i));
             end
 
             g.setbase(2, 1);
@@ -71,9 +71,9 @@ classdef TestScanGroup < matlab.unittest.TestCase
             test.verifyEqual(g.scansize(1), 2);
             test.verifyEqual(g.scansize(2), 1);
             test.verifyEqual(g.nseq(), 3);
-            test.verifyEqual(g.getseq(1), struct('c', 3, 'a', 1, 'b', 2, 'd', 1));;
-            test.verifyEqual(g.getseq(2), struct('c', 3, 'a', 1, 'b', 2, 'd', 2));;
-            test.verifyEqual(g.getseq(3), struct('d', 0, 'k', kstruct, 'c', 3, 'a', 1, 'b', 2));;
+            test.verifyEqual(g.getseq(1), struct('c', 3, 'a', 1, 'b', 2, 'd', 1));
+            test.verifyEqual(g.getseq(2), struct('c', 3, 'a', 1, 'b', 2, 'd', 2));
+            test.verifyEqual(g.getseq(3), struct('d', 0, 'k', kstruct, 'c', 3, 'a', 1, 'b', 2));
 
             test.verifyEqual(fieldnames(g.get_scan(1)), {'c', 'a', 'b', 'd'});
             test.verifyEqual(fieldnames(g.get_scan(2)), {'d', 'k', 'c', 'a', 'b'});
@@ -83,7 +83,7 @@ classdef TestScanGroup < matlab.unittest.TestCase
             test.verifyEqual(x, 3);
             test.verifyEqual(y, 0);
             [x, y] = g.get_scan(1).d;
-            test.verifyEqual(x, [1, 2]);;
+            test.verifyEqual(x, [1, 2]);
             test.verifyEqual(y, 2);
             [x, y] = g.get_scan(2).k;
             test.verifyClass(x, 'SubProps');
@@ -117,9 +117,9 @@ classdef TestScanGroup < matlab.unittest.TestCase
 
             g3 = ScanGroup.load(g.dump());
             test.verifyEqual(g3.nseq(), 3);
-            test.verifyEqual(g3.getseq(1), struct('c', 3, 'a', 1, 'b', 2, 'd', 1));;
-            test.verifyEqual(g3.getseq(2), struct('c', 3, 'a', 1, 'b', 2, 'd', 2));;
-            test.verifyEqual(g3.getseq(3), struct('d', 0, 'k', kstruct, 'c', 3, 'a', 1, 'b', 2));;
+            test.verifyEqual(g3.getseq(1), struct('c', 3, 'a', 1, 'b', 2, 'd', 1));
+            test.verifyEqual(g3.getseq(2), struct('c', 3, 'a', 1, 'b', 2, 'd', 2));
+            test.verifyEqual(g3.getseq(3), struct('d', 0, 'k', kstruct, 'c', 3, 'a', 1, 'b', 2));
             test.verifyEqual(g3().a(), 1);
             test.verifyEqual(g3().b(), 2);
             test.verifyEqual(g3(1).c(), 3);
@@ -128,15 +128,15 @@ classdef TestScanGroup < matlab.unittest.TestCase
             g3(3) = g3(1);
             test.verifyEqual(g3.nseq(), 5);
             for i = 1:2
-                test.verifyEqual(g3.getseq(i), g3.getseq(3 + i));;
+                test.verifyEqual(g3.getseq(i), g3.getseq(3 + i));
             end
             g3(5) = g3(2);
             test.verifyEqual(g3.nseq(), 12);
-            test.verifyEqual(g3.getseq(12), g3.getseq(3));;
+            test.verifyEqual(g3.getseq(12), g3.getseq(3));
             i = 1;
             for d = 1:2
                 for c = 1:3
-                    test.verifyEqual(g3.getseq(5 + i), struct('a', 1, 'b', 2, 'c', c, 'd', d));;
+                    test.verifyEqual(g3.getseq(5 + i), struct('a', 1, 'b', 2, 'c', c, 'd', d));
                     i = i + 1;
                 end
             end
@@ -162,24 +162,24 @@ classdef TestScanGroup < matlab.unittest.TestCase
 
             g4 = ScanGroup.load(struct('version', 0, 'p', p0, 'scan', struct()));
             test.verifyEqual(g4.nseq(), 20);
-            test.verifyEqual(g4.get_fixed(1), struct('A', 1));;
-            test.verifyEqual(g4.get_fixed(2), struct('A', 2));;
-            test.verifyEqual(g4.get_vars(1), struct('B', p0(1).B));;
-            test.verifyEqual(g4.get_vars(1, 1), struct('B', p0(1).B));;
-            test.verifyEqual(g4.get_vars(2), struct('B', p0(1).B));;
-            test.verifyEqual(g4.get_vars(2, 1), struct('B', p0(1).B));;
+            test.verifyEqual(g4.get_fixed(1), struct('A', 1));
+            test.verifyEqual(g4.get_fixed(2), struct('A', 2));
+            test.verifyEqual(g4.get_vars(1), struct('B', p0(1).B));
+            test.verifyEqual(g4.get_vars(1, 1), struct('B', p0(1).B));
+            test.verifyEqual(g4.get_vars(2), struct('B', p0(1).B));
+            test.verifyEqual(g4.get_vars(2, 1), struct('B', p0(1).B));
             [val, path] = g4.get_scanaxis(1, 1);
-            test.verifyEqual(val, p0(1).B);;
-            test.verifyEqual(path, 'B');;
+            test.verifyEqual(val, p0(1).B);
+            test.verifyEqual(path, 'B');
             [val, path] = g4.get_scanaxis(1, 1, 'B');
-            test.verifyEqual(val, p0(1).B);;
-            test.verifyEqual(path, 'B');;
+            test.verifyEqual(val, p0(1).B);
+            test.verifyEqual(path, 'B');
 
             ary2 = (1:length(p0(1).B)) * 2.5;
             g4(2).a.b.c.d.scan(ary2);
             [val, path] = g4.get_scanaxis(2, 1, 'a.b.c.d');
-            test.verifyEqual(val, ary2);;
-            test.verifyEqual(path, 'a.b.c.d');;
+            test.verifyEqual(val, ary2);
+            test.verifyEqual(path, 'a.b.c.d');
         end
     end
 end

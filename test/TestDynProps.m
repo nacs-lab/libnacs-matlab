@@ -39,36 +39,36 @@ classdef TestDynProps < matlab.unittest.TestCase
             test.verifyEqual(dp0.C(), struct('A', 1, 'B', 2));
             d0c = dp0.C(struct('C', 3));
             test.verifyEqual(d0c.C, 3);
-            test.verifyEqual(d0c, struct('A', 1, 'B', 2, 'C', 3));;
-            test.verifyEqual(dp0.C(), struct('A', 1, 'B', 2, 'C', 3));;
+            test.verifyEqual(d0c, struct('A', 1, 'B', 2, 'C', 3));
+            test.verifyEqual(dp0.C(), struct('A', 1, 'B', 2, 'C', 3));
             d0c2 = dp0.C(struct('D', 4));
             test.verifyTrue(isfield(d0c, 'C'));
             test.verifyFalse(isfield(d0c, 'D'));
             test.verifyTrue(isfield(d0c2, 'C'));
             test.verifyTrue(isfield(d0c2, 'D'));
             test.verifyEqual(d0c2.D, 4);
-            test.verifyEqual(d0c2, struct('A', 1, 'B', 2, 'C', 3, 'D', 4));;
-            test.verifyEqual(dp0.C(), struct('A', 1, 'B', 2, 'C', 3, 'D', 4));;
+            test.verifyEqual(d0c2, struct('A', 1, 'B', 2, 'C', 3, 'D', 4));
+            test.verifyEqual(dp0.C(), struct('A', 1, 'B', 2, 'C', 3, 'D', 4));
             d0c3 = dp0.C('D', 5);
             test.verifyEqual(d0c3.D, 4);
-            test.verifyEqual(d0c3, struct('A', 1, 'B', 2, 'C', 3, 'D', 4));;
-            test.verifyEqual(dp0.C(), struct('A', 1, 'B', 2, 'C', 3, 'D', 4));;
+            test.verifyEqual(d0c3, struct('A', 1, 'B', 2, 'C', 3, 'D', 4));
+            test.verifyEqual(dp0.C(), struct('A', 1, 'B', 2, 'C', 3, 'D', 4));
             dp0.C.D = NaN;
             d0c4 = dp0.C('D', 5);
             test.verifyEqual(d0c4.D, 5);
-            test.verifyEqual(d0c4, struct('A', 1, 'B', 2, 'C', 3, 'D', 5));;
-            test.verifyEqual(dp0.C(), struct('A', 1, 'B', 2, 'C', 3, 'D', 5));;
+            test.verifyEqual(d0c4, struct('A', 1, 'B', 2, 'C', 3, 'D', 5));
+            test.verifyEqual(dp0.C(), struct('A', 1, 'B', 2, 'C', 3, 'D', 5));
 
             dp0.C = struct('A', 1, 'B', 2);
             d0c = dp0.C{'C', 3};
             test.verifyEqual(d0c.C, 3);
-            test.verifyEqual(d0c(), struct('A', 1, 'B', 2, 'C', 3));;
+            test.verifyEqual(d0c(), struct('A', 1, 'B', 2, 'C', 3));
             d0c.C = 2;
-            test.verifyEqual(dp0.C(), struct('A', 1, 'B', 2, 'C', 2));;
+            test.verifyEqual(dp0.C(), struct('A', 1, 'B', 2, 'C', 2));
             d0c.C = 3;
             d0c2 = dp0.C{'D', 4};
             test.verifyEqual(d0c2.D, 4);
-            test.verifyEqual(d0c2(), struct('A', 1, 'B', 2, 'C', 3, 'D', 4));;
+            test.verifyEqual(d0c2(), struct('A', 1, 'B', 2, 'C', 3, 'D', 4));
 
             %% Create new nested field
             dp1.D.E.F = 3;
@@ -109,8 +109,8 @@ classdef TestDynProps < matlab.unittest.TestCase
             dp2 = DynProps();
             dp2.C.A = 2;
             c = dp2.C{struct('A', 4, 'B', 3), 'C', 1};
-            test.verifyEqual(c(), struct('A', 2, 'B', 3, 'C', 1));;
-            test.verifyEqual(dp2.C(), struct('A', 2, 'B', 3, 'C', 1));;
+            test.verifyEqual(c(), struct('A', 2, 'B', 3, 'C', 1));
+            test.verifyEqual(dp2.C(), struct('A', 2, 'B', 3, 'C', 1));
 
             dp2 = DynProps();
             dp2.C.A = 2;
