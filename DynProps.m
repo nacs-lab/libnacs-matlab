@@ -20,6 +20,7 @@ classdef DynProps < handle
     end
     methods(Static, Access=private)
         function [a, changed] = merge_struct(a, b, changed, undefnan)
+            % Can treat NaN as missing but may keep them in the return value
             fns = fieldnames(b);
             for i = 1:length(fns)
                 name = fns{i};
@@ -37,6 +38,7 @@ classdef DynProps < handle
             end
         end
         function res = isfield_def(a, name, undefnan)
+            % Can treat NaN as missing
             if ~isfield(a, name)
                 res = false;
             elseif ~undefnan
@@ -53,6 +55,7 @@ classdef DynProps < handle
             res = isnan(obj);
         end
         function res = construct_struct(varargin)
+            % Treats NaN as missing
             res = struct();
             i = 1;
             while i <= nargin
@@ -61,8 +64,37 @@ classdef DynProps < handle
                     i = i + 1;
                     v = struct(v, varargin{i});
                 end
-                res = DynProps.merge_struct(res, v, 0, 1);
+                res = DynProps.merge_struct(res, v, false, true);
                 i = i + 1;
+            end
+        end
+        function v = remove_nanfields(v)
+            % Treats NaN as missing and will remove them in the return value
+            if ~DynProps.isscalarstruct(v)
+                return;
+            end
+            fns = fieldnames(v);
+            for i = 1:length(fns)
+                name = fns{i};
+                subv = v.(name);
+                if DynProps.isnanobj(subv)
+                    v = rmfield(v, name);
+                    continue;
+                end
+                v.(name) = DynProps.remove_nanfields(subv);
+            end
+        end
+        function res = fieldnames_nan(v)
+            % Treats NaN as missing
+            res = cell(0, 1);
+            fns = fieldnames(v);
+            for i = 1:length(fns)
+                name = fns{i};
+                subv = v.(name);
+                if DynProps.isnanobj(subv)
+                    continue;
+                end
+                res{end + 1, 1} = name;
             end
         end
     end
@@ -79,6 +111,7 @@ classdef DynProps < handle
     end
     methods(Access=private)
         function res = try_getfield(self, S, missing)
+            % Can treat NaN as missing but may keep them in the return value
             nS = length(S);
             % Scan through all the '.' in the leading access items
             v = self.V;
@@ -112,6 +145,7 @@ classdef DynProps < handle
             self.V = V;
         end
         function res = getfields(self, varargin)
+            % Treats NaN as missing and will remove them in the return value
             res = struct();
             if isempty(varargin)
                 return;
@@ -134,14 +168,16 @@ classdef DynProps < handle
                     %% unreachable
                     return;
                 end
-                res.(arg) = v;
+                res.(arg) = DynProps.remove_nanfields(v);
             end
         end
         function res = fieldnames(self)
-            res = fieldnames(self.V);
+            % Treats NaN as missing
+            res = DynProps.fieldnames_nan(self.V);
         end
         function res = subfieldnames(self, S)
-            res = fieldnames(try_getfield(self, S, struct()));
+            % Treats NaN as missing
+            res = DynProps.fieldnames_nan(try_getfield(self, S, struct()));
         end
         function B = subsref(self, S)
             nS = length(S);
@@ -228,6 +264,8 @@ classdef DynProps < handle
                         end
                         if strcmp(S(i).type, '{}')
                             v = SubProps(self, S(1:i - 1));
+                        else
+                            v = DynProps.remove_nanfields(v);
                         end
                         if i == nS
                             B = v;
@@ -236,7 +274,7 @@ classdef DynProps < handle
                         end
                         return;
                     otherwise
-                        B = subsref(v, S(i:end));
+                        B = subsref(DynProps.remove_nanfields(v), S(i:end));
                         return;
                 end
             end
@@ -275,7 +313,7 @@ classdef DynProps < handle
             res = DynProps.isfield_def(self.V, name, true);
         end
         function res = subisfield(self, S, name)
-            res = isfield(try_getfield(self, S, struct()), name);
+            res = DynProps.isfield_def(try_getfield(self, S, struct()), name, true);
         end
     end
 end
