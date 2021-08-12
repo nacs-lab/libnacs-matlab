@@ -128,17 +128,105 @@ classdef TestDynProps < matlab.unittest.TestCase
             test.verifyEqual(c0.A(1), 1);
             test.verifyEqual(c0.A(), 1);
             test.verifyEqual(c0.A, 1);
+        end
 
-            dp2 = DynProps();
-            dp2.C.A = 2;
-            c = dp2.C{struct('A', 4, 'B', 3), 'C', 1};
+        function test_brace_multiaccess(test)
+            dp = DynProps();
+            dp.C.A = 2;
+            c = dp.C{struct('A', 4, 'B', 3), 'C', 1};
             test.verifyEqual(c(), struct('A', 2, 'B', 3, 'C', 1));
-            test.verifyEqual(dp2.C(), struct('A', 2, 'B', 3, 'C', 1));
+            test.verifyEqual(dp.C(), struct('A', 2, 'B', 3, 'C', 1));
+        end
 
-            dp2 = DynProps();
-            dp2.C.A = 2;
-            test.verifyEqual(dp2.C(struct('A', 4, 'B', 3), 'C', 1), ...
+        function test_paren_multiaccess(test)
+            dp = DynProps();
+            dp.C.A = 2;
+            test.verifyEqual(dp.C(struct('A', 4, 'B', 3), 'C', 1), ...
                              struct('A', 2, 'B', 3, 'C', 1));
+        end
+
+        function test_isfield(test)
+            dp = DynProps();
+            test.verifyFalse(isfield(dp, 'abc'));
+            test.verifyFalse(isfield(dp.XYZ, 'abc'));
+            test.verifyEqual(dp(), struct());
+
+            dp.A = NaN;
+            test.verifyFalse(isfield(dp, 'A'));
+            dp.B = struct('C', NaN);
+            test.verifyFalse(isfield(dp.B, 'C'));
+            test.verifyEqual(dp(), struct('B', struct()));
+            test.verifyEqual(dp.B(), struct());
+            test.verifyTrue(isfield(dp, 'B'));
+
+            test.verifyEqual(dp.B.C('abc'), 'abc');
+            test.verifyTrue(isfield(dp.B, 'C'));
+        end
+
+        function test_getfields(test)
+            dp = DynProps(struct('A', struct('C', NaN), 'B', struct(), ...
+                                 'C', struct('X', [1, 2, 3]), 'D', NaN));
+
+            test.verifyEqual(getfields(dp), struct());
+            test.verifyEqual(getfields(dp, 'A', 'C'), ...
+                             struct('A', struct(), 'C', struct('X', [1, 2, 3])));
+            test.verifyEqual(getfields(dp, struct('X', 123), 'B'), ...
+                             struct('B', struct(), 'X', 123));
+        end
+
+        function test_fieldnames(test)
+            dp = DynProps(struct('A', struct('C', NaN), 'B', 2, 'D', NaN));
+            test.verifyEqual(fieldnames(dp), {'A', 'B'}');
+            test.verifyEqual(fieldnames(dp()), {'A', 'B'}');
+
+            test.verifyEqual(fieldnames(dp.A), cell(0, 1));
+            test.verifyEqual(fieldnames(dp.A()), cell(0, 1));
+        end
+
+        function test_merge(test)
+            dp = DynProps();
+
+            test.verifyEqual(dp.A.B.C(struct('A', 1, 'B', struct('C', struct('K', 4), ...
+                                                                 'D', 5)), ...
+                                      struct('A', 3, 'B', struct('C', struct('M', 'abc'), ...
+                                                                 'D', ''))), ...
+                             struct('A', 1, 'B', struct('C', struct('K', 4, 'M', 'abc'), ...
+                                                        'D', 5)));
+            test.verifyEqual(dp.A.B.C(), ...
+                             struct('A', 1, 'B', struct('C', struct('K', 4, 'M', 'abc'), ...
+                                                        'D', 5)));
+        end
+
+        function test_chain(test)
+            dp = DynProps();
+
+            test.verifyEqual(dp.A.B.C(struct('A', 3, 'B', struct('C', struct('M', 'abc'), ...
+                                                                 'D', ''))).B.C, ...
+                             struct('M', 'abc'));
+            test.verifyEqual(dp.A.B.C(), ...
+                             struct('A', 3, 'B', struct('C', struct('M', 'abc'), ...
+                                                        'D', '')));
+            test.verifyEqual(dp.X.Y{struct('A', 3, 'B', struct('C', struct('M', 'abc'), ...
+                                                               'D', ''))}.B.F('M', 10), ...
+                             struct('M', 10));
+            test.verifyEqual(dp.X.Y(), ...
+                             struct('A', 3, 'B', struct('C', struct('M', 'abc'), ...
+                                                        'D', '', 'F', struct('M', 10))));
+
+            % The value and the key must have the same length
+            % or matlab complains about too many outputs.
+            % Basically a matlab bug but they'll most likely tell you
+            % that they are not going to fix this
+            % and you shouldn't write code like this as usual.
+            % Never expect them to care what you write or any backward capatibility.
+            test.verifyEqual(dp('C', 'a').A.B.C.A, 3);
+            test.verifyEqual(dp{'D', 100}.D, 100);
+        end
+
+        function test_struct_array(test)
+            dp = DynProps();
+            dp.A = struct('A', 1, 'B', {1, 2}); % Note that this is a vector of two structs
+            test.verifyEqual(dp.A, struct('A', 1, 'B', {1, 2}));
         end
 
         function test_disp(test)

@@ -113,26 +113,20 @@ classdef DynProps < handle
         function res = try_getfield(self, S, missing)
             % Can treat NaN as missing but may keep them in the return value
             nS = length(S);
-            % Scan through all the '.' in the leading access items
             v = self.V;
             for i = 1:nS
-                switch S(i).type
-                    case '.'
-                        name = S(i).subs;
-                        if isfield(v, name)
-                            newv = v.(name);
-                            % Treat NaN as missing value
-                            if ~DynProps.isnanobj(newv)
-                                v = newv;
-                                continue;
-                            end
-                        end
-                        res = missing;
-                        return;
-                    otherwise
-                        res = missing;
-                        return;
+                assert(strcmp(S(i).type, '.'));
+                name = S(i).subs;
+                if isfield(v, name)
+                    newv = v.(name);
+                    % Treat NaN as missing value
+                    if ~DynProps.isnanobj(newv)
+                        v = newv;
+                        continue;
+                    end
                 end
+                res = missing;
+                return;
             end
             res = v;
         end
@@ -152,7 +146,7 @@ classdef DynProps < handle
             end
             if DynProps.isscalarstruct(varargin{1})
                 res = varargin{1};
-                args = varargin{2:end};
+                args = varargin(2:end);
             else
                 args = varargin;
             end
@@ -199,18 +193,19 @@ classdef DynProps < handle
                                 v = rmfield(v, name);
                             end
                         end
-                        j = i;
+                        j = i + 1;
                         found = 0;
                         % Check if this is an access with default
                         while j <= nS
                             switch S(j).type
                                 case '.'
                                     j = j + 1;
-                                    continue;
                                 case {'()', '{}'}
                                     found = 1;
+                                    break;
+                                otherwise
+                                    error('Field undefined.');
                             end
-                            break;
                         end
                         if ~found
                             B = SubProps(self, S);
@@ -227,11 +222,8 @@ classdef DynProps < handle
                             end
                         end
                         % Assign default value
-                        if j == 1
-                            self.V = def;
-                        else
-                            self.V = subsasgn(self.V, S(1:j - 1), def);
-                        end
+                        assert(j > 1);
+                        self.V = subsasgn(self.V, S(1:j - 1), def);
                         if strcmp(S(j).type, '{}')
                             def = SubProps(self, S(1:j - 1));
                         end
