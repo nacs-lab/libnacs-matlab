@@ -61,14 +61,18 @@ classdef ScanInfo < handle
             info_disp(self.group, self.idx, self);
         end
         function display(self, name)
-            fprintf('%s = ', name);
+            if exist('name', 'var')
+                fprintf('%s = ', name);
+            end
             disp(self);
         end
         function subdisp(self, S)
             info_subdisp(self.group, self.idx, self, S);
         end
         function subdisplay(self, S, name)
-            fprintf('%s = ', name);
+            if exist('name', 'var')
+                fprintf('%s = ', name);
+            end
             subdisp(self, S);
         end
     end

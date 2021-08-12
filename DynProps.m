@@ -254,7 +254,9 @@ classdef DynProps < handle
             fprintf('DynProps:\n  %s\n', YAML.sprint(self.V, 2, true));
         end
         function display(self, name)
-            fprintf('%s = ', name);
+            if exist('name', 'var')
+                fprintf('%s = ', name);
+            end
             disp(self);
         end
         function subdisp(self, S)
@@ -264,7 +266,9 @@ classdef DynProps < handle
             YAML.print(try_getfield(self, S, struct()), 2, true);
         end
         function subdisplay(self, S, name)
-            fprintf('%s = ', name);
+            if exist('name', 'var')
+                fprintf('%s = ', name);
+            end
             subdisp(self, S);
         end
         function res = isfield(self, name)

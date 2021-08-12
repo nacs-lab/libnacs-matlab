@@ -47,10 +47,16 @@ classdef SubProps < handle
         end
         function display(self, name)
             if ismethod(self.parent, 'subdisplay')
-                subdisplay(self.parent, self.path, name);
+                if exist('name', 'var')
+                    subdisplay(self.parent, self.path, name);
+                else
+                    subdisplay(self.parent, self.path);
+                end
                 return;
             end
-            fprintf('%s =\n\n', name);
+            if exist('name', 'var')
+                fprintf('%s =\n\n', name);
+            end
             disp(self);
         end
     end

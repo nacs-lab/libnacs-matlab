@@ -657,7 +657,9 @@ classdef ScanGroup < handle
             end
         end
         function display(self, name)
-            fprintf('%s = ', name);
+            if exist('name', 'var')
+                fprintf('%s = ', name);
+            end
             disp(self);
         end
     end
