@@ -1,4 +1,4 @@
-%% Copyright (c) 2014-2018, Yichao Yu <yyc1992@gmail.com>
+%% Copyright (c) 2014-2021, Yichao Yu <yyc1992@gmail.com>
 %
 % This library is free software; you can redistribute it and/or
 % modify it under the terms of the GNU Lesser General Public
@@ -128,8 +128,30 @@ function params = runSeq(func, varargin)
         argidx = argidx + 1;
     end
 
-    nseq = size(arglist, 2);
+    nseq = length(arglist);
     seqlist = cell(1, nseq);
+    if is_scangroup
+        % Can't use `nseq(scangroup)` since `nseq` is a local variable.
+        scan_size = scangroup.nseq();
+        % A table of all the index we'll run to keep track of what's left.
+        all_scan_index = java.util.Hashtable();
+        % For scan group, all arguments must be a inbounds integer
+        for i = 1:nseq
+            arg = arglist{i};
+            if length(arg) ~= 1
+                error('Scan group index must be a single number.');
+            end
+            arg = arg{:};
+            if length(arg) ~= 1
+                error('Scan group index must be a scalar.');
+            elseif arg ~= floor(arg)
+                error('Scan group index must be a integer.');
+            elseif arg < 1 || arg > scan_size
+                error('Scan group index out of bound.');
+            end
+            put(all_scan_index, arg, true);
+        end
+    end
 
     % sequence number printing interval
     if nseq >= 1000
@@ -158,7 +180,8 @@ function params = runSeq(func, varargin)
         end
         disabler = ExpSeq.disable(true);
         if is_scangroup
-            s = ExpSeq(getseq(scangroup, arglist{idx}{:}));
+            s = ExpSeq(getseq(scangroup, arg0));
+            remove(all_scan_index, arg0);
             func(s);
             seqlist{idx} = s;
         else
