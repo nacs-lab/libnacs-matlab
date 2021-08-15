@@ -43,7 +43,7 @@ function params = runSeq(func, varargin)
     return_array = false;
     notify = [];
 
-    seq_map = containers.Map('KeyType', 'double', 'ValueType', 'double');
+    seq_map = java.util.Hashtable();
     SeqConfig.cache(1);
     seq_config = SeqConfig.get();
 
@@ -177,11 +177,12 @@ function params = runSeq(func, varargin)
             return;
         elseif length(arglist{idx}) == 1 && isnumeric(arglist{idx}{1})
             arg0 = arglist{idx}{1};
-            if isKey(seq_map, arg0)
-                seqlist{idx} = seqlist{seq_map(arg0)};
+            prev_idx = get(seq_map, arg0);
+            if ~isempty(prev_idx)
+                seqlist{idx} = seqlist{prev_idx};
                 return;
             end
-            seq_map(arg0) = idx;
+            put(seq_map, arg0, idx);
         end
         disabler = ExpSeq.disable(true);
         if is_scangroup
