@@ -1,4 +1,4 @@
-%% Copyright (c) 2014-2018, Yichao Yu <yyc1992@gmail.com>
+%% Copyright (c) 2014-2021, Yichao Yu <yyc1992@gmail.com>
 %
 % This library is free software; you can redistribute it and/or
 % modify it under the terms of the GNU Lesser General Public
@@ -35,6 +35,7 @@ classdef SeqConfig < handle
         niClocks;
         niStart;
         maxLength;
+        warnUnusedScan;
     end
 
     methods
@@ -58,6 +59,7 @@ classdef SeqConfig < handle
             niStart = containers.Map();
             consts = struct();
             maxLength = 0;
+            warnUnusedScan = true;
             disableChannel = SeqConfig.getDisableChannelSetter(m_disabledChannels);
 
             % Run script which loads the empty maps.
@@ -70,6 +72,7 @@ classdef SeqConfig < handle
             self.niStart = niStart;
             self.consts = consts;
             self.maxLength = maxLength;
+            self.warnUnusedScan = warnUnusedScan;
 
             for key = keys(channelAlias)
                 key = key{:};

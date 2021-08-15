@@ -45,6 +45,7 @@ function params = runSeq(func, varargin)
 
     seq_map = containers.Map('KeyType', 'double', 'ValueType', 'double');
     SeqConfig.cache(1);
+    seq_config = SeqConfig.get();
 
     function runSeqCleanup()
         SeqConfig.reset();
@@ -151,6 +152,10 @@ function params = runSeq(func, varargin)
             end
             put(all_scan_index, arg, true);
         end
+        use_scan_tracker = seq_config.warnUnusedScan;
+        if use_scan_tracker
+            scan_tracker = ScanAccessTracker(scangroup);
+        end
     end
 
     % sequence number printing interval
@@ -182,7 +187,14 @@ function params = runSeq(func, varargin)
         if is_scangroup
             s = ExpSeq(getseq(scangroup, arg0));
             remove(all_scan_index, arg0);
+            clear_accessed(s.C);
             func(s);
+            if use_scan_tracker
+                record_access(scan_tracker, arg0, get_accessed(s.C));
+                if isEmpty(all_scan_index)
+                    force_check(scan_tracker);
+                end
+            end
             seqlist{idx} = s;
         else
             seqlist{idx} = func(arglist{idx}{:});
