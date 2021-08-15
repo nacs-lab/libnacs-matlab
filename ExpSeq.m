@@ -543,7 +543,8 @@ classdef ExpSeq < ExpSeqBase
                     error('Cannot disable channel that is already initialized');
                 end
             end
-            if isempty(self.disabled_channels)
+            if isempty(self.disabled_channels) && ~self.G.localDisableWarned(false)
+                self.G.localDisableWarned = true;
                 warning('Channel disabled locally.');
             end
             self.disabled_channels(name) = 0;
