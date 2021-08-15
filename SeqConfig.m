@@ -36,6 +36,11 @@ classdef SeqConfig < handle
         niStart;
         maxLength;
         warnUnusedScan;
+
+        % Global context. See `ExpSeqBase::G`.
+        % Put it in the config in order to (ab)use the runSeq caching logic to share this
+        % between all the sequences.
+        G;
     end
 
     methods
@@ -117,6 +122,8 @@ classdef SeqConfig < handle
                 warning('%d channel disabled globally.', ...
                         length(self.disabledChannels));
             end
+
+            self.G = DynProps();
         end
 
         %% name is assumed to be translated. Returns false for untranslated name.

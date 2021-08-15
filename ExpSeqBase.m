@@ -42,6 +42,11 @@ classdef ExpSeqBase < TimeSeq
         % This is the nested struct (`DynProp`) that contains global constant
         % and scan parameters. See `ScanGroup` for more detail.
         C; % ::DynProp
+        % Global context.
+        % For a sequence as part of a scan (or runSeq),
+        % this is shared between all the sequences in the scan
+        % and can be used to share information between sequences.
+        G; % ::DynProp
     end
 
     methods
@@ -54,6 +59,7 @@ classdef ExpSeqBase < TimeSeq
                 self.config = parent_or_C.config;
                 self.topLevel = parent_or_C.topLevel;
                 self.C = parent_or_C.C;
+                self.G = parent_or_C.G;
                 % Add to parent
                 ns = parent_or_C.nSubSeqs + 1;
                 parent_or_C.nSubSeqs = ns;
@@ -82,6 +88,7 @@ classdef ExpSeqBase < TimeSeq
                 end
             end
             self.C = DynProps(C);
+            self.G = self.config.G;
         end
 
         %% API's to add steps and subsequences.
