@@ -3,6 +3,7 @@ build*/
 .*
 !.git*
 !.mailmap
+!.codecov.yml
 .git/
 *.tar.*
 *.kdev4
