@@ -640,20 +640,27 @@ classdef ScanGroup < handle
         function disp(self)
             fprintf('ScanGroup:\n');
             if ~isempty(fieldnames(self.base.params)) || ~isempty(self.base.vars)
-                cprintf('*magenta', '  Default:\n');
+                fprintf('  ');
+                cprintf('*magenta', 'Default:');
+                fprintf('\n');
                 print_scan(self, self.base, 4);
             end
             if length(self.scans) > 1 || ~isempty(fieldnames(self.scans(1).params)) || ...
                ~isempty(self.scans(1).vars)
                 for i = 1:length(self.scans)
-                    cprintf('*magenta', '  Scan %d:\n', i);
+                    fprintf('  ');
+                    cprintf('*magenta', 'Scan %d:', i);
+                    fprintf('\n');
                     print_scan(self, self.scans(i), 4);
                 end
             end
             runp = self.runparam();
             if ~isempty(fieldnames(runp))
-                cprintf('*0.66,0.33,0.1', '  Run parameters:\n');
-                cprintf('0.66,0.33,0.1', '     %s\n', YAML.sprint(runp, 5, true));
+                fprintf('  ');
+                cprintf('*0.66,0.33,0.1', 'Run parameters:');
+                fprintf('\n');
+                cprintf('0.66,0.33,0.1', '     %s', YAML.sprint(runp, 5, true));
+                fprintf('\n');
             end
         end
         function display(self, name)
@@ -737,7 +744,8 @@ classdef ScanGroup < handle
         function info_subdisp(self, idx, info, S)
             path = ['.', strjoin({S.subs}, '.')];
             fprintf('SubProp{ScanInfo}: <%d> ', idx);
-            cprintf('*magenta', '[%s]\n', path);
+            cprintf('*magenta', '[%s]', path);
+            fprintf('\n');
             scan = getfullscan(self, idx);
             print_scan(self, self.get_subscan(scan, S), 2);
         end
@@ -873,7 +881,9 @@ classdef ScanGroup < handle
                 else
                     fprintf('ScanParam: <%d>\n', idx);
                     if idx > length(self.scans)
-                        cprintf('*red', '  <Uninitialized>\n');
+                        fprintf('  ');
+                        cprintf('*red', '<Uninitialized>');
+                        fprintf('\n');
                         return;
                     else
                         scan = self.scans(idx);
@@ -898,12 +908,18 @@ classdef ScanGroup < handle
             fprintf('>\n');
             for i = idx
                 if i == 0
-                    cprintf('*magenta', '  Default:\n')
+                    fprintf('  ');
+                    cprintf('*magenta', 'Default:')
+                    fprintf('\n');
                     scan = self.base;
                 else
-                    cprintf('*magenta', '  Scan %d:\n', i);
+                    fprintf('  ');
+                    cprintf('*magenta', 'Scan %d:', i);
+                    fprintf('\n');
                     if i > length(self.scans)
-                        cprintf('*red', '    <Uninitialized>\n');
+                        fprintf('    ');
+                        cprintf('*red', '<Uninitialized>');
+                        fprintf('\n');
                         continue;
                     else
                         scan = self.scans(i);
@@ -917,13 +933,17 @@ classdef ScanGroup < handle
             if length(idx) == 1
                 if idx == 0
                     fprintf('SubProp{ScanParam}: <default> ');
-                    cprintf('*magenta', '[%s]\n', path);
+                    cprintf('*magenta', '[%s]', path);
+                    fprintf('\n');
                     scan = self.base;
                 else
                     fprintf('SubProp{ScanParam}: <%d>, ', idx);
-                    cprintf('*magenta', '[%s]\n', path);
+                    cprintf('*magenta', '[%s]', path);
+                    fprintf('\n');
                     if idx > length(self.scans)
-                        cprintf('*red', '  <Uninitialized>\n');
+                        fprintf('  ');
+                        cprintf('*red', '<Uninitialized>');
+                        fprintf('\n');
                         return;
                     else
                         scan = self.scans(idx);
@@ -946,15 +966,22 @@ classdef ScanGroup < handle
                 end
             end
             fprintf('> ');
-            cprintf('*magenta', '[%s]\n', path);
+            cprintf('*magenta', '[%s]', path);
+            fprintf('\n');
             for i = idx
                 if i == 0
-                    cprintf('*magenta', '  Default: [%s]\n', path)
+                    fprintf('  ');
+                    cprintf('*magenta', 'Default: [%s]', path)
+                    fprintf('\n');
                     scan = self.base;
                 else
-                    cprintf('*magenta', '  Scan %d: [%s]\n', i, path);
+                    fprintf('  ');
+                    cprintf('*magenta', 'Scan %d: [%s]', i, path);
+                    fprintf('\n');
                     if i > length(self.scans)
-                        cprintf('*red', '    <Uninitialized>\n');
+                        fprintf('    ');
+                        cprintf('*red', '<Uninitialized>');
+                        fprintf('\n');
                         continue;
                     else
                         scan = self.scans(i);
@@ -970,13 +997,19 @@ classdef ScanGroup < handle
             empty = true;
             if isfield(scan, 'baseidx') && scan.baseidx ~= 0
                 empty = false;
-                cprintf('*red', [prefix, 'Base index: %d\n'], scan.baseidx);
+                fprintf(prefix);
+                cprintf('*red', 'Base index: %d', scan.baseidx);
+                fprintf('\n');
             end
             params = scan.params;
             if ~isstruct(params) || ~isempty(fieldnames(params))
                 empty = false;
-                cprintf('*blue', [prefix, 'Fixed parameters:\n']);
-                cprintf('blue', [prefix, '   %s\n'], YAML.sprint(params, indent + 3, true));
+                fprintf(prefix);
+                cprintf('*blue', 'Fixed parameters:');
+                fprintf('\n');
+                fprintf([prefix, '   ']);
+                cprintf('blue', '%s', YAML.sprint(params, indent + 3, true));
+                fprintf('\n');
             end
             for i = 1:length(scan.vars)
                 var = scan.vars(i);
@@ -984,12 +1017,17 @@ classdef ScanGroup < handle
                     continue;
                 end
                 empty = false;
-                cprintf('*0,0.62,0', [prefix, 'Scan dimension %d: (size %d)\n'], i, var.size);
-                cprintf('0,0.62,0', [prefix, '   %s\n'], ...
-                        YAML.sprint(var.params, indent + 3, true));
+                fprintf(prefix);
+                cprintf('*0,0.62,0', 'Scan dimension %d: (size %d)', i, var.size);
+                fprintf('\n');
+                fprintf([prefix, '   ']);
+                cprintf('0,0.62,0', '%s', YAML.sprint(var.params, indent + 3, true));
+                fprintf('\n');
             end
             if empty
-                cprintf('*red', [prefix, '<empty>\n']);
+                fprintf(prefix);
+                cprintf('*red', '<empty>');
+                fprintf('\n');
             end
         end
         function res = get_subscan(self, scan, S)
