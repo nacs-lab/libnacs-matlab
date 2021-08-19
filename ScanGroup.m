@@ -899,31 +899,24 @@ classdef ScanGroup < handle
                     fprintf(', ');
                 end
                 first = false;
-                if idx == 0
-                    fprintf('default');
-                else
-                    fprintf('%d', i)
-                end
+                % We do not allow creating `ScanParam` with default (0)
+                % as part of an array of indices
+                assert(i ~= 0);
+                fprintf('%d', i)
             end
             fprintf('>\n');
             for i = idx
-                if i == 0
-                    fprintf('  ');
-                    cprintf('*magenta', 'Default:')
+                assert(i ~= 0);
+                fprintf('  ');
+                cprintf('*magenta', 'Scan %d:', i);
+                fprintf('\n');
+                if i > length(self.scans)
+                    fprintf('    ');
+                    cprintf('*red', '<Uninitialized>');
                     fprintf('\n');
-                    scan = self.base;
+                    continue;
                 else
-                    fprintf('  ');
-                    cprintf('*magenta', 'Scan %d:', i);
-                    fprintf('\n');
-                    if i > length(self.scans)
-                        fprintf('    ');
-                        cprintf('*red', '<Uninitialized>');
-                        fprintf('\n');
-                        continue;
-                    else
-                        scan = self.scans(i);
-                    end
+                    scan = self.scans(i);
                 end
                 print_scan(self, scan, 4);
             end
@@ -937,7 +930,7 @@ classdef ScanGroup < handle
                     fprintf('\n');
                     scan = self.base;
                 else
-                    fprintf('SubProp{ScanParam}: <%d>, ', idx);
+                    fprintf('SubProp{ScanParam}: <%d> ', idx);
                     cprintf('*magenta', '[%s]', path);
                     fprintf('\n');
                     if idx > length(self.scans)
@@ -959,33 +952,26 @@ classdef ScanGroup < handle
                     fprintf(', ');
                 end
                 first = false;
-                if idx == 0
-                    fprintf('default');
-                else
-                    fprintf('%d', i)
-                end
+                % We do not allow creating `ScanParam` with default (0)
+                % as part of an array of indices
+                assert(i ~= 0);
+                fprintf('%d', i)
             end
             fprintf('> ');
             cprintf('*magenta', '[%s]', path);
             fprintf('\n');
             for i = idx
-                if i == 0
-                    fprintf('  ');
-                    cprintf('*magenta', 'Default: [%s]', path)
+                assert(i ~= 0);
+                fprintf('  ');
+                cprintf('*magenta', 'Scan %d: [%s]', i, path);
+                fprintf('\n');
+                if i > length(self.scans)
+                    fprintf('    ');
+                    cprintf('*red', '<Uninitialized>');
                     fprintf('\n');
-                    scan = self.base;
+                    continue;
                 else
-                    fprintf('  ');
-                    cprintf('*magenta', 'Scan %d: [%s]', i, path);
-                    fprintf('\n');
-                    if i > length(self.scans)
-                        fprintf('    ');
-                        cprintf('*red', '<Uninitialized>');
-                        fprintf('\n');
-                        continue;
-                    else
-                        scan = self.scans(i);
-                    end
+                    scan = self.scans(i);
                 end
                 print_scan(self, self.get_subscan(scan, S), 4);
             end
