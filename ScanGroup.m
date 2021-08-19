@@ -605,8 +605,8 @@ classdef ScanGroup < handle
                         self.scans(idx).params = rscan.params;
                         self.scans(idx).vars = rscan.vars;
                         self.scanscache(idx).dirty = true;
+                        self.use_var_scans(end + 1:idx) = ScanGroup.DEF_USE_VAR;
                         self.use_var_scans(idx) = use_var;
-                        self.use_var_scans(end + 1:idx - 1) = ScanGroup.DEF_USE_VAR;
                     end
                     return;
                 elseif ScanGroup.hasarray(B)
