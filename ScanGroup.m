@@ -345,6 +345,7 @@ classdef ScanGroup < handle
                 vars{end + 1} = {{path.subs}, v(subidx + 1)};
             end
             id = 0;
+            scale = 1;
             for i = 1:length(scan.vars)
                 var = scan.vars(i);
                 if var.size == 0
@@ -352,13 +353,13 @@ classdef ScanGroup < handle
                 end
                 subidx = mod(seqidx, var.size); % 0-based
                 seqidx = (seqidx - subidx) / var.size;
-                id = id * var.size;
                 if use_var(i)
                     ScanGroup.foreach_nonstruct(@addvar_cb, var.params);
                 else
-                    id = id + subidx;
                     ScanGroup.foreach_nonstruct(@setparam_cb, var.params);
+                    id = id + scale * subidx;
                 end
+                scale = scale * var.size;
             end
             id = id + 1;
         end
