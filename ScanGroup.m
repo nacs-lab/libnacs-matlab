@@ -637,6 +637,7 @@ classdef ScanGroup < handle
         end
         function usevar(self, varargin)
             self.use_var_base = ScanGroup.set_use_var(self.use_var_base, varargin{:});
+            self.use_var_cache = {};
         end
         function disp(self)
             fprintf('ScanGroup:\n');
@@ -798,11 +799,12 @@ classdef ScanGroup < handle
                 end
                 if i > 1 && strcmp(S(i - 1).subs, 'usevar') && strcmp(S(i).type, '()')
                     if i < nS
-                        error('Invalid usevar() syntax after scan.');
+                        error('Invalid usevar() syntax after usevar.');
                     end
                     nargoutchk(0, 0);
                     path = {S(1:end - 2).subs};
                     args = S(end).subs;
+                    self.use_var_cache = {};
                     if idx == 0
                         self.use_var_base = ScanGroup.set_sub_use_var(self.use_var_base, ...
                                                                       path, args{:});
@@ -1058,7 +1060,7 @@ classdef ScanGroup < handle
                     res.vars(i).params = params;
                 end
             end
-       end
+        end
         function base = getbaseidx(self, idx)
             base = self.scans(idx).baseidx;
         end
@@ -1580,7 +1582,7 @@ classdef ScanGroup < handle
             update.dims(end + 1:ndims) = 0;
             for i = 1:ndims
                 if update.dims(i) == 0
-                    base.dims(i) = update.dims(i);
+                    update.dims(i) = base.dims(i);
                 end
             end
             fields = fieldnames(base.field);
