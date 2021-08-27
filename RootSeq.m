@@ -43,13 +43,13 @@ classdef RootSeq < ExpSeqBase
         end
 
         function condBranch(self, cond, target)
-            assert(isempty(target) || isa(target, 'RootSeq'));
+            checkBranchTarget(self, target);
             id = nextObjID(self.topLevel.seq_ctx);
             self.branches(end + 1) = struct('cond', cond, 'target', target, 'id', id);
         end
 
         function defaultBranch(self, target)
-            assert(isempty(target) || isa(target, 'RootSeq'));
+            checkBranchTarget(self, target);
             self.default_target = target;
         end
 
@@ -157,6 +157,17 @@ classdef RootSeq < ExpSeqBase
     end
 
     methods(Access=protected)
+        function checkBranchTarget(self, target)
+            if ~isempty(target)
+                if ~isa(target, 'RootSeq')
+                    error('Only the toplevel sequence (`ExpSeq`) or other basic sequences (return values of `newBasicSeq`) are valid branch target');
+                end
+                if self.topLevel ~= target.topLevel
+                    error('Only basic sequences in the same top level sequence are valid branch target. You should create new basic sequence with `newBasicSeq()` instead of `ExpSeq()`');
+                end
+            end
+        end
+
         function t = globalPath(self)
             t = {};
         end
