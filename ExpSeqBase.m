@@ -325,7 +325,7 @@ classdef ExpSeqBase < TimeSeq
         function subseqs = alignEnd(self, varargin)
             % Make sure that the input sequences end at the same time and the longest
             % one of which started `offset` after the current time of this sequence.
-            % (Does not modify current time).
+            % (Does not modify current time). Offset is the final argument.
             % Return the input sequences/steps as a cell array.
             if isempty(varargin)
                 error('Requires at least one sequence to align');
