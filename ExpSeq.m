@@ -99,8 +99,12 @@ classdef ExpSeq < RootSeq
             self.curSeqTime = self.zero_time;
         end
 
-        function bseq = newBasicSeq(self)
+        function bseq = newBasicSeq(self, cb)
+            % can use a callback, cb, to populate the new BasicSeq
             bseq = BasicSeq(self);
+            if exist('cb', 'var')
+                cb(bseq);
+            end
         end
 
         function addTTLMgr(self, chn, off_delay, on_delay, ...
