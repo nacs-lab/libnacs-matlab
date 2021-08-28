@@ -15,9 +15,9 @@ classdef SeqTime < handle
     %% This represents a time offset from the start of the parent sequence
     % as a chain of terms. The sign describes the current term.
     properties(Constant, Hidden)
-        Unknown = 0;
-        NonNeg = 1;
-        Pos = 2;
+        Unknown = int8(0);
+        NonNeg = int8(1);
+        Pos = int8(2);
     end
     properties
         seq;
@@ -33,7 +33,7 @@ classdef SeqTime < handle
     end
     methods(Static)
         function res = zero(seq)
-            res = SeqTime(seq, 0, SeqTime.Unknown, [], 0);
+            res = SeqTime(seq, uint32(0), SeqTime.Unknown, [], 0);
         end
     end
     methods
@@ -120,7 +120,7 @@ classdef SeqTime < handle
                 if isnumeric(selfterm) || islogical(selfterm)
                     % The SeqTime ID is only used for error reporting.
                     % Since we've already checked that there's no need to generate a new one
-                    self = SeqTime(seq, 0, SeqTime.Unknown, self.parent, selfterm + term);
+                    self = SeqTime(seq, uint32(0), SeqTime.Unknown, self.parent, selfterm + term);
                     return;
                 end
             elseif isnumeric(selfterm) || islogical(selfterm)
@@ -130,7 +130,7 @@ classdef SeqTime < handle
                 ctx = seq.topLevel.seq_ctx;
                 % Inlined implementation of `SeqContext::nextObjID` for hot path
                 id = ctx.obj_counter;
-                ctx.obj_counter = id + 1;
+                ctx.obj_counter = id + uint32(1);
                 if ctx.collect_dbg_info
                     ctx.obj_backtrace{id + 1} = dbstack('-completenames', 1);
                 end
@@ -144,7 +144,7 @@ classdef SeqTime < handle
             ctx = seq.topLevel.seq_ctx;
             % Inlined implementation of `SeqContext::nextObjID` for hot path
             id = ctx.obj_counter;
-            ctx.obj_counter = id + 1;
+            ctx.obj_counter = id + uint32(1);
             if ctx.collect_dbg_info
                 ctx.obj_backtrace{id + 1} = dbstack('-completenames', 1);
             end

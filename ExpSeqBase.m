@@ -589,7 +589,7 @@ classdef ExpSeqBase < TimeSeq
                     continue;
                 end
                 time_id = getTimeID(root, sub_seq.tOffset);
-                len_id = uint32(getValID(seq_ctx, sub_seq.rawLen));
+                len_id = getValID(seq_ctx, sub_seq.rawLen);
                 for chn = 1:npulses
                     pulse = pulses{chn};
                     % Note that `chn` may be out of bound for `cid_map`.
@@ -606,16 +606,11 @@ classdef ExpSeqBase < TimeSeq
                         end
                         cond_id = uint32(0);
                     else
-                        cond_id = uint32(getValID(seq_ctx, pulse.cond));
+                        cond_id = getValID(seq_ctx, pulse.cond);
                     end
                     id = uint32(pulse.id);
-                    val_id = uint32(getValID(seq_ctx, pulse.val));
-                    res{end + 1} = [typecast(id, 'int8'), ...
-                                    typecast(time_id, 'int8'), ...
-                                    typecast(len_id, 'int8'), ...
-                                    typecast(val_id, 'int8'), ...
-                                    typecast(cond_id, 'int8'), ...
-                                    typecast(cid, 'int8')];
+                    val_id = getValID(seq_ctx, pulse.val);
+                    res{end + 1} = typecast([id, time_id, len_id, val_id, cond_id, cid], 'int8');
                 end
             end
         end
