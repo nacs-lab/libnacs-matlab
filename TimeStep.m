@@ -112,7 +112,7 @@ classdef (Sealed) TimeStep < TimeSeq
             end
             % Inlined implementation of `SeqContext::nextObjID` for hot path
             id = ctx.obj_counter;
-            ctx.obj_counter = id + 1;
+            ctx.obj_counter = id + uint32(1);
             if ctx.collect_dbg_info
                 ctx.obj_backtrace{id + 1} = dbstack('-completenames', 1);
             end
@@ -176,7 +176,7 @@ classdef (Sealed) TimeStep < TimeSeq
             end
             % Inlined implementation of `SeqContext::nextObjID` for hot path
             id = ctx.obj_counter;
-            ctx.obj_counter = id + 1;
+            ctx.obj_counter = id + uint32(1);
             if ctx.collect_dbg_info
                 ctx.obj_backtrace{id + 1} = dbstack('-completenames', 1);
             end

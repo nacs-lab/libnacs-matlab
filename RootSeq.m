@@ -60,23 +60,28 @@ classdef RootSeq < ExpSeqBase
             end
             parent = time.parent;
             if ~isempty(parent)
-                prev_id = getTimeID(self, parent);
+                prev_id = parent.time_id;
+                if prev_id == 0
+                    prev_id = getTimeID(self, parent);
+                end
             else
                 seq = time.seq;
                 if ~isempty(seq.parent)
-                    prev_id = getTimeID(self, seq.tOffset);
+                    parent = seq.tOffset;
+                    prev_id = parent.time_id;
+                    if prev_id == 0
+                        prev_id = getTimeID(self, parent);
+                    end
                 else
                     prev_id = uint32(0);
                 end
             end
             time_id = uint32(length(self.time_serialized) + 1);
             time.time_id = time_id;
-            term_id = uint32(getValID(self.topLevel.seq_ctx, time.term));
+            term_id = getValID(self.topLevel.seq_ctx, time.term);
             % [sign: 1B][id: 4B][delta_node: 4B][prev_id: 4B]
             self.time_serialized{time_id} = [int8(time.sign), ...
-                                             typecast(uint32(time.id), 'int8'), ...
-                                             typecast(term_id, 'int8'), ...
-                                             typecast(prev_id, 'int8')];
+                                             typecast([time.id, term_id, prev_id], 'int8')];
         end
 
         function res = toString(self, indent)
@@ -190,9 +195,9 @@ classdef RootSeq < ExpSeqBase
             orders_serialized = cell(1, norders);
             for i = 1:norders
                 order = orders{i};
-                orders_serialized{i} = [int8(order{2}), typecast(uint32(order{1}), 'int8'), ...
-                                        typecast(getTimeID(self, order{3}), 'int8'), ...
-                                        typecast(getTimeID(self, order{4}), 'int8')];
+                orders_serialized{i} = [order{2}, ...
+                                        typecast([order{1}, getTimeID(self, order{3}), ...
+                                                  getTimeID(self, order{4})], 'int8')];
             end
             orders_serialized = [typecast(uint32(norders), 'int8'), orders_serialized{:}];
 
@@ -213,9 +218,8 @@ classdef RootSeq < ExpSeqBase
                 if cid == 0
                     continue;
                 end
-                measures_serialized{i} = [typecast(uint32(measure.id), 'int8'), ...
-                                          typecast(getTimeID(self, measure.time), 'int8'), ...
-                                          typecast(cid, 'int8')];
+                measures_serialized{i} = typecast([uint32(measure.id), ...
+                                                   getTimeID(self, measure.time), cid], 'int8');
             end
             measures_serialized = [typecast(uint32(nmeasures), 'int8'), ...
                                    measures_serialized{:}];
@@ -230,9 +234,8 @@ classdef RootSeq < ExpSeqBase
                 if isempty(val)
                     continue;
                 end
-                assigns_serialized{i} = [typecast(uint32(assign.id), 'int8'), ...
-                                         typecast(uint32(getValID(seq_ctx, val)), 'int8'), ...
-                                         typecast(uint32(assign.chn), 'int8')];
+                assigns_serialized{i} = typecast([assign.id, getValID(seq_ctx, val), ...
+                                                  uint32(assign.chn)], 'int8');
             end
             assigns_serialized = [typecast(uint32(length(assigns_serialized)), 'int8'), ...
                                   assigns_serialized{:}];
@@ -251,9 +254,7 @@ classdef RootSeq < ExpSeqBase
                     target_id = uint32(target.bseq_id);
                 end
                 cond_id = getValID(seq_ctx, branch.cond);
-                branches_serialized{i} = [typecast(uint32(branch.id), 'int8'), ...
-                                          typecast(target_id, 'int8'), ...
-                                          typecast(uint32(cond_id), 'int8')];
+                branches_serialized{i} = typecast([branch.id, target_id, cond_id], 'int8');
             end
             default_target = self.default_target;
             if isempty(default_target)

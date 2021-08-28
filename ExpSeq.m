@@ -242,16 +242,16 @@ classdef ExpSeq < RootSeq
                     assert(defval);
                     defval_serialized = [defval_serialized, ...
                                          typecast(cid, 'int8'), ...
-                                         int8(SeqVal.TypeBool), int8(1)];
+                                         SeqVal.TypeBool, int8(1)];
                 elseif isa(defval, 'int32')
                     defval_serialized = [defval_serialized, ...
                                          typecast(cid, 'int8'), ...
-                                         int8(SeqVal.TypeInt32), typecast(defval, 'int8')];
+                                         SeqVal.TypeInt32, typecast(defval, 'int8')];
                 else
                     defval = double(defval);
                     defval_serialized = [defval_serialized, ...
                                          typecast(cid, 'int8'), ...
-                                         int8(SeqVal.TypeFloat64), typecast(defval, 'int8')];
+                                         SeqVal.TypeFloat64, typecast(defval, 'int8')];
                 end
                 ndefvals = ndefvals + 1;
             end
