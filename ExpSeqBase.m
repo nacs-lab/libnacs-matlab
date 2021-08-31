@@ -288,11 +288,11 @@ classdef ExpSeqBase < TimeSeq
         end
 
         %% Condition
-        function res = conditional(self, cond, cb)
+        function res = conditional(self, cond, cb, varargin)
             res = ConditionalWrapper(self, cond);
             if exist('cb', 'var')
                 assert(~isnumeric(cb) && ~islogical(cb) && ~isa(cb, 'SeqVal'));
-                res = addStep(res, cb);
+                res = addStep(res, cb, varargin{:});
             end
         end
 
