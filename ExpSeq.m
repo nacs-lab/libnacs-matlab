@@ -99,11 +99,11 @@ classdef ExpSeq < RootSeq
             self.curSeqTime = self.zero_time;
         end
 
-        function bseq = newBasicSeq(self, cb)
+        function bseq = newBasicSeq(self, cb, varargin)
             % can use a callback, cb, to populate the new BasicSeq
             bseq = BasicSeq(self);
             if exist('cb', 'var')
-                cb(bseq);
+                cb(bseq, varargin{:});
             end
         end
 
