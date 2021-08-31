@@ -372,6 +372,9 @@ classdef ExpSeq < RootSeq
             end
             bseq_len = cur_bseq_length(self.pyseq);
             next_idx = double(post_run(self.pyseq));
+            for cb = bseq.after_branch_cbs
+                cb{:}(self);
+            end
         end
 
         function run_real(self)
