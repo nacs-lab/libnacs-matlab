@@ -159,6 +159,39 @@ classdef RootSeq < ExpSeqBase
             % with the sequence as the argument.
             self.after_branch_cbs{end + 1} = cb;
         end
+        %% Methods that call topLevel methods to allow for more convenient and linear API usage
+        % See methods in ExpSeq for the arguments required for each.
+        function bseq = newBasicSeq(self, varargin)
+            bseq = newBasicSeq(self.topLevel, varargin{:});
+        end
+
+        function addTTLMgr(self, varargin)
+            addTTLMgr(self.topLevel, varargin{:});
+        end
+
+        function disableChannel(self, varargin)
+            disableChannel(self.topLevel, varargin{:});
+        end
+
+        function res = checkChannelDisabled(self, varargin)
+            res = checkChannelDisabled(self.topLevel, varargin{:});
+        end
+
+        function self = regBeforeStart(self, varargin)
+            regBeforeStart(self.topLevel, varargin{:});
+        end
+
+        function self = regAfterEnd(self, varargin)
+            regAfterEnd(self.topLevel, varargin{:});
+        end
+
+        function val = get_global(self, varargin)
+            val = get_global(self.topLevel, varargin{:});
+        end
+
+        function set_global(self, varargin)
+            set_global(self.topLevel, varargin{:});
+        end
     end
 
     methods(Access=protected)
