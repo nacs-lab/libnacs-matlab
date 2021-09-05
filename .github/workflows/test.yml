@@ -7,7 +7,8 @@ on:
     branches: [ master ]
 
 jobs:
-  build:
+  testing:
+    name: "Test MATLAB ${{matrix.release}}"
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
