@@ -581,7 +581,7 @@ classdef ExpSeq < RootSeq
                 if g.persist && ~first
                     continue;
                 end
-                set_global(self.pyseq, g.id, g.init_val);
+                set_global(self.pyseq, uint32(g.id), double(g.init_val));
             end
         end
     end
