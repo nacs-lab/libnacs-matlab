@@ -267,8 +267,7 @@ classdef RootSeq < ExpSeqBase
                 if isempty(val)
                     continue;
                 end
-                assigns_serialized{i} = typecast([assign.id, getValID(seq_ctx, val), ...
-                                                  uint32(assign.chn)], 'int8');
+                assigns_serialized{end + 1} = typecast([assign.id, uint32(i-1), getValID(seq_ctx, val)], 'int8');
             end
             assigns_serialized = [typecast(uint32(length(assigns_serialized)), 'int8'), ...
                                   assigns_serialized{:}];
