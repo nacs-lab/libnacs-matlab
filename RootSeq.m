@@ -278,7 +278,7 @@ classdef RootSeq < ExpSeqBase
             nbranches = length(branches);
             branches_serialized = cell(1, nbranches);
             for i = 1:nbranches
-                branch = branches{i};
+                branch = branches(i);
                 target = branch.target;
                 if isempty(target)
                     target_id = uint32(0);

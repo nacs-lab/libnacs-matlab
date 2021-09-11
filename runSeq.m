@@ -222,13 +222,6 @@ function params = runSeq(func, varargin)
             put(seqid_map, seqid, idx);
             s = ExpSeq(seqparam);
             clear_accessed(s.C);
-            func(s);
-            if use_scan_tracker
-                record_access(scan_tracker, arg0, get_accessed(s.C));
-                if isEmpty(all_scan_index)
-                    force_check(scan_tracker);
-                end
-            end
             nseqvars = length(seqvars);
             scanvariable = cell(1, nseqvars);
             scanvariable_value = zeros(1, nseqvars);
@@ -236,13 +229,20 @@ function params = runSeq(func, varargin)
                 % Use persistent global since we assign to it every sequence anyway...
                 % No need to let the sequence do that.
                 seq_gv = newPersistGlobal(s);
-                subsasgn(s.C, struct('types', '.', 'subs', seqvars{i}{1}), seq_gv);
+                subsasgn(s.C, struct('type', '.', 'subs', seqvars{i}{1}), seq_gv);
                 scanvariable{i} = seq_gv;
                 scanvariable_value(i) = seqvars{i}{2};
             end
             seqlist{idx} = s;
             scanvariables{idx} = scanvariable;
             scanvariable_values{idx} = scanvariable_value;
+            func(s);
+            if use_scan_tracker
+                record_access(scan_tracker, arg0, get_accessed(s.C));
+                if isEmpty(all_scan_index)
+                    force_check(scan_tracker);
+                end
+            end
         else
             seqlist{idx} = func(arglist{idx}{:});
         end
