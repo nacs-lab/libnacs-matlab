@@ -322,6 +322,8 @@ function params = runSeq(func, varargin)
         error('Cannot run the sequence by negative times.');
     end
 
+    SeqManager.new_run();
+
     if is_random
         if rep == 0
             idx = randi(nseq);

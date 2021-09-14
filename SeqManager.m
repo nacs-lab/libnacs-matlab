@@ -46,6 +46,9 @@ classdef SeqManager < handle
         function load_config_string(config)
             load_config_string(SeqManager.get(), config);
         end
+        function new_run()
+            new_run(SeqManager.get());
+        end
 
         function enable_debug(enable)
             if ~exist('enable', 'var')

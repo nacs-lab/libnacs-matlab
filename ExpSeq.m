@@ -417,6 +417,7 @@ classdef ExpSeq < RootSeq
                 generate(self);
             end
             fprintf('Running @%s\n', datestr(now(), 'yyyy/mm/dd HH:MM:SS'));
+            SeqManager.new_run();
             run_real(self);
         end
 
