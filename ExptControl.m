@@ -37,14 +37,15 @@ classdef ExptControl < matlab.apps.AppBase
             % start timers if needed
             app.ImgTimer = timer('ExecutionMode', 'fixedSpacing', 'Period', 2, ...
                                 'TimerFcn', {@(obj, event, app_obj) app_obj.processImgLoop(), app});
-            app.StatusTimer = timer('ExecutionMode', 'fixedDelay', 'Period', 1 ...
+            app.StatusTimer = timer('ExecutionMode', 'fixedDelay', 'Period', 1, ...
                                 'TimerFcn', {@(obj, event, app_obj) app_obj.updateStatusLoop(), app});
-            app.ImgTimer.start();
-            app.StatusTimer.start();
+            start(app.ImgTimer);
+            start(app.StatusTimer);
         end
         
         % grabs, processes, saves images on a timer
         function processImgLoop(app)
+            disp('Img update')
             info = app.AU.grab_imgs();
             nseqs = length(info.imgs);
             if nseqs == 0
@@ -92,6 +93,7 @@ classdef ExptControl < matlab.apps.AppBase
         end
         
         function updateStatusLoop(app)
+            disp('Status update')
             res = app.AU.get_status();
             if res == 0
                 state_str = 'Stopped';
@@ -168,7 +170,7 @@ classdef ExptControl < matlab.apps.AppBase
             % Create StatusLabel
             app.StatusLabel = uilabel(app.UIFigure);
             app.StatusLabel.HorizontalAlignment = 'center';
-            app.StatusLabel.WordWrap = 'on';
+            % app.StatusLabel.WordWrap = 'on'; not available in 2017b
             app.StatusLabel.FontSize = 20;
             app.StatusLabel.Position = [18 377 513 67];
             app.StatusLabel.Text = 'Status: ';
@@ -241,8 +243,8 @@ classdef ExptControl < matlab.apps.AppBase
 
         % Code that executes before app deletion
         function delete(app)
-            app.ImgTimer.stop()
-            app.StatusTimer.stop()
+            stop(app.ImgTimer)
+            stop(app.StatusTimer)
             % Delete UIFigure when app is deleted
             delete(app.UIFigure)
         end
