@@ -250,7 +250,7 @@ class ExptServer(object):
 
     def get_imgs(self):
         # returns bytes to be sent across the network
-        # intended format: [nseqs: double][[scan_id: double][shape_x: double, shape_y: double, nimgs: double, data: shape_x * shape_y * nimgs * sizeof(double)] x num_transfers_per_seq] [<0>:double] x nseqs]
+        # intended format: [nseqs: double][[scan_id: double][seq_id: double][shape_x: double, shape_y: double, nimgs: double, data: shape_x * shape_y * nimgs * sizeof(double)] x num_transfers_per_seq] [<0>:double] x nseqs]
         # 0 separates out sequences
         n_transfer = 0
         zero_array = array.array('d', [0])
@@ -293,7 +293,7 @@ class ExptServer(object):
             res = self.__seq_req.value # get value for Matlab
         return res
 
-    def start_seq(self):
+    def start_scan(self):
         with self.__data_lock:
             self.seq_status = self.State.Running
         #clear abort or pause if exists

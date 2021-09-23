@@ -26,10 +26,11 @@ classdef ExptServer < handle
             % 2 - Abort
             res = double(self.server.check_request());
         end
-        function res = start_seq(self)
-            res = int64(self.server.start_seq());
+        function res = start_scan(self)
+            res = int64(self.server.start_scan());
         end
         function store_imgs(self, imgs, scan_id, seq_id)
+%             disp('storing imgs');
             shape = size(imgs);
             if length(shape) == 2
                 to_send = [double(shape(1)) double(shape(2)) double(1) imgs(:)'];
@@ -55,7 +56,8 @@ classdef ExptServer < handle
         end
     end
 
-    properties(Constant, Access=private)
+%     properties(Constant, Access=private)
+    properties(Constant)
         cache = containers.Map();
     end
     methods(Static)

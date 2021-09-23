@@ -55,7 +55,11 @@ classdef ExptControl < matlab.apps.AppBase
             if app.cur_scan_id ~= 0 && app.cur_scan_id ~= info.scan_ids(1)
                 % if next batch consists of a new scan. Flush out the data
                 % manager associated with the scan. 
-                DM = DataMgr.get(app.cur_scan_id);
+                if app.cur_scan_id > 0
+                    DM = ScanDataMgr.get(app.cur_scan_id);
+                else
+                    DM = SingleShotDataMgr.get(app.cur_scan_id);
+                end
                 DM.process_data(1);
                 DM.plot_data(1);
                 DM.save_data(1);
@@ -73,7 +77,7 @@ classdef ExptControl < matlab.apps.AppBase
                 end
                 % process, plot and save cur_scan_id images
                 if app.cur_scan_id > 0
-                    DM = DataMgr.get(app.cur_scan_id);
+                    DM = ScanDataMgr.get(app.cur_scan_id);
                 else
                     DM = SingleShotDataMgr.get(app.cur_scan_id);
                 end
@@ -109,17 +113,21 @@ classdef ExptControl < matlab.apps.AppBase
 
         % Button pushed function: PauseSeqButton
         function PauseSeqButtonPushed(app, event)
-            app.AU.pause_seq();
+%             app.AU.pause_seq();
+              % for now use memory map...
+              PauseRunSeq();
         end
 
         % Button pushed function: StartSeqButton
         function StartSeqButtonPushed(app, event)
-            app.AU.start_seq();
+%             app.AU.start_seq();
+              ContinueRunSeq();
         end
 
         % Button pushed function: AbortSeqButton
         function AbortSeqButtonPushed(app, event)
-            app.AU.abort_seq();
+%             app.AU.abort_seq();
+              AbortRunSeq();
         end
 
         % Value changed function: RefreshRateinsEditField
@@ -245,6 +253,8 @@ classdef ExptControl < matlab.apps.AppBase
         function delete(app)
             stop(app.ImgTimer)
             stop(app.StatusTimer)
+            delete(app.ImgTimer)
+            delete(app.StatusTimer)
             % Delete UIFigure when app is deleted
             delete(app.UIFigure)
         end

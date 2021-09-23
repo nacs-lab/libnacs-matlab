@@ -30,12 +30,12 @@ class AnalysisUser(object):
         #with self.__user_lock:
         self.user_imgs = [] # deque that is swapped with deque populated by worker
         with self.__data_lock:
-            self.seq_status = None
-            self.seq_num = None
+            self.seq_status = self.SeqStatus.Unknown
+            self.seq_num = 0
             self.refresh_rate = 60 # in seconds
             self.imgs = []
             self.config = None
-            self.msg = None
+            self.msg = ""
 
         self.last_time = 0
 
@@ -148,24 +148,16 @@ class AnalysisUser(object):
 
     def __worker_func(self):
         req = self.__pop_worker_req()
-        last_state = self.check_status()
+        # last_state = self.check_status()
         while req != self.WorkerRequest.Stop:
             cur_time = time.time()
             if cur_time - self.last_time >= self.refresh_rate:
                 # __update status. Cached status, in principle is good enough, but this is mainly to protect against stopping of the sequence that this thread does not know about
-                state = self.__update_status()
-                if state == self.SeqStatus.Stopped or state == self.SeqStatus.Paused:
-                    if last_state != state:
-                        # sequence status has changed
-                        self.__update()
-                    # TODO, IF SEQUENCE HAS STOPPED
-                elif state == self.SeqStatus.Running:
-                    # TODO, IF SEQUENCE JUST STARTED RUNNING
-                    self.__update()
-                #last_state = state
+                # state = self.__update_status()
+                self.__update()
                 self.last_time = cur_time
             self.__handle_req(req)
-            last_state = self.__update_status()
+            self.__update_status()
             req = self.__pop_worker_req()
 
     def pop_img(self):

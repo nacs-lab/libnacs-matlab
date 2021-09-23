@@ -1,8 +1,8 @@
 % script to test new communication between instances.
 
-ES = ExptServer.get("tcp://127.0.0.1:8888");
+ES = ExptServer.get(Consts().MatlabURL);
 
-scan_id = ES.start_seq(); % don't need to get scan_id from ES...
+scan_id = ES.start_scan(); % don't need to get scan_id from ES...
 req = ES.check_request();
 % 0 - NoRequest
 % 1 - Pause
