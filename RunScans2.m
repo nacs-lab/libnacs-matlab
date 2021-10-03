@@ -40,7 +40,7 @@ fprintf('Total scan points: %d\n', nseqs);
 Scan = getfields(scanp, 'AndorCenter', 'BoxSize', 'FrameSize', ...
                  'NumImages', 'NumSites', 'SingleAtomSpecies', ...
                  'SingleAtomSites', 'Cutoffs', 'LoadingLogicals', ...
-                 'SurvivalLoadingLogicals', 'SurvivalLogicals');
+                 'SurvivalLoadingLogicals', 'SurvivalLogicals', 'RearrSurvLoadingLogicals');
 
 % Name of parameter to scan over
 Scan.ParamName = p.ParamName('');
@@ -49,6 +49,7 @@ Scan.ParamUnits = p.ParamUnits('');
 % x-axis scale for plots.  Enter 1e-6 for micro, 1e3 for kilo, etc.
 Scan.PlotScale = p.PlotScale(1);
 Scan.ScanGroup = scangroup.dump();
+Scan.Rearrangement = scanp.Rearrangement(0);
 % Parameter values to scan over.  Some helpful custom functions might be
 % stack, scramble, QuasirandomList.  Parameter values are in the units used
 % in the sequence.
