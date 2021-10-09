@@ -62,5 +62,13 @@ classdef ConditionalWrapper < handle
             step.end_after_parent = false;
             step.totallen_after_parent = false;
         end
+
+        function wrapper = conditional(self, cond)
+            wrapper = ConditionalWrapper(self.seq, self.cond & cond);
+        end
+
+        function wrapper = conditionalOr(self, cond)
+            wrapper = ConditionalWrapper(self.seq, self.cond | cond);
+        end
     end
 end
