@@ -70,7 +70,7 @@ classdef AnalysisUser < handle
         end
     end
 
-    properties(Constant, Access=private)
+    properties(Constant)
         cache = containers.Map();
     end
     methods(Static)

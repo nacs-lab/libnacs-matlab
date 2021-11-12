@@ -343,6 +343,9 @@ classdef ExpSeq < RootSeq
             if isempty(self.pyseq)
                 error('Sequence must be generated before running.');
             end
+%             if idx == 1
+%                 tic;
+%             end
             % Basic sequence 1 is the `ExpSeq`, the rest are in the `basic_seqs` array.
             if idx == 1
                 bseq = self;
@@ -352,29 +355,41 @@ classdef ExpSeq < RootSeq
             for cb = bseq.before_bseq_cbs
                 cb{:}(self);
             end
+%             before_seq_cb = toc
             pre_run(self.pyseq);
+%             after_pre_run = toc
             if ~isempty(self.ni_channels)
                 ni_nchns = length(self.ni_channels);
-                ni_data = double(get_nidaq_data(self.pyseq, 'NiDAQ')); % Hardcode name
-                ni_ndata = length(ni_data);
-                assert(mod(ni_ndata, ni_nchns) == 0);
-                NiDAQRunner.run(self.ni_channels, self.config.niClocks, self.config.niStart, ...
-                                reshape(ni_data, [ni_ndata / ni_nchns, ni_nchns]));
+                ni_data_raw = get_nidaq_data(self.pyseq, 'NiDAQ');
+%                 if ni_data_raw ~= py.NoneType
+                    ni_data = double(ni_data_raw); % Hardcode name
+                    ni_ndata = length(ni_data);
+                    assert(mod(ni_ndata, ni_nchns) == 0);
+                    NiDAQRunner.run(self.ni_channels, self.config.niClocks, self.config.niStart, ...
+                                    reshape(ni_data, [ni_ndata / ni_nchns, ni_nchns]));
+%                 end
             end
+%             after_nidaq = toc
             start(self.pyseq);
+%             after_start = toc
             while ~wait(self.pyseq, uint64(100))
             end
+%             after_pyseq_wait = toc
             if ~isempty(self.ni_channels)
                 NiDAQRunner.wait();
             end
+%             after_nidaq_wait = toc
             for cb = bseq.after_bseq_cbs
                 cb{:}(self);
             end
+%             after_after_seq_cb = toc
             bseq_len = cur_bseq_length(self.pyseq);
             next_idx = double(post_run(self.pyseq));
+%             after_post_run = toc
             for cb = bseq.after_branch_cbs
                 cb{:}(self);
             end
+%             after_after_branch = toc
         end
 
         function run_real(self)

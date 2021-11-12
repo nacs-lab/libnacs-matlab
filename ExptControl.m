@@ -45,70 +45,78 @@ classdef ExptControl < matlab.apps.AppBase
         
         % grabs, processes, saves images on a timer
         function processImgLoop(app)
-            disp('Img update')
-            info = app.AU.grab_imgs();
-            nseqs = length(info.imgs);
-            if nseqs == 0
-                return
-            end
-            start_idx = 1;
-            if app.cur_scan_id ~= 0 && app.cur_scan_id ~= info.scan_ids(1)
-                % if next batch consists of a new scan. Flush out the data
-                % manager associated with the scan. 
-                if app.cur_scan_id > 0
-                    DM = ScanDataMgr.get(app.cur_scan_id);
-                else
-                    DM = SingleShotDataMgr.get(app.cur_scan_id);
+            try
+                disp('Img update')
+                info = app.AU.grab_imgs();
+                nseqs = length(info.imgs);
+                if nseqs == 0
+                    return
                 end
-                DM.process_data(1);
-                DM.plot_data(1);
-                DM.save_data(1);
-            end
-            while start_idx <= nseqs
-                end_idx = nseqs;
-                app.cur_scan_id = info.scan_ids(start_idx);
-                new_scan_idx = find(info.scan_ids(start_idx:end_idx) ~= app.cur_scan_id, 1);
-                % if new_scan_idx is empty, then all members belong to the
-                % cur_scan_id
-                if isempty(new_scan_idx)
+                start_idx = 1;
+                if app.cur_scan_id ~= 0 && app.cur_scan_id ~= info.scan_ids(1)
+                    % if next batch consists of a new scan. Flush out the data
+                    % manager associated with the scan. 
+                    if app.cur_scan_id > 0
+                        DM = ScanDataMgr.get(app.cur_scan_id);
+                    else
+                        DM = SingleShotDataMgr.get(app.cur_scan_id);
+                    end
+                    DM.process_data(1);
+                    DM.plot_data(1);
+                    DM.save_data(1);
+                end
+                while start_idx <= nseqs
                     end_idx = nseqs;
-                else
-                    end_idx = start_idx + new_scan_idx - 1;
+                    app.cur_scan_id = info.scan_ids(start_idx);
+                    new_scan_idx = find(info.scan_ids(start_idx:end_idx) ~= app.cur_scan_id, 1);
+                    % if new_scan_idx is empty, then all members belong to the
+                    % cur_scan_id
+                    if isempty(new_scan_idx)
+                        end_idx = nseqs;
+                    else
+                        end_idx = start_idx + new_scan_idx - 1;
+                    end
+                    % process, plot and save cur_scan_id images
+                    if app.cur_scan_id > 0
+                        DM = ScanDataMgr.get(app.cur_scan_id);
+                    else
+                        DM = SingleShotDataMgr.get(app.cur_scan_id);
+                    end
+                    this_info = struct();
+                    this_info.imgs = info.imgs(start_idx:end_idx);
+                    this_info.seq_ids = info.seq_ids(start_idx:end_idx);
+                    DM.store_new_data(this_info);
+                    DM.process_data();
+                    DM.plot_data();
+                    fname = DM.save_data();
+                    start_idx = end_idx + 1;
                 end
-                % process, plot and save cur_scan_id images
-                if app.cur_scan_id > 0
-                    DM = ScanDataMgr.get(app.cur_scan_id);
-                else
-                    DM = SingleShotDataMgr.get(app.cur_scan_id);
-                end
-                this_info = struct();
-                this_info.imgs = info.imgs(start_idx:end_idx);
-                this_info.seq_ids = info.seq_ids(start_idx:end_idx);
-                DM.store_new_data(this_info);
-                DM.process_data();
-                DM.plot_data();
-                fname = DM.save_data();
-                start_idx = end_idx + 1;
+                app.cur_seq_id = info.seq_ids(end);
+                app.LastScanIDLabel.Text = ['Last Scan ID: ' num2str(app.cur_scan_id)];
+                app.LastSeqIDLabel.Text = ['Last Seq ID: ' num2str(app.cur_seq_id)];
+                app.LastSavedFileLabel.Text = ['Last Saved File: ' fname];
+            catch me
+                disp(getReport(me, 'extended', 'hyperlinks', 'on'))
             end
-            app.cur_seq_id = info.seq_ids(end);
-            app.LastScanIDLabel.Text = ['Last Scan ID: ' num2str(app.cur_scan_id)];
-            app.LastSeqIDLabel.Text = ['Last Seq ID: ' num2str(app.cur_seq_id)];
-            app.LastSavedFileLabel.Text = ['Last Saved File: ' fname];
         end
         
         function updateStatusLoop(app)
-            disp('Status update')
-            res = app.AU.get_status();
-            if res == 0
-                state_str = 'Stopped';
-            elseif res == 1
-                state_str = 'Running';
-            elseif res == 2
-                state_str = 'Paused';
-            else
-                state_str = 'Unknown';
+            try
+                disp('Status update')
+                res = app.AU.get_status();
+                if res == 0
+                    state_str = 'Stopped';
+                elseif res == 1
+                    state_str = 'Running';
+                elseif res == 2
+                    state_str = 'Paused';
+                else
+                    state_str = 'Unknown';
+                end
+                app.StatusLabel.Text = ['Status: ' state_str];
+            catch me
+                disp(getReport(me, 'extended', 'hyperlinks', 'on'))
             end
-            app.StatusLabel.Text = ['Status: ' state_str];
         end
 
         % Button pushed function: PauseSeqButton
@@ -128,6 +136,14 @@ classdef ExptControl < matlab.apps.AppBase
         function AbortSeqButtonPushed(app, event)
 %             app.AU.abort_seq();
               AbortRunSeq();
+              if app.cur_scan_id > 0
+                DM = ScanDataMgr.get(app.cur_scan_id);
+              else
+                DM = SingleShotDataMgr.get(app.cur_scan_id);
+              end
+              DM.process_data(1);
+              DM.plot_data(1);
+              DM.save_data(1);
         end
 
         % Value changed function: RefreshRateinsEditField
