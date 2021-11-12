@@ -299,36 +299,44 @@ function params = runSeq2(func, varargin)
     function abort = run_seq(idx, next_idx)
         % Note that generation of sequence in parallel
         % with the sequence run is disabled for now since it may affect branching delay.
-        if CheckPauseAbort(m)
-            disp('AbortRunSeq set to 1.  Stopping gracefully.');
-            abort = 1;
-            return;
-        end
-        abort = 0;
-        prepare_seq(idx);
-        log_run(idx);
-        if tstartwait > 0
-            % This wait could be used to workaround bug in the NI DAQ
-            % driver causing a timing error in the NI DAQ output.
-            pause(tstartwait);
-        end
-        run_cb(pre_cb, idx);
-        cur_seq = seqlist{idx};
-        if is_scangroup
-            scanvariable = scanvariables{idx};
-            scanvariable_value = scanvariable_values{idx};
-            for j = 1:length(scanvariable)
-                set_global(cur_seq, scanvariable{j}, scanvariable_value(j));
+        retry = true;
+        while (retry)
+            retry = false;
+            if CheckPauseAbort(m)
+                disp('AbortRunSeq set to 1.  Stopping gracefully.');
+                abort = 1;
+                return;
             end
+            abort = 0;
+            prepare_seq(idx);
+            log_run(idx);
+            if tstartwait > 0
+                % This wait could be used to workaround bug in the NI DAQ
+                % driver causing a timing error in the NI DAQ output.
+                pause(tstartwait);
+            end
+            run_cb(pre_cb, idx);
+            cur_seq = seqlist{idx};
+            if is_scangroup
+                scanvariable = scanvariables{idx};
+                scanvariable_value = scanvariable_values{idx};
+                for j = 1:length(scanvariable)
+                    set_global(cur_seq, scanvariable{j}, scanvariable_value(j));
+                end
+            end
+            m.Data(1).CurrentSeqNum = m.Data(1).CurrentSeqNum + 1;
+            run_real(cur_seq);
+            run_cb(post_cb, idx);
+            if (cur_seq.C.RESTART(0))
+                retry = true;
+                printf("Really retrying sequence in runSeq2!\n");
+            end
+    %         % If we are using NumGroup to run sequences in groups, pause every
+    %         % NumGroup sequences.
+    %         if ~mod(m.Data(1).CurrentSeqNum, m.Data(1).NumPerGroup) && (m.Data(1).NumPerGroup>0)
+    %             m.Data(1).PauseRunSeq = 1;
+    %         end
         end
-        m.Data(1).CurrentSeqNum = m.Data(1).CurrentSeqNum + 1;
-        run_real(cur_seq);
-        run_cb(post_cb, idx);
-%         % If we are using NumGroup to run sequences in groups, pause every
-%         % NumGroup sequences.
-%         if ~mod(m.Data(1).CurrentSeqNum, m.Data(1).NumPerGroup) && (m.Data(1).NumPerGroup>0)
-%             m.Data(1).PauseRunSeq = 1;
-%         end
         seq_config.G.seq_id = seq_config.G.seq_id + 1;
     end
 

@@ -39,6 +39,9 @@ classdef ExptServer < handle
             end
             res = self.server.store_imgs(to_send, scan_id, seq_id);
         end
+        function seq_cancel(self)
+            self.server.seq_cancel();
+        end
         function seq_finish(self)
             self.server.seq_finish();
         end

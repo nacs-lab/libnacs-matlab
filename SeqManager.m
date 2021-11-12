@@ -40,6 +40,9 @@ classdef SeqManager < handle
         function res = create_sequence(data)
             res = create_sequence(SeqManager.get(), PythonHack.convert_array(data));
         end
+        function res = get_device_restart(dev_name)
+            res = get_device_restart(SeqManager.get(), dev_name);
+        end
         function load_config_file(fname)
             load_config_file(SeqManager.get(), fname);
         end

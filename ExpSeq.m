@@ -393,6 +393,8 @@ classdef ExpSeq < RootSeq
         end
 
         function run_real(self)
+            begin_restarts = double(SeqManager.get_device_restart('AWG1')); % hard coded
+            self.C.RESTART = 0;
             bseq_len = 0;
             try
                 for cb = self.before_start_cbs
@@ -403,6 +405,10 @@ classdef ExpSeq < RootSeq
                 while idx ~= 0
                     start_t = now() * 86400;
                     [idx, bseq_len] = run_bseq(self, idx);
+                end
+                end_restarts = double(SeqManager.get_device_restart('AWG1'));
+                if (end_restarts ~= begin_restarts)
+                    self.C.RESTART = 1;
                 end
                 for cb = self.after_end_cbs
                     cb{:}(self);
@@ -434,6 +440,13 @@ classdef ExpSeq < RootSeq
             fprintf('Running @%s\n', datestr(now(), 'yyyy/mm/dd HH:MM:SS'));
             SeqManager.new_run();
             run_real(self);
+        end
+
+        function res = refresh_device_restart(self, dev_name)
+            if isempty(self.pyseq)
+                error('Sequence must be generated before requesting a refresh of the device restart number.');
+            end
+            res = double(refresh_device_restart(self.pyseq, dev_name));
         end
 
         % For debug use only

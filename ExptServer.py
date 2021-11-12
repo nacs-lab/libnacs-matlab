@@ -319,6 +319,9 @@ class ExptServer(object):
                 self.expt_imgs.appendleft(b'')
         self.temp_imgs.clear()
 
+    def seq_cancel(self):
+        self.temp_imgs.clear()
+
     def set_config(self, date: str, time: str):
         with self.__data_lock:
             self.dateStamp = date
