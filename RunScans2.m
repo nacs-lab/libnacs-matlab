@@ -50,6 +50,12 @@ Scan.ParamUnits = p.ParamUnits('');
 Scan.PlotScale = p.PlotScale(1);
 Scan.ScanGroup = scangroup.dump();
 Scan.Rearrangement = scanp.Rearrangement(0);
+if Scan.Rearrangement
+    Scan.Algo = func2str(RearrConsts.Algo);
+    Scan.locs = RearrConsts.locs;
+    Scan.AlgoCbArgs = RearrConsts.AlgoCbArgs;
+    Scan.cutoffs = RearrConsts.cutoffs;
+end
 % Parameter values to scan over.  Some helpful custom functions might be
 % stack, scramble, QuasirandomList.  Parameter values are in the units used
 % in the sequence.

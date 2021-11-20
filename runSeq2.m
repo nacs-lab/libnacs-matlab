@@ -324,12 +324,11 @@ function params = runSeq2(func, varargin)
                     set_global(cur_seq, scanvariable{j}, scanvariable_value(j));
                 end
             end
-            m.Data(1).CurrentSeqNum = m.Data(1).CurrentSeqNum + 1;
             run_real(cur_seq);
             run_cb(post_cb, idx);
             if (cur_seq.C.RESTART(0))
                 retry = true;
-                printf("Really retrying sequence in runSeq2!\n");
+                fprintf("Really retrying sequence in runSeq2!\n");
             end
     %         % If we are using NumGroup to run sequences in groups, pause every
     %         % NumGroup sequences.
@@ -337,6 +336,7 @@ function params = runSeq2(func, varargin)
     %             m.Data(1).PauseRunSeq = 1;
     %         end
         end
+        m.Data(1).CurrentSeqNum = m.Data(1).CurrentSeqNum + 1;
         seq_config.G.seq_id = seq_config.G.seq_id + 1;
     end
 
