@@ -80,7 +80,15 @@ classdef (Sealed) TimeStep < TimeSeq
             %     The object will be called to compute the output value.
             toplevel = self.topLevel;
             if ~isnumeric(cid)
+                % Even if a pulse is disabled, we still want to make sure
+                % that the channel is used and so it is initialized.
+                % Do not skip based on cond before this point.
                 cid = translateChannel(toplevel, cid);
+            end
+            cond = self.cond;
+            if islogical(cond) && ~cond
+                % If the pulse is disabled, no need to do anything else.
+                return;
             end
             if cid > length(self.pulses)
                 % Minimize resizing
@@ -116,7 +124,7 @@ classdef (Sealed) TimeStep < TimeSeq
             if ctx.collect_dbg_info
                 ctx.obj_backtrace{id + 1} = dbstack('-completenames', 1);
             end
-            self.pulses{cid} = Pulse(id, pulse, self.cond);
+            self.pulses{cid} = Pulse(id, pulse, cond);
         end
 
         function self = addConditional(self, cid, pulse, cond)
@@ -146,6 +154,11 @@ classdef (Sealed) TimeStep < TimeSeq
             if ~isnumeric(cid)
                 cid = translateChannel(toplevel, cid);
             end
+            cond = self.cond & cond;
+            if islogical(cond) && ~cond
+                % If the pulse is disabled, no need to do anything else.
+                return;
+            end
             if cid > length(self.pulses)
                 % Minimize resizing
                 self.pulses{cid + 5} = [];
@@ -180,7 +193,7 @@ classdef (Sealed) TimeStep < TimeSeq
             if ctx.collect_dbg_info
                 ctx.obj_backtrace{id + 1} = dbstack('-completenames', 1);
             end
-            self.pulses{cid} = Pulse(id, pulse, self.cond & cond);
+            self.pulses{cid} = Pulse(id, pulse, cond);
         end
 
         function res = totalTime(self)

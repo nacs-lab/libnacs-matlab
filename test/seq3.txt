@@ -3,5 +3,4 @@ BS1:
     default: end
   ExpSeq()
     Step(len=g(0) * 2 * 1000, cond=false) @ 0
-      chn1(Device0/CH9): Pulse(id=0, val=g(0) / 2, cond=false)
     curSeqTime: 0

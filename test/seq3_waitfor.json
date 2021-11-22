@@ -47,12 +47,12 @@
     2, 0, 0, 0,
     // 1
     1, // sign
-    1, 0, 0, 0, // id
+    0, 0, 0, 0, // id
     2, 0, 0, 0, // before_id
     1, 0, 0, 0, // after_id
     // 2
     1, // sign
-    2, 0, 0, 0, // id
+    1, 0, 0, 0, // id
     2, 0, 0, 0, // before_id
     1, 0, 0, 0, // after_id
     // [noutputs: 4B][[id: 4B][time_id: 4B][len: 4B][val: 4B][cond: 4B][chn: 4B] x noutputs]

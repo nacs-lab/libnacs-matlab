@@ -5,10 +5,9 @@ BS1:
     Step(len=1000) @ 0
       chn1(Device1/CH1): Pulse(id=0, val=4)
     Step(len=100, cond=false) @ 1000
-      chn2(Device1/CH5): Pulse(id=1, val=3, cond=false)
     Step(len=100.4) @ 1000
-      chn3(Device2/CH3): Pulse(id=2, val=-1)
-    Step(len=1200) @ round(g(0) * 1000)/nn + ifelse(m(4) < 0, 3400, 0)/nn + 3400
-      chn2(Device1/CH5): Pulse(id=6, val=arg(0) / 1000 - 2.3)
-    Measure(id=4, val=m(4), chn4(Device2/CH5)) @ round(g(0) * 1000)/nn + 3400
-    curSeqTime: round(g(0) * 1000)/nn + ifelse(m(4) < 0, 3400, 0)/nn + 4600
+      chn3(Device2/CH3): Pulse(id=1, val=-1)
+    Step(len=1200) @ round(g(0) * 1000)/nn + ifelse(m(3) < 0, 3400, 0)/nn + 3400
+      chn2(Device1/CH5): Pulse(id=5, val=arg(0) / 1000 - 2.3)
+    Measure(id=3, val=m(3), chn4(Device2/CH5)) @ round(g(0) * 1000)/nn + 3400
+    curSeqTime: round(g(0) * 1000)/nn + ifelse(m(3) < 0, 3400, 0)/nn + 4600

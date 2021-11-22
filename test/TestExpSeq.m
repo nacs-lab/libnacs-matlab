@@ -59,21 +59,21 @@ classdef TestExpSeq < matlab.unittest.TestCase
             m1 = s.addMeasure('Device2/CH5');
             s.conditional(m1 < 0).wait(3.4);
             test.verifyEqual(SeqVal.toString(s.curTime), ...
-                             '(3400 + ifelse(m(4) < 0, 3400, 0) + round(g(0) * 1000)) / 1000');
+                             '(3400 + ifelse(m(3) < 0, 3400, 0) + round(g(0) * 1000)) / 1000');
             s.addStep(1.2).add('Device1/CH5', @(t) t - 2.3);
 
             test.verifyEqual(SeqVal.toString(s.totalTime()), ...
-                             '(4600 + ifelse(m(4) < 0, 3400, 0) + round(g(0) * 1000)) / 1000');
+                             '(4600 + ifelse(m(3) < 0, 3400, 0) + round(g(0) * 1000)) / 1000');
             test.verifyEqual([toString(s) char(10)], fileread([test.path '/seq1.txt']));
 
             % It should be clear that nothing needs to be waited for.
             s.waitBackground();
             test.verifyEqual(SeqVal.toString(s.totalTime()), ...
-                             '(4600 + ifelse(m(4) < 0, 3400, 0) + round(g(0) * 1000)) / 1000');
+                             '(4600 + ifelse(m(3) < 0, 3400, 0) + round(g(0) * 1000)) / 1000');
             test.verifyEqual([toString(s) char(10)], fileread([test.path '/seq1.txt']));
             s.waitAll();
             test.verifyEqual(SeqVal.toString(s.totalTime()), ...
-                             '(4600 + ifelse(m(4) < 0, 3400, 0) + round(g(0) * 1000)) / 1000');
+                             '(4600 + ifelse(m(3) < 0, 3400, 0) + round(g(0) * 1000)) / 1000');
             test.verifyEqual([toString(s) char(10)], fileread([test.path '/seq1.txt']));
             bytes = serialize(s);
             test.verifyEqual(serialize(s), bytes);
