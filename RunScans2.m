@@ -51,10 +51,11 @@ Scan.PlotScale = p.PlotScale(1);
 Scan.ScanGroup = scangroup.dump();
 Scan.Rearrangement = scanp.Rearrangement(0);
 if Scan.Rearrangement
-    Scan.Algo = func2str(RearrConsts.Algo);
-    Scan.locs = RearrConsts.locs;
-    Scan.AlgoCbArgs = RearrConsts.AlgoCbArgs;
-    Scan.cutoffs = RearrConsts.cutoffs;
+    Scan.Rearr.Algo = func2str(RearrConsts.Algo);
+    Scan.Rearr.locs = RearrConsts.locs;
+    Scan.Rearr.AlgoCbArgs = RearrConsts.AlgoCbArgs;
+    Scan.Rearr.cutoffs = {RearrConsts.cutoffs}; % TODO: generalize this to more images.
+    Scan.Rearr.imgForCutoff = RearrConsts.imgForCutoff;
 end
 % Parameter values to scan over.  Some helpful custom functions might be
 % stack, scramble, QuasirandomList.  Parameter values are in the units used
