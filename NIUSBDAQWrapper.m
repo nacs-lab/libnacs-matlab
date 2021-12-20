@@ -14,6 +14,7 @@ classdef NIUSBDAQWrapper < handle
     properties
         devNum;
         channelName = "ai0";
+        outChannel = "ao0";
         trigChan = "PFI0";
         bTrig = 1;
     end
@@ -28,6 +29,9 @@ classdef NIUSBDAQWrapper < handle
 
             if isfield(channelSettings, 'channelName')
                 self.channelName = channelSettings.channelName;
+            end
+            if isfield(channelSettings, 'outChannel')
+                self.outChannel = channelSettings.outChannel;
             end
             if isfield(channelSettings, 'bTrig')
                 self.bTrig = channelSettings.bTrig;
@@ -59,6 +63,17 @@ classdef NIUSBDAQWrapper < handle
             %Acquire data and convert to numeric array
             aiData = cell2mat(cell(py.NIUSBDAQ.acquire(self.devNum,self.channelName,...
                 sampleRate, sampleTime,self.bTrig, self.trigChan)));
+        end
+        
+        function res = setV(self,channelName,V)
+            %Acquire data from NI USB DAQ
+            %Arguments:
+            %   channelName, string: Channel name on which to set voltage
+            %   V, float: Voltage to set on channel
+
+            %Set voltage on channel
+            py.NIUSBDAQ.setV(self.devNum,channelName,V)
+            res = self;
         end
     end
 

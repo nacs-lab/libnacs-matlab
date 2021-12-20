@@ -57,6 +57,26 @@ def acquire(devNum,channelName, sampleRate,sampleTime, bTrig = 0, trigChan = "PF
         samples = task.read(number_of_samples_per_channel=nSamples, timeout = 1.5*sampleTime)
 
     return samples
+    
+def setV(devNum,channelName,V):
+    #Check NI DAQ connected and reset
+    try:
+         daq = initDAQ(devNum)
+    except IndexError:
+         print("No NI DAQ device connected")
+         raise SystemExit
+    except Exception:
+         print("Unknown Error")
+         raise SystemExit
+    with nidaqmx.Task() as task:
+        task.ao_channels.add_ao_voltage_chan('Dev1/ao0')
+
+        print('1 Channel 1 Sample Write: ')
+        print(task.write(V))
+        task.stop()
+    
+    return
+
 
 def getSerial(devNum):
     #Return the serial number for device number devNum
