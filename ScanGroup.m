@@ -456,6 +456,7 @@ classdef ScanGroup < handle
             end
             scan = getfullscan(self, idx);
             if numel(scan.vars) < dim || scan.vars(dim).size == 0
+                warning('get_scanaxis with out of bound dimension is deprecated. Use scandim to check the dimension first.');
                 params = scan.params;
             else
                 params = scan.vars(dim).params;
