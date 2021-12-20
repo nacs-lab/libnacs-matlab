@@ -64,6 +64,9 @@ function [fname, stamp] = FindDataFile(id)
         time = to_char('%06d', id(2));
         stamp = [date, '_', time];
         fname = fullfile(PathPrefix, 'Data', date, ['data_', stamp, '.mat']);
+        if ~exist(fname, 'file')
+            fname = fullfile(PathPrefix, 'Data', date, ['data_', stamp, filesep, 'data_', stamp, '.mat']);
+        end
     end
     if ~exist(fname, 'file')
         error('Cannot find file: %s', id);
