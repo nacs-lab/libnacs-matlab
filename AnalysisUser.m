@@ -40,6 +40,9 @@ classdef AnalysisUser < handle
         function set_refresh_rate(self, val)
             self.AU.set_refresh_rate(val);
         end
+        function res = get_refresh_rate(self)
+            res = double(self.AU.get_refresh_rate());
+        end
         function info = grab_imgs(self)
             res = cell(self.AU.grab_imgs());
             info.imgs = {};

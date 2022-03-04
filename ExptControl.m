@@ -34,6 +34,7 @@ classdef ExptControl < matlab.apps.AppBase
         function startupFcn(app)
             app.AU = AnalysisUser.get(Consts().MatlabURL);
             
+            app.RefreshRateinsEditField.Value = app.AU.get_refresh_rate;
             % start timers if needed
             app.ImgTimer = timer('ExecutionMode', 'fixedSpacing', 'Period', 2, ...
                                 'TimerFcn', {@(obj, event, app_obj) app_obj.processImgLoop(), app});

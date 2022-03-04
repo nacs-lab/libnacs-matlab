@@ -181,6 +181,10 @@ class AnalysisUser(object):
         with self.__data_lock:
             self.refresh_rate = val
 
+    def get_refresh_rate(self):
+        with self.__data_lock:
+            return self.refresh_rate
+
     def get_seq_num(self):
         # get cached
         pass
