@@ -334,7 +334,7 @@ classdef ExpSeq < RootSeq
         function set_global(self, g, val)
             if isempty(self.pyseq)
                 error('Sequence must be generated before accessing globals.');
-            end
+            end           
             assert(isa(g, 'SeqVal') && g.head == SeqVal.HGlobal);
             set_global(self.pyseq, uint32(g.args{1}), double(val));
         end

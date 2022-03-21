@@ -7,7 +7,7 @@ classdef DataProcessTools
             survival_loading_logical_cond = cond.SurvivalLoadingLogicals;
             survival_logical_cond = cond.SurvivalLogicals;
             if is_rearr
-                rearr_surv_logical_cond = cond.RearrSurvLoadingLogicals;
+                rearr_surv_logical_cond = cond.RearrSurvLoadingLogicals; %Defined in StartScan
             end
 
             num_sites = size(sal, 2);

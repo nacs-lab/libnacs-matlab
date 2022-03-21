@@ -83,6 +83,7 @@ classdef PlotProcessTools
         function plotLoadingInTime(figInfo, logicals, num_seq_per_grp, loading_logical_cond, single_atom_species, site_idxs)
             num = figInfo.fignum(1);
             bClear = figInfo.bClear(0);
+            bLeg = figInfo.bLeg(1);
             fig1 = figure(num); 
             if bClear
                 clf(fig1);
@@ -114,8 +115,10 @@ classdef PlotProcessTools
                     legend_string21{num_sites*(i-1)+n} = [logical_cond_2str(loading_logical_cond{i}, single_atom_species) ' (site ' int2str(site_idxs(n)) ')'];
                 end
             end
-            lgnd21=legend(legend_string21,'Location','eastoutside');
-            set(lgnd21,'color','none');
+            if bLeg
+                lgnd21=legend(legend_string21,'Location','eastoutside');
+                set(lgnd21,'color','none');
+            end
 
             box on
             if num_grp > 0
@@ -135,6 +138,7 @@ classdef PlotProcessTools
         function plotLoadsInTime(figInfo, unique_params, param_loads, param_loads_err, loading_logical_cond, single_atom_species, num_seq, site_idx)
             num = figInfo.fignum(1);
             bClear = figInfo.bClear(0);
+            bLeg = figInfo.bLeg(1);
             fig1 = figure(num); 
             if bClear
                 clf(fig1);
@@ -182,8 +186,11 @@ classdef PlotProcessTools
                     legend_string22{i} = logical_cond_2str(loading_logical_cond{i}, single_atom_species);
                 end
             end
-            lgnd22=legend(legend_string22,'Location','eastoutside');
-            set(lgnd22,'color','none');
+            if bLeg
+                lgnd22=legend(legend_string22,'Location','eastoutside');
+                set(lgnd22,'color','none');
+            end
+            
             box on
             xlabel({param_name_unit},'interpreter','none')
             ylabel('Loading rate')
@@ -267,6 +274,7 @@ classdef PlotProcessTools
             if bClear
                 clf(fig1);
             end
+            nSpecies = size(sData.rearr_success,1);
             subplot_triple = figInfo.subPlotTriple([1 1 1]);
             subplot(subplot_triple(1), subplot_triple(2), subplot_triple(3))
             plot_scale = figInfo.plot_scale(1);
@@ -274,11 +282,18 @@ classdef PlotProcessTools
             fname = figInfo.fname('');
             hold on;
             rearr_sd = sqrt(sData.rearr_success .* (1 - sData.rearr_success)) ./ sqrt(sData.rearr_n);
-            errorbar(unique_params/plot_scale, sData.rearr_success, rearr_sd, 'Linewidth', 1.0)
+            if nSpecies == 1
+                errorbar(unique_params/plot_scale, sData.rearr_success, rearr_sd, 'Linewidth', 1.0)
+            else
+                for i = 1:nSpecies
+                    errorbar(unique_params/plot_scale, sData.rearr_success(i,:), rearr_sd(i,:), 'Linewidth', 1.0)
+                end
+            end
             ylim([0 1])
             if length(unique_params) > 1
                 xlim([unique_params(1)- 0.1*(unique_params(end)-unique_params(1)), unique_params(end)+ 0.1*(unique_params(end)-unique_params(1))]/plot_scale);
             end
+            legend({'Na','Cs'})
             grid on; box on;
             xlabel({param_name_unit})
             ylabel('Rearrangement Survival')
@@ -307,6 +322,7 @@ classdef PlotProcessTools
             % param_loads should be a total
             num = figInfo.fignum(1);
             bClear = figInfo.bClear(0);
+            bLeg = figInfo.bLeg(1);
             fig1 = figure(num); 
             if bClear
                 clf(fig1);
@@ -316,6 +332,12 @@ classdef PlotProcessTools
             fname = figInfo.fname('');
             AuxPlotIdx = figInfo.AuxPlotIdx(0);
             AuxData = figInfo.AuxData([]);
+            AuxPlotInd = figInfo.AuxPlotInd([1,2]);
+            
+            %Throw out images not being plotted
+            ImgPlotInd = figInfo.ImgPlotInd(1:size(param_loads, 1));
+            param_loads = param_loads(ImgPlotInd,:,:);
+            
             num_imgs = size(param_loads, 1);
             num_sites = size(param_loads, 2);
             num_params = length(unique_params);
@@ -330,14 +352,17 @@ classdef PlotProcessTools
                     errorbar(1:num_sites, squeeze(param_loads(i,:,j)) / num_attempts_by_param(j), squeeze(param_loads_err(i,:,j)) / num_attempts_by_param(j), 'Color', ColorSet(j,:), 'Linewidth', 1.0)
                     legendstr{j} = sprintf('%s: %f', param_name_unit, unique_params(j) / plot_scale);
                 end
-                if i == AuxPlotIdx
+                if ismember(i,AuxPlotIdx)
+                    thisInd = AuxPlotInd(AuxPlotIdx == i);
                     for j = 1:num_params
-                        plot(1:num_sites, squeeze(AuxData(1,:,j)) / num_attempts_by_param(j), 'Color', ColorSet(j,:), 'Linewidth', 1.0, 'LineStyle', '--')
+                        plot(1:num_sites, squeeze(AuxData(thisInd,:,j)) / num_attempts_by_param(j), 'Color', ColorSet(j,:), 'Linewidth', 1.0, 'LineStyle', '--')
                     end
                 end
                 xlabel('Site index')
                 ylabel('Loading rate');
-                legend(legendstr);
+                if bLeg
+                    legend(legendstr);
+                end
             end
             if isfield(figInfo, 'fname')
                 annotation('textbox', [0.1, 0, 0.9, 0.05], 'string', figInfo.fname, 'EdgeColor', 'none', 'Interpreter', 'none')
