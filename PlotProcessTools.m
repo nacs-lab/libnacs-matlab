@@ -48,26 +48,33 @@ classdef PlotProcessTools
             if bClear
                 clf(fig1);
             end
-            num_rows = length(site_idxs);
             num_cols = size(signals, 1);
-            num_sites = num_rows;
+            if ~iscell(site_idxs)
+                tmpIdx = cell(num_cols,1);
+                for i = 1:num_cols
+                    tmpIdx{i} = site_idxs;
+                end
+                site_idxs = tmpIdx;
+            end
             plot_idx = 1;
-            for i = 1:num_rows
-                for n = 1:num_cols
-                    cutoff = cutoffs{n}(site_idxs(i));
+            for n = 1:num_cols
+                num_rows = length(site_idxs{n});
+                num_sites = num_rows;
+                for i = 1:num_rows
+                    cutoff = cutoffs{n}(site_idxs{n}(i));
                     subplot(num_rows, num_cols, plot_idx);
                     hold on;
-                    h_counts = histogram(signals(n,site_idxs(i),:),40);
+                    h_counts = histogram(signals(n,site_idxs{n}(i),:),40);
                     ymax = max(h_counts.Values(10:end)); % approx single atom hump
                     ylim([0, 2*ymax]);
                     plot([cutoff,cutoff],ylim,'-r');
                     if is_rearr
                         ind = find(img_for_cutoff == n);
                         if ~isempty(ind)
-                            plot([rearr_cutoff{ind}(site_idxs(i)), rearr_cutoff{ind}(site_idxs(i))],ylim,'-g');
+                            plot([rearr_cutoff{ind}(site_idxs{n}(i)), rearr_cutoff{ind}(site_idxs{n}(i))],ylim,'-g');
                         end
                     end
-                    title(['site #',num2str(site_idxs(i))]);
+                    title(['site #',num2str(site_idxs{n}(i))]);
                     if i == num_sites
                         xlabel('Counts');
                     end
@@ -94,25 +101,33 @@ classdef PlotProcessTools
             subplot_triple = figInfo.subPlotTriple([1 1 1]);
             subplot(subplot_triple(1), subplot_triple(2), subplot_triple(3))
             num_loading = size(logicals, 1);
-            num_sites = length(site_idxs);
-            num_grp = floor(size(logicals, 3) / num_seq_per_grp);
-            grp_loading = zeros(num_loading, num_sites, num_grp);
-%             grp_loading(num_loading, num_sites, num_grp) = 0;
-            legend_string21{num_loading * num_sites} = '';
-            ColorSet2 = nacstools.display.varycolorrainbow(num_sites * num_loading);
-            logicals = logicals(:,site_idxs,:);
+            if ~iscell(site_idxs)
+                tmpIdx = cell(num_loading,1);
+                for i = 1:num_loading
+                    tmpIdx{i} = site_idxs;
+                end
+                site_idxs = tmpIdx;
+            end
+            num_sites = [];
             for i = 1:num_loading
-                this_legend_string21{num_sites} = '';
+                num_sites(i) = length(site_idxs{i});
+            end
+            num_grp = floor(size(logicals, 3) / num_seq_per_grp);
+            grp_loading = zeros(num_loading, max(num_sites), num_grp);
+            legend_string21{sum(num_sites)} = '';
+            ColorSet2 = nacstools.display.varycolorrainbow(sum(num_sites));
+            for i = 1:num_loading
+                this_legend_string21{num_sites(i)} = '';
                 for j = 1:num_grp
                     grp_ind = ((j-1)*num_seq_per_grp+1):j*num_seq_per_grp;
-                    grp_loading(i,:,j) = sum(logicals(i,:,grp_ind),3)/num_seq_per_grp;
+                    grp_loading(i,:,j) = sum(logicals(i,site_idxs{i},grp_ind),3)/num_seq_per_grp;
                 end
-                for n = 1:num_sites
+                for n = 1:num_sites(i)
                     hold on;
-                    plot(num_seq_per_grp*[1:num_grp],squeeze(grp_loading(i,n,:)),'.-','Color',ColorSet2(num_sites * (i - 1) + n,:))
+                    plot(num_seq_per_grp*[1:num_grp],squeeze(grp_loading(i,n,:)),'.-','Color',ColorSet2(num_sites(i) * (i - 1) + n,:))
                     hold off
-                    this_legend_string21{n} = [logical_cond_2str(loading_logical_cond{i}, single_atom_species) ' (site ' int2str(site_idxs(n)) ')'];
-                    legend_string21{num_sites*(i-1)+n} = [logical_cond_2str(loading_logical_cond{i}, single_atom_species) ' (site ' int2str(site_idxs(n)) ')'];
+                    this_legend_string21{n} = [logical_cond_2str(loading_logical_cond{i}, single_atom_species) ' (site ' int2str(site_idxs{i}(n)) ')'];
+                    legend_string21{num_sites(i)*(i-1)+n} = [logical_cond_2str(loading_logical_cond{i}, single_atom_species) ' (site ' int2str(site_idxs{i}(n)) ')'];
                 end
             end
             if bLeg
@@ -151,37 +166,47 @@ classdef PlotProcessTools
             plot_scale = figInfo.plot_scale(1);
             num_params = length(unique_params);
             num_loading = size(param_loads, 1);
-            num_sites = length(site_idx);
-            ColorSet2 = nacstools.display.varycolorrainbow(num_sites * num_loading);
-            if num_sites > 1
-                param_loads = param_loads(:, site_idx, :);
+            
+            if ~iscell(site_idx)
+                tmpIdx = cell(num_loading,1);
+                for i = 1:num_loading
+                    tmpIdx{i} = site_idx;
+                end
+                site_idx = tmpIdx;
             end
-            if num_sites > 1
-                legend_string22{num_loading*(num_sites + 1)} = '';
+            num_sites = zeros(num_loading,1);
+            for i = 1:num_loading
+                num_sites(i) = length(site_idx{i});
+            end
+            
+            ColorSet2 = nacstools.display.varycolorrainbow(sum(num_sites));
+            if any(num_sites > 1)
+                param_loads = param_loads(:, site_idx, :);
+                legend_string22{sum(num_sites) + num_loading} = '';
             else
                 legend_string22{num_loading} = '';
             end
             %line_specs = {'rs','bs','ms','cs','gs','ys'};
             %ColorSet=nacstools.display.varycolor(num_sites);
             for i = 1:num_loading
-                for j = 1:num_sites
+                for j = 1:num_sites(i)
                     if num_params == 1
                         hold on;
                         errorbar(unique_params/plot_scale, squeeze(param_loads(i,j)), abs(param_loads_err(i,j)), 's','Linewidth',0.7);
                         hold off;
-                        legend_string22{(i-1)*(num_sites + 1)+j} = [logical_cond_2str(loading_logical_cond{i}, single_atom_species) '(site ' int2str(site_idx(j)) ')'];
+                        legend_string22{(i-1)*(num_sites(i) + 1)+j} = [logical_cond_2str(loading_logical_cond{i}, single_atom_species) '(site ' int2str(site_idx(j)) ')'];
                     elseif num_sites == 1
                         errorbar(unique_params/plot_scale, squeeze(param_loads(i,:)), abs(param_loads_err(i,:)), 's','Linewidth',0.7);
                     else
                         hold on;
-                        errorbar(unique_params/plot_scale, squeeze(param_loads(i,j,:)), squeeze(param_loads_err(i,j,:)), 's','Color',ColorSet2(num_sites * (i - 1) + j,:),'Linewidth',0.7);
+                        errorbar(unique_params/plot_scale, squeeze(param_loads(i,j,:)), squeeze(param_loads_err(i,j,:)), 's','Color',ColorSet2(num_sites(i) * (i - 1) + j,:),'Linewidth',0.7);
                         hold off
-                        legend_string22{(i-1)*(num_sites + 1)+j} = [logical_cond_2str(loading_logical_cond{i}, single_atom_species) '(site ' int2str(site_idx(j)) ')'];
+                        legend_string22{(i-1)*(num_sites(i) + 1)+j} = [logical_cond_2str(loading_logical_cond{i}, single_atom_species) '(site ' int2str(site_idx(j)) ')'];
                     end
                 end
 
-                if num_sites > 1
-                    legend_string22{i*(num_sites+1)} = logical_cond_2str(loading_logical_cond{i}, single_atom_species);
+                if num_sites(i) > 1
+                    legend_string22{i*(num_sites(i)+1)} = logical_cond_2str(loading_logical_cond{i}, single_atom_species);
                 else
                     legend_string22{i} = logical_cond_2str(loading_logical_cond{i}, single_atom_species);
                 end
@@ -217,22 +242,32 @@ classdef PlotProcessTools
             param_name_unit = figInfo.param_name_unit('');
             fname = figInfo.fname('');
             num_survival = size(surv_prob{1}, 1);
-            num_sites = length(site_idx);
-            ColorSet = nacstools.display.varycolorrainbow(num_sites);
+            if ~iscell(site_idx)
+                tmpIdx = cell(num_survival,1);
+                for i = 1:num_loading
+                    tmpIdx{i} = site_idx;
+                end
+                site_idx = tmpIdx;
+            end
+            num_sites = [];
+            for i = 1:num_survival
+                num_sites(i) = length(site_idx{i});
+            end
+            ColorSet = nacstools.display.varycolorrainbow(max(num_sites));
             ncol = num_survival;
             nrow = 1;
             for n = 1 : num_survival
-                if num_sites > 0
+                if num_sites(n) > 0
                     subplot(nrow, ncol, (nrow-1)*ncol+n); hold on;
                     title({['survive: image ' logical_cond_2str(survival_logical_cond{n}, single_atom_species)], ...
                         ['load: image ' logical_cond_2str(survival_loading_logical_cond{n}, single_atom_species)]})
                   %  line_specs = {'rs-','bs-','ms-','cs-','gs-','ys-'};
                     %legend_string3n1{num_sites+1} = '';
-                    legend_string3n1{num_sites} = ''; %if not plotting average
-                    for i = 1:num_sites
-                     errorbar(unique_params/plot_scale, squeeze(surv_prob{site_idx(i)}(n,:)), ...
-                            surv_err{site_idx(i)}(n,:), 'Color', ColorSet(i,:),'Linewidth',1.0);
-                        legend_string3n1{i} = ['site #',num2str(site_idx(i))];
+                    legend_string3n1{num_sites(n)} = ''; %if not plotting average
+                    for i = 1:num_sites(n)
+                     errorbar(unique_params/plot_scale, squeeze(surv_prob{site_idx{n}(i)}(n,:)), ...
+                            surv_err{site_idx{n}(i)}(n,:), 'Color', ColorSet(i,:),'Linewidth',1.0);
+                        legend_string3n1{i} = ['site #',num2str(site_idx{n}(i))];
                     end
                     hold off;
 

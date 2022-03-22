@@ -10,9 +10,12 @@ classdef ExptControl < matlab.apps.AppBase
         LastScanIDLabel               matlab.ui.control.Label
         LastSeqIDLabel                matlab.ui.control.Label
         RefreshRateinsEditFieldLabel  matlab.ui.control.Label
+        cBoxLabel                     matlab.ui.control.Label
+        dummyCBox                     matlab.ui.control.CheckBox
         RefreshRateinsEditField       matlab.ui.control.NumericEditField
         LastSavedFileLabel            matlab.ui.control.Label
         OpenAnalysisPanelButton       matlab.ui.control.Button
+        
     end
 
     
@@ -88,7 +91,7 @@ classdef ExptControl < matlab.apps.AppBase
                     this_info.seq_ids = info.seq_ids(start_idx:end_idx);
                     DM.store_new_data(this_info);
                     DM.process_data();
-                    DM.plot_data();
+                    DM.plot_data(0,app.dummyCBox.Value);
                     fname = DM.save_data();
                     start_idx = end_idx + 1;
                 end
@@ -238,8 +241,13 @@ classdef ExptControl < matlab.apps.AppBase
             app.OpenAnalysisPanelButton = uibutton(app.UIFigure, 'push');
             app.OpenAnalysisPanelButton.ButtonPushedFcn = createCallbackFcn(app, @OpenAnalysisPanelButtonPushed, true);
             app.OpenAnalysisPanelButton.FontSize = 24;
-            app.OpenAnalysisPanelButton.Position = [237 94 275 99];
+            app.OpenAnalysisPanelButton.Position = [237 94 275 80];
             app.OpenAnalysisPanelButton.Text = 'Open Analysis Panel';
+            
+            app.dummyCBox = uicheckbox(app.UIFigure,'Position',[237 180 242 42]);
+            app.dummyCBox.Value = 0;
+            app.dummyCBox.Text = 'Show dummy sites';
+            app.dummyCBox.FontSize = 18;
 
             % Show the figure after all components are created
             app.UIFigure.Visible = 'on';
