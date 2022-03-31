@@ -9,8 +9,8 @@ classdef PlotProcessTools
                 clf(fig1);
             end
             num_col = size(av_imgs, 3);
-            num_sites = size(single_atom_sites{1}, 1);
             for n = 1:num_col
+                num_sites = size(single_atom_sites{n},1);
                 subplot(1, num_col, n);
                 imagesc(-ceil(frame_size(2)/2) + 1, -floor(frame_size(1)/2), av_imgs(:,:,n));
                 colormap gray; shading flat; pbaspect([1,1,1]);   %axis equal;
@@ -56,11 +56,11 @@ classdef PlotProcessTools
                 end
                 site_idxs = tmpIdx;
             end
-            plot_idx = 1;
             for n = 1:num_cols
                 num_rows = length(site_idxs{n});
                 num_sites = num_rows;
                 for i = 1:num_rows
+                    plot_idx = (i-1)*num_cols + n;
                     cutoff = cutoffs{n}(site_idxs{n}(i));
                     subplot(num_rows, num_cols, plot_idx);
                     hold on;
@@ -80,7 +80,6 @@ classdef PlotProcessTools
                     end
 %                     ylabel('Frequency')
                     box on
-                    plot_idx = plot_idx + 1;
                 end
             end
             if isfield(figInfo, 'fname')
@@ -180,28 +179,28 @@ classdef PlotProcessTools
             end
             
             ColorSet2 = nacstools.display.varycolorrainbow(sum(num_sites));
-            if any(num_sites > 1)
-                param_loads = param_loads(:, site_idx, :);
-                legend_string22{sum(num_sites) + num_loading} = '';
-            else
-                legend_string22{num_loading} = '';
-            end
             %line_specs = {'rs','bs','ms','cs','gs','ys'};
             %ColorSet=nacstools.display.varycolor(num_sites);
             for i = 1:num_loading
+                if any(num_sites > 1)
+                    param_loads = param_loads(:, site_idx{i}, :);
+                    legend_string22{sum(num_sites) + num_loading} = '';
+                else
+                    legend_string22{num_loading} = '';
+                end
                 for j = 1:num_sites(i)
                     if num_params == 1
                         hold on;
                         errorbar(unique_params/plot_scale, squeeze(param_loads(i,j)), abs(param_loads_err(i,j)), 's','Linewidth',0.7);
                         hold off;
-                        legend_string22{(i-1)*(num_sites(i) + 1)+j} = [logical_cond_2str(loading_logical_cond{i}, single_atom_species) '(site ' int2str(site_idx(j)) ')'];
+                        legend_string22{(i-1)*(num_sites(i) + 1)+j} = [logical_cond_2str(loading_logical_cond{i}, single_atom_species) '(site ' int2str(site_idx{i}(j)) ')'];
                     elseif num_sites == 1
                         errorbar(unique_params/plot_scale, squeeze(param_loads(i,:)), abs(param_loads_err(i,:)), 's','Linewidth',0.7);
                     else
                         hold on;
                         errorbar(unique_params/plot_scale, squeeze(param_loads(i,j,:)), squeeze(param_loads_err(i,j,:)), 's','Color',ColorSet2(num_sites(i) * (i - 1) + j,:),'Linewidth',0.7);
                         hold off
-                        legend_string22{(i-1)*(num_sites(i) + 1)+j} = [logical_cond_2str(loading_logical_cond{i}, single_atom_species) '(site ' int2str(site_idx(j)) ')'];
+                        legend_string22{(i-1)*(num_sites(i) + 1)+j} = [logical_cond_2str(loading_logical_cond{i}, single_atom_species) '(site ' int2str(site_idx{i}(j)) ')'];
                     end
                 end
 
@@ -242,17 +241,20 @@ classdef PlotProcessTools
             param_name_unit = figInfo.param_name_unit('');
             fname = figInfo.fname('');
             num_survival = size(surv_prob{1}, 1);
+            
             if ~iscell(site_idx)
                 tmpIdx = cell(num_survival,1);
-                for i = 1:num_loading
+                for i = 1:num_survival
                     tmpIdx{i} = site_idx;
                 end
                 site_idx = tmpIdx;
             end
+            
             num_sites = [];
             for i = 1:num_survival
                 num_sites(i) = length(site_idx{i});
             end
+            
             ColorSet = nacstools.display.varycolorrainbow(max(num_sites));
             ncol = num_survival;
             nrow = 1;
