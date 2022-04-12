@@ -112,6 +112,9 @@ classdef ExpSeq < RootSeq
             if ~exist('off_val', 'var')
                 off_val = false;
             end
+            if off_delay < 0 || on_delay < 0 || skip_time < 0 || min_time < 0
+                error("TTL Manager input times must be positive or zero")
+            end
             % Only translate the name at this time since we don't want to assigned
             % a channel ID, (and therefore mark them used and initializing them)
             % just because we've specified the properties of these channels.
@@ -541,16 +544,16 @@ classdef ExpSeq < RootSeq
                     continue;
                 end
                 cid = cid_map(self.cid_cache(chnname));
-                off_delay = int32(ttl_manager.off_delay * self.time_scale);
-                on_delay = int32(ttl_manager.on_delay * self.time_scale);
-                skip_time = int32(ttl_manager.skip_time * self.time_scale);
-                min_time = int32(ttl_manager.min_time * self.time_scale);
+                off_delay = int64(ttl_manager.off_delay * self.time_scale);
+                on_delay = int64(ttl_manager.on_delay * self.time_scale);
+                skip_time = int64(ttl_manager.skip_time * self.time_scale);
+                min_time = int64(ttl_manager.min_time * self.time_scale);
                 off_val = ttl_manager.off_val ~= 0;
                 ttl_mgr_serialized = [typecast(cid, 'int8'), ... % [chn_id: 4B]
-                                      typecast(off_delay, 'int8'), ... % [off_delay: 4B]
-                                      typecast(on_delay, 'int8'), ... % [on_delay: 4B]
-                                      typecast(skip_time, 'int8'), ... % [skip_time: 4B]
-                                      typecast(min_time, 'int8'), ... % [min_time: 4B]
+                                      typecast(off_delay, 'int8'), ... % [off_delay: 8B]
+                                      typecast(on_delay, 'int8'), ... % [on_delay: 8B]
+                                      typecast(skip_time, 'int8'), ... % [skip_time: 8B]
+                                      typecast(min_time, 'int8'), ... % [min_time: 8B]
                                       int8(off_val), ... % [off_val: 1B]
                                      ];
                 if isKey(device_ttl_managers, devname)
