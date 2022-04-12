@@ -347,13 +347,16 @@ classdef PlotProcessTools
             end
             subplot_triple = figInfo.subPlotTriple([1 1 1]);
             subplot(subplot_triple(1), subplot_triple(2), subplot_triple(3))
-            hold on;
             histogram(n_loads(1,:), length(unique(n_loads(1,:))));
+            hold on;
+            histogram(n_loads(2,:), length(unique(n_loads(1,:))));
+            legend({"Na","Cs"})
             xlabel('Number of atoms loaded')
             ylabel('Counts')
             if isfield(figInfo, 'fname')
                 annotation('textbox', [0.1, 0, 0.9, 0.05], 'string', figInfo.fname, 'EdgeColor', 'none', 'Interpreter', 'none')
             end
+            hold off
         end
         function plotLoadingBySite(figInfo, unique_params, param_loads, param_loads_err, num_attempts_by_param, loading_logical_cond, single_atom_species)
             % param_loads should be a total
