@@ -131,7 +131,6 @@ classdef ScanAccessTracker < handle
                 return;
             end
             if fixed
-                return
                 msg = sprintf('Unused fixed parameters in scan #%d:', scan_idx);
             else
                 msg = sprintf('Unused scanning parameters in scan #%d:', scan_idx);
