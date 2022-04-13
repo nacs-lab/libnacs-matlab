@@ -78,7 +78,7 @@ classdef ExptControl < matlab.apps.AppBase
                     if isempty(new_scan_idx)
                         end_idx = nseqs;
                     else
-                        end_idx = start_idx + new_scan_idx - 1;
+                        end_idx = start_idx + new_scan_idx - 2;
                     end
                     % process, plot and save cur_scan_id images
                     if app.cur_scan_id > 0
