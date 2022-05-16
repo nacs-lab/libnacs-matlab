@@ -314,6 +314,7 @@ classdef PlotProcessTools
             end
             nSpecies = size(sData.rearr_success,1);
             subplot_triple = figInfo.subPlotTriple([1 1 1]);
+            legend_cell_arr = figInfo.Legend({'Na', 'Cs'});
             subplot(subplot_triple(1), subplot_triple(2), subplot_triple(3))
             plot_scale = figInfo.plot_scale(1);
             param_name_unit = figInfo.param_name_unit('');
@@ -331,7 +332,7 @@ classdef PlotProcessTools
             if length(unique_params) > 1
                 xlim([unique_params(1)- 0.1*(unique_params(end)-unique_params(1)), unique_params(end)+ 0.1*(unique_params(end)-unique_params(1))]/plot_scale);
             end
-            legend({'Na','Cs'})
+            legend(legend_cell_arr)
             grid on; box on;
             xlabel({param_name_unit})
             ylabel('Rearrangement Survival')

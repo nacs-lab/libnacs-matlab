@@ -12,13 +12,25 @@ classdef DataProcessTools
 
             num_sites = size(sal, 2);
             num_seq = size(sal, 3);
-
+            act_surv_loading_logical = zeros(length(survival_loading_logical_cond), num_sites, num_seq);
             loading_logical = find_logical(loading_logical_cond, sal, num_sites, num_seq);
             if is_rearr
+                % check for the ones that need to be rearranged.
+                rearr_idxs = zeros(1, length(rearr_surv_logical_cond));
+                for i = 1:length(rearr_surv_logical_cond)
+                    rearr_idxs(i) = rearr_surv_logical_cond{i};
+                end
                 [rearr_loading_logical, n_loads] = Alg.getRearrangedLogicals(loading_logical);
-                survival_loading_logical = find_logical(rearr_surv_logical_cond, rearr_loading_logical, num_sites, num_seq);
-                res.rearr_loading_logical = rearr_loading_logical;
-                res.n_loads = n_loads;
+                for i = 1:length(survival_loading_logical_cond)
+                    if ismember(i, rearr_idxs)
+                        act_surv_loading_logical(i,:,:) = find_logical({rearr_surv_logical_cond{i}}, rearr_loading_logical, num_sites, num_seq);
+                        res.n_loads = n_loads; % THIS IS A BUG I THINK.
+                    else
+                        % not rearranged
+                        act_surv_loading_logical(i,:,:) = find_logical({survival_loading_logical_cond{i}}, sal, num_sites, num_seq);
+                    end
+                end
+                survival_loading_logical = act_surv_loading_logical;
             else
                 survival_loading_logical = find_logical(survival_loading_logical_cond, sal, num_sites, num_seq);
             end
