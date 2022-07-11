@@ -3,8 +3,10 @@ classdef PlotProcessTools
         function plotAvgImg(figInfo, av_imgs, single_atom_sites, frame_size, box_size, single_atom_species)
             % figInfo is a DynProps to allow for default value settings
             num = figInfo.fignum(1);
+            figstr = figInfo.figstr('');
             bClear = figInfo.bClear(1);
-            fig1 = figure(num); 
+            fig1 = figure(num);
+            fig1.Name = figstr;
             if bClear
                 clf(fig1);
             end
@@ -43,8 +45,10 @@ classdef PlotProcessTools
         end
         function plotHistograms(figInfo, signals, cutoffs, site_idxs, is_rearr, rearr_cutoff, img_for_cutoff)
             num = figInfo.fignum(1);
+            figstr = figInfo.figstr('');
             bClear = figInfo.bClear(1);
-            fig1 = figure(num); 
+            fig1 = figure(num);
+            fig1.Name = figstr;
             if bClear
                 clf(fig1);
             end
@@ -88,9 +92,11 @@ classdef PlotProcessTools
         end
         function plotLoadingInTime(figInfo, logicals, num_seq_per_grp, loading_logical_cond, single_atom_species, site_idxs)
             num = figInfo.fignum(1);
-            bClear = figInfo.bClear(0);
+            figstr = figInfo.figstr('');
+            bClear = figInfo.bClear(1);
+            fig1 = figure(num);
+            fig1.Name = figstr;
             bLeg = figInfo.bLeg(1);
-            fig1 = figure(num); 
             if bClear
                 clf(fig1);
             end
@@ -151,9 +157,11 @@ classdef PlotProcessTools
         end
         function plotLoadsInTime(figInfo, unique_params, param_loads, param_loads_err, loading_logical_cond, single_atom_species, num_seq, site_idx)
             num = figInfo.fignum(1);
-            bClear = figInfo.bClear(0);
+            figstr = figInfo.figstr('');
+            bClear = figInfo.bClear(1);
+            fig1 = figure(num);
+            fig1.Name = figstr;
             bLeg = figInfo.bLeg(1);
-            fig1 = figure(num); 
             if bClear
                 clf(fig1);
             end
@@ -233,8 +241,10 @@ classdef PlotProcessTools
         end
         function plotSurvival(figInfo, unique_params, surv_prob, surv_err, survival_logical_cond, survival_loading_logical_cond, single_atom_species, site_idx)
             num = figInfo.fignum(1);
+            figstr = figInfo.figstr('');
             bClear = figInfo.bClear(1);
-            fig1 = figure(num); 
+            fig1 = figure(num);
+            fig1.Name = figstr;
             if bClear
                 clf(fig1);
             end
@@ -307,8 +317,10 @@ classdef PlotProcessTools
         end
         function plotRearrSuc(figInfo, unique_params, sData)
             num = figInfo.fignum(1);
-            bClear = figInfo.bClear(0);
-            fig1 = figure(num); 
+            figstr = figInfo.figstr('');
+            bClear = figInfo.bClear(1);
+            fig1 = figure(num);
+            fig1.Name = figstr;
             if bClear
                 clf(fig1);
             end
@@ -342,8 +354,10 @@ classdef PlotProcessTools
         end
         function plotNumAtomLoads(figInfo, n_loads)
             num = figInfo.fignum(1);
-            bClear = figInfo.bClear(0);
-            fig1 = figure(num); 
+            figstr = figInfo.figstr('');
+            bClear = figInfo.bClear(1);
+            fig1 = figure(num);
+            fig1.Name = figstr;
             if bClear
                 clf(fig1);
             end
@@ -360,9 +374,11 @@ classdef PlotProcessTools
         function plotLoadingBySite(figInfo, unique_params, param_loads, param_loads_err, num_attempts_by_param, loading_logical_cond, single_atom_species)
             % param_loads should be a total
             num = figInfo.fignum(1);
-            bClear = figInfo.bClear(0);
+            figstr = figInfo.figstr('');
+            bClear = figInfo.bClear(1);
+            fig1 = figure(num);
+            fig1.Name = figstr;
             bLeg = figInfo.bLeg(1);
-            fig1 = figure(num); 
             if bClear
                 clf(fig1);
             end
