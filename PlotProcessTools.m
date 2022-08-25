@@ -4,6 +4,8 @@ classdef PlotProcessTools
             % figInfo is a DynProps to allow for default value settings
             num = figInfo.fignum(1);
             bClear = figInfo.bClear(1);
+            bSquare = figInfo.bSquare(0);
+            bTitle = figInfo.bTitle(1);
             fig1 = figure(num); 
             if bClear
                 clf(fig1);
@@ -11,11 +13,16 @@ classdef PlotProcessTools
             num_col = size(av_imgs, 3);
             for n = 1:num_col
                 num_sites = size(single_atom_sites{n},1);
-                subplot(1, num_col, n);
+                if bSquare
+                    subplot(ceil(sqrt(num_col)), ceil(sqrt(num_col)), n);
+                else
+                    subplot(1, num_col, n);
+                end
                 imagesc(-ceil(frame_size(2)/2) + 1, -floor(frame_size(1)/2), av_imgs(:,:,n));
                 colormap gray; shading flat; pbaspect([1,1,1]);   %axis equal;
-
-                title(['Image #',num2str(n),' ',single_atom_species{n}])
+                if bTitle
+                    title(['Image #',num2str(n),' ',single_atom_species{n}])
+                end
 
                 sites = single_atom_sites{n};
                 if ~isempty(sites)
@@ -25,17 +32,20 @@ classdef PlotProcessTools
                         rad = ceil((box_size-1)/2);
                         x = site(1) - 0.5 - rad;%site(1)+round(frame_size/2)-0.5-rad;
                         y = site(2) - 0.5 - rad;%site(2)+round(frame_size/2)-0.5-rad;
-
-                        subplot(1, num_col, n); %(n-1)*num_col+1);
+                        if bSquare
+                            subplot(ceil(sqrt(num_col)), ceil(sqrt(num_col)), n);
+                        else
+                            subplot(1, num_col, n); %(n-1)*num_col+1);
+                        end
                         hold on;
                         rectangle('Position',[x, y, 2*rad+1, 2*rad+1],'EdgeColor','r');
                         t = text(x-1, y-1, num2str(i));
                         t.Color = 'red';
                         hold off;
-                        axis equal
-                        axis tight
                     end 
                 end
+                axis equal
+                axis tight
             end
             if isfield(figInfo, 'fname')
                 annotation('textbox', [0.1, 0, 0.9, 0.05], 'string', figInfo.fname, 'EdgeColor', 'none', 'Interpreter', 'none')
