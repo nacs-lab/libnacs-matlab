@@ -361,7 +361,7 @@ classdef NaCsDataLive < matlab.apps.AppBase
             app.LeaveemptytoincludeallsitesOtherwiseseparatesitesbycommaLabel = uilabel(app.UIFigure);
             app.LeaveemptytoincludeallsitesOtherwiseseparatesitesbycommaLabel.HorizontalAlignment = 'center';
             app.LeaveemptytoincludeallsitesOtherwiseseparatesitesbycommaLabel.Position = [12 248 379 30];
-            app.LeaveemptytoincludeallsitesOtherwiseseparatesitesbycommaLabel.WordWrap = 'on';
+%             app.LeaveemptytoincludeallsitesOtherwiseseparatesitesbycommaLabel.WordWrap = 'on';
             app.LeaveemptytoincludeallsitesOtherwiseseparatesitesbycommaLabel.Text = 'Leave empty to include all sites. Otherwise, separate sites by comma. -1 for average sites.';
 
             % Create ParamsEditFieldLabel
@@ -378,7 +378,7 @@ classdef NaCsDataLive < matlab.apps.AppBase
 
             % Create Label
             app.Label = uilabel(app.UIFigure);
-            app.Label.WordWrap = 'on';
+%             app.Label.WordWrap = 'on';
             app.Label.Position = [12 157 215 48];
             app.Label.Text = 'First number is scanidx, then comma separated list of dimension ScanDims. 0 specifies all members of that dimension';
 
@@ -428,7 +428,7 @@ classdef NaCsDataLive < matlab.apps.AppBase
 
             % Create Label_2
             app.Label_2 = uilabel(app.UIFigure);
-            app.Label_2.WordWrap = 'on';
+%             app.Label_2.WordWrap = 'on';
             app.Label_2.Position = [476 178 145 64];
             app.Label_2.Text = 'Index into loading logicals and survival logicals defined in StartScan';
 
@@ -453,7 +453,7 @@ classdef NaCsDataLive < matlab.apps.AppBase
             app.MessageLabel = uilabel(app.UIFigure);
             app.MessageLabel.HorizontalAlignment = 'center';
             app.MessageLabel.VerticalAlignment = 'top';
-            app.MessageLabel.WordWrap = 'on';
+%             app.MessageLabel.WordWrap = 'on';
             app.MessageLabel.FontSize = 14;
             app.MessageLabel.Position = [509 34 112 135];
             app.MessageLabel.Text = 'Message';
