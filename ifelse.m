@@ -13,9 +13,29 @@
 
 function res = ifelse(cond, v1, v2)
     % Scalar only. This should still work when `v1` or `v2` are `SeqVal`s.
-    if cond
-        res = v1;
+    if length(cond) > 1 && ~isa(cond, 'SeqVal')
+        % vectorized implementation. SeqVals return length of 1.
+        res = zeros(1, length(cond));
+        for i = 1:length(cond)
+            if cond(i)
+                if length(v1) > 1
+                    res(i) = v1(i);
+                else
+                    res(i) = v1;
+                end
+            else
+                if length(v2) > 1
+                    res(i) = v2(i);
+                else
+                    res(i) = v2;
+                end
+            end
+        end
     else
-        res = v2;
+        if cond
+            res = v1;
+        else
+            res = v2;
+        end
     end
 end
