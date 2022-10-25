@@ -91,7 +91,7 @@ classdef ExptControl < matlab.apps.AppBase
                     this_info.seq_ids = info.seq_ids(start_idx:end_idx);
                     DM.store_new_data(this_info);
                     DM.process_data();
-                    DM.plot_data(0,app.dummyCBox.Value);
+                    DM.plot_data(1,app.dummyCBox.Value);
                     fname = DM.save_data();
                     start_idx = end_idx + 1;
                 end
