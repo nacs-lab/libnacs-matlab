@@ -1,7 +1,12 @@
 classdef DataProcessTools
    
     methods(Static)
-        function res = getCondLogicals(cond, sal, is_rearr, Alg)
+        function res = getCondLogicals(cond, sal, is_rearr, Alg, new_idx)
+            % new_idx is the start point of new idxs that need to be rearranged. Do not
+            % redo work that already was done. 
+            if ~exist('new_idx', 'var')
+                new_idx = 0;
+            end
             res = struct();
             loading_logical_cond = cond.LoadingLogicals;
             survival_loading_logical_cond = cond.SurvivalLoadingLogicals;
@@ -20,7 +25,8 @@ classdef DataProcessTools
                 for i = 1:length(rearr_surv_logical_cond)
                     rearr_idxs(i) = rearr_surv_logical_cond{i};
                 end
-                [rearr_loading_logical, n_loads] = Alg.getRearrangedLogicals(loading_logical);
+                [rearr_loading_logical, n_loads] = Alg.getRearrangedLogicals(loading_logical(:,:, (new_idx + 1):end));
+                rearr_loading_logical = cat(3, zeros(size(rearr_loading_logical, 1), size(rearr_loading_logical, 2), new_idx), rearr_loading_logical);
                 for i = 1:length(survival_loading_logical_cond)
                     if ismember(i, rearr_idxs)
                         act_surv_loading_logical(i,:,:) = find_logical({rearr_surv_logical_cond{i}}, rearr_loading_logical, num_sites, num_seq);
