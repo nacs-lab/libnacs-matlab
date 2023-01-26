@@ -46,5 +46,8 @@ classdef Ops < handle
         function res = sigma_field_open_ij(ctx, i, j)
             res = Ops.sigma_field_open(ctx, i) * Ops.sigma_field_open(ctx, j);
         end
+        function res = sigma_field_close(ctx, idx, C)
+            res = (-1)^(idx) * (Ops.n(ctx, idx) - C);
+        end
     end
 end
