@@ -4,6 +4,13 @@ classdef Ops < handle
             % evaluates logical(i) on site i
             res = ctx.Z(i);
         end
+        function res = avg_n(ctx, site_nums)
+            res = 0;
+            for i = 1:length(site_nums)
+                res = res + Ops.n(ctx, site_nums(i));
+            end
+            res = res / length(site_nums);
+        end
         function res = nn(ctx, i, j)
             % evaluates logical(i) * logical(j) on sites i,j
             res = Ops.n(ctx, i) * Ops.n(ctx, j); 
