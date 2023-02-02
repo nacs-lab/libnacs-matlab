@@ -56,5 +56,22 @@ classdef Ops < handle
         function res = sigma_field_close(ctx, idx, C)
             res = (-1)^(idx) * (Ops.n(ctx, idx) - C);
         end
+        function res = HRyd1D(ctx, det, V, periodic)
+            % nearest neighbor only and in the Z basis
+            if ~exist('periodic', 'var')
+                periodic = 0;
+            end
+            res = 0;
+            for i = 1:(ctx.L)
+                res = res - det * Ops.n(ctx, i);
+                if i ~= ctx.L
+                    res = res + V * Ops.n(ctx, i) * Ops.n(ctx, i + 1);
+                else
+                    if periodic
+                        res = res + V * Ops.n(ctx, ctx.L) * Ops.n(ctx, 1);
+                    end
+                end
+            end
+        end
     end
 end
