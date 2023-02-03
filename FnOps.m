@@ -17,7 +17,7 @@ classdef FnOps < handle
         function res = nn(i, j)
             % evaluates logical(i) * logical(j) on sites i,j
             function result = fn(logs)
-                result = logs(i) * logs(j);
+                result = ~logs(i) * ~logs(j);
             end
             res = @fn;
         end
