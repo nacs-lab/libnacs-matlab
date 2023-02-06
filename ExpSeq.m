@@ -404,10 +404,13 @@ classdef ExpSeq < RootSeq
                     cb{:}(self);
                 end
                 init_run(self.pyseq);
+%                 after_init_run = toc
                 idx = 1;
                 while idx ~= 0
+%                     fprintf('bseq idx: %i\n', idx);
                     start_t = now() * 86400;
                     [idx, bseq_len] = run_bseq(self, idx);
+%                     after_bseq = toc
                 end
                 end_restarts = double(SeqManager.get_device_restart('AWG1'));
                 if (end_restarts ~= begin_restarts)
@@ -416,6 +419,7 @@ classdef ExpSeq < RootSeq
                 for cb = self.after_end_cbs
                     cb{:}(self);
                 end
+%                 after_end_cb = toc
             catch E
                 reset_globals(self, false);
                 rethrow(E);

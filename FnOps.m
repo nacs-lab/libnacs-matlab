@@ -132,7 +132,7 @@ classdef FnOps < handle
                 else
                     shifted_logs = [0, ryd_logs(1:(end - 1))];
                 end
-                result =  -det * sum(ryd_logs) + dot(ryd_logs, shifted_logs) * V;
+                result =  -det * sum(ryd_logs) + dot(double(ryd_logs), shifted_logs) * V;
             end
             res = @fn;
 %             res = 0;
