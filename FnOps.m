@@ -147,5 +147,26 @@ classdef FnOps < handle
 %                 end
 %             end
         end
+        function res = HRyd1Ds(dets, V, periodic, site_idxs)
+            % nearest neighbor only and in the Z basis, version which
+            % allows you to specify a detuning with a second argument to
+            % the function
+            if ~exist('periodic', 'var')
+                periodic = 0;
+            end
+            function result = fn(logs, k)
+                if ~exist('site_idxs', 'var')
+                    site_idxs = 1:length(logs);
+                end
+                ryd_logs = ~logs(site_idxs);
+                if periodic
+                    shifted_logs = [ryd_logs(end), ryd_logs(1:(end - 1))];
+                else
+                    shifted_logs = [0, ryd_logs(1:(end - 1))];
+                end
+                result =  -dets(k) * sum(ryd_logs) + dot(ryd_logs, shifted_logs) * V;
+            end
+            res = @fn;
+        end
     end
 end
