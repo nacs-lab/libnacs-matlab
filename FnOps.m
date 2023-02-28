@@ -7,6 +7,13 @@ classdef FnOps < handle
             end
             res = @fn;
         end
+        function res = z(i)
+            % evaluates logical(i) on site i
+            function result = fn(logs)
+                result = 2 * ~logs(i) - 1;
+            end
+            res = @fn;
+        end
         function res = avg_n(site_nums)
             % evaluates avg_n
             function result = fn(logs)
@@ -18,6 +25,13 @@ classdef FnOps < handle
             % evaluates logical(i) * logical(j) on sites i,j
             function result = fn(logs)
                 result = ~logs(i) * ~logs(j);
+            end
+            res = @fn;
+        end
+        function res = zz(i, j)
+            % evaluates logical(i) on site i
+            function result = fn(logs)
+                result = (2 * ~logs(i) - 1) * (2 * ~logs(j) - 1);
             end
             res = @fn;
         end
@@ -85,17 +99,17 @@ classdef FnOps < handle
 %                 res = res + (-1)^i * (Ops.n(ctx, idxs(i)) - 1/2) / N;
 %             end
         end
-        function res = sigma_field_open(idx)
+        function res = sigma_field_open(idx1, idx2)
             function result = fn(logs)
-                result = (-1)^(idx) * (~logs(idx) - ~logs(idx + 1));
+                result = (-1)^(idx1) * (~logs(idx1) - ~logs(idx2));
             end
             res = @fn;
 %             res = (-1)^(idx) * (Ops.n(ctx, idx) - Ops.n(ctx, idx + 1));
         end
-        function res = sigma_field_open_ij(i, j)
+        function res = sigma_field_open_ij(i1, i2, j1, j2)
             function result = fn(logs)
-                fn1 = FnOps.sigma_field_open(i);
-                fn2 = FnOps.sigma_field_open(j);
+                fn1 = FnOps.sigma_field_open(i1, i2);
+                fn2 = FnOps.sigma_field_open(j1, j2);
                 result = fn1(logs) * fn2(logs);
             end
             res = @fn;
@@ -165,6 +179,36 @@ classdef FnOps < handle
                     shifted_logs = [0, ryd_logs(1:(end - 1))];
                 end
                 result =  -dets(k) * sum(ryd_logs) + dot(ryd_logs, shifted_logs) * V;
+            end
+            res = @fn;
+        end
+        function res = MaxRydCluster(site_idxs, periodic)
+            function result = fn(logs)
+                if ~exist('site_idxs', 'var')
+                    site_idxs = 1:length(logs);
+                end
+                ryd_logs = ~logs(site_idxs);
+                if all(~ryd_logs)
+                    result = 0;
+                    return;
+                end
+                logs_to_consider = ryd_logs;
+                shift_logs = ryd_logs;
+                cluster_sz = 1;
+                for i = 1:(length(ryd_logs) - 1)
+                    if periodic
+                        shift_logs = [shift_logs(2:end), shift_logs(1)];
+                    else
+                        shift_logs = [shift_logs(2:end), 0];
+                    end
+                    logs_to_consider = logs_to_consider & shift_logs;
+                    if any(logs_to_consider)
+                        cluster_sz = cluster_sz + 1;
+                    else
+                        break;
+                    end
+                end
+                result = cluster_sz;
             end
             res = @fn;
         end
