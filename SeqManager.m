@@ -38,6 +38,7 @@ classdef SeqManager < handle
             end
         end
         function res = create_sequence(data)
+%             SeqManager.enable_debug();
             res = create_sequence(SeqManager.get(), PythonHack.convert_array(data));
         end
         function res = get_device_restart(dev_name)
