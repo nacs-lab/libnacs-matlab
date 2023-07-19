@@ -324,7 +324,9 @@ function params = runSeq2(func, varargin)
                     set_global(cur_seq, scanvariable{j}, scanvariable_value(j));
                 end
             end
+%             tic
             run_real(cur_seq);
+%             toc
             run_cb(post_cb, idx);
             if (cur_seq.C.RESTART(0))
                 retry = true;

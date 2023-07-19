@@ -94,6 +94,12 @@ classdef ExptControl < matlab.apps.AppBase
                     DM.plot_data(0,app.dummyCBox.Value);
                     fname = DM.save_data();
                     start_idx = end_idx + 1;
+                    if ~isempty(DM.seq_ids)
+                        if DM.endidx ~= length(DM.ParamList)
+%                             AbortRunSeq
+                            warning('Last seq id does not match number of seqs received!')
+                        end
+                    end
                 end
                 app.cur_seq_id = info.seq_ids(end);
                 app.LastScanIDLabel.Text = ['Last Scan ID: ' num2str(app.cur_scan_id)];
