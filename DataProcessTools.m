@@ -16,9 +16,13 @@ classdef DataProcessTools
             loading_logical = find_logical(loading_logical_cond, sal, num_sites, num_seq);
             if is_rearr
                 [rearr_loading_logical, n_loads] = Alg.getRearrangedLogicals(loading_logical);
-                survival_loading_logical = find_logical(rearr_surv_logical_cond, rearr_loading_logical, num_sites, num_seq);
                 res.rearr_loading_logical = rearr_loading_logical;
                 res.n_loads = n_loads;
+                if min(abs(cell2mat(survival_loading_logical_cond))) > min(abs(cell2mat(rearr_surv_logical_cond)))
+                    survival_loading_logical = find_logical(survival_loading_logical_cond, sal, num_sites, num_seq);
+                else
+                    survival_loading_logical = find_logical(rearr_surv_logical_cond, rearr_loading_logical, num_sites, num_seq); 
+                end
             else
                 survival_loading_logical = find_logical(survival_loading_logical_cond, sal, num_sites, num_seq);
             end
@@ -70,13 +74,26 @@ classdef DataProcessTools
             res.num_attempts_by_param = num_attempts;
         end
 
-        function res = getSurvivalByParam(param_list, survival_loading_logical, survival_logical)
+        function res = getSurvivalByParam(param_list, survival_loading_logical, survival_logical,site_idxs)
             % param_list is a list of parameters of the same size as the
             % third dimension of survival_loading_logical, survival_logical
             unique_params = unique(param_list);
             num_params = length(unique(param_list));
             num_survival = size(survival_loading_logical, 1);
             num_sites = size(survival_loading_logical, 2);
+            
+            if nargin < 4
+                site_idxs = cell(1,num_survival);
+                for i = 1:num_survival
+                    site_idxs{i} = 1:num_sites;
+                end
+            elseif ~iscell(site_idxs)
+                tmp_idx = {};
+                for i = 1:num_survival
+                    tmp_idx{i} = site_idxs;
+                end
+                site_idxs = tmp_idx;
+            end
 
             p_survival_all(num_survival, num_params) = 0;
             p_survival_err_all(num_survival, num_params) = 0;
@@ -86,8 +103,8 @@ classdef DataProcessTools
             for n = 1:num_survival
             % combine different sites
                 [p_survival_all(n,:), p_survival_err_all(n,:)] = ...
-                    find_survival(reshape(permute(survival_logical(n,:,:), [1,3,2]), 1, numel(survival_logical(n,:,:))),...
-                        reshape(permute(survival_loading_logical(n,:,:), [1,3,2]), 1, numel(survival_loading_logical(n,:,:))),...
+                    find_survival(reshape(permute(survival_logical(n,site_idxs{n},:), [1,3,2]), 1, numel(survival_logical(n,site_idxs{n},:))),...
+                        reshape(permute(survival_loading_logical(n,site_idxs{n},:), [1,3,2]), 1, numel(survival_loading_logical(n,site_idxs{n},:))),...
                         repmat(param_list, 1, num_sites), unique_params, num_params);
 
                 if num_sites > 0

@@ -20,7 +20,7 @@ for i = 1:length(logical_spec)
             if num_sites > 1
                 logical_temp = logical_temp .* not(squeeze(single_atom_logical(-ind,:,:)));
             else
-                logical_temp = logical_temp .* not(squeeze(single_atom_logical(-ind,:,:))');git 
+                logical_temp = logical_temp .* not(squeeze(single_atom_logical(-ind,:,:))');
             end
         end
     end

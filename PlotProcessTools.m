@@ -9,9 +9,11 @@ classdef PlotProcessTools
                 clf(fig1);
             end
             num_col = size(av_imgs, 3);
+            tiledlayout(ceil(num_col/5), 5, 'Padding', 'none', 'TileSpacing', 'compact'); 
             for n = 1:num_col
                 num_sites = size(single_atom_sites{n},1);
-                subplot(1, num_col, n);
+%                 subplot(ceil(num_col/5), 5, n);
+%                 subplot(2, 4, n);
                 imagesc(-ceil(frame_size(2)/2) + 1, -floor(frame_size(1)/2), av_imgs(:,:,n));
                 colormap gray; shading flat; pbaspect([1,1,1]);   %axis equal;
 
@@ -22,19 +24,25 @@ classdef PlotProcessTools
                     for i = 1:num_sites
                         % plot ROI for atom detection
                         site = sites(i,:);
-                        rad = ceil((box_size-1)/2);
-                        x = site(1) - 0.5 - rad;%site(1)+round(frame_size/2)-0.5-rad;
-                        y = site(2) - 0.5 - rad;%site(2)+round(frame_size/2)-0.5-rad;
+%                         rad = ceil((box_size-1)/2);
+                        rad =box_size/2;
+%                         x = site(1) - 0.5 - rad;%site(1)+round(frame_size/2)-0.5-rad;
+%                         y = site(2) - 0.5 - rad;%site(2)+round(frame_size/2)-0.5-rad;
+                         x = ceil(site(1) - rad) - 0.5;%site(1)+round(frame_size/2)-0.5-rad;
+                        y = ceil(site(2) -rad) - 0.5;%site(2)+round(frame_size/2)-0.5-rad;
 
-                        subplot(1, num_col, n); %(n-1)*num_col+1);
+%                         subplot(ceil(num_col/5), 5, n); %(n-1)*num_col+1);
                         hold on;
-                        rectangle('Position',[x, y, 2*rad+1, 2*rad+1],'EdgeColor','r');
+                        rectangle('Position',[x, y, 2*rad, 2*rad],'EdgeColor','r');
                         t = text(x-1, y-1, num2str(i));
                         t.Color = 'red';
                         hold off;
                         axis equal
                         axis tight
                     end 
+                end
+                if n~= num_col
+                    nexttile
                 end
             end
             if isfield(figInfo, 'fname')
@@ -285,7 +293,13 @@ classdef PlotProcessTools
                         xlabel({param_name_unit})
                     end
                     ylabel('Survival probability')
-                    legend(legend_string3n1)
+                    if num_survival == 2
+                        legend(legend_string3n1,'Location','Best')
+                    elseif num_survival == 7
+                        if n == 3 || n ==5 || n ==7
+                            legend(legend_string3n1,'Location','Best')
+                        end
+                    end
                 end
 
                 ylim([0 1])
@@ -373,6 +387,7 @@ classdef PlotProcessTools
             
             %Throw out images not being plotted
             ImgPlotInd = figInfo.ImgPlotInd(1:size(param_loads, 1));
+
             param_loads = param_loads(ImgPlotInd,:,:);
             
             num_imgs = size(param_loads, 1);
@@ -398,7 +413,7 @@ classdef PlotProcessTools
                 xlabel('Site index')
                 ylabel('Loading rate');
                 if bLeg
-                    legend(legendstr);
+                    legend(legendstr,'Location','Best');
                 end
             end
             if isfield(figInfo, 'fname')

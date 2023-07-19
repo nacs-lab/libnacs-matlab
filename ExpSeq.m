@@ -57,6 +57,8 @@ classdef ExpSeq < RootSeq
         %% Runtime
         pyseq;
         ni_channels;
+        ardnoTimer;
+        warnCount;
     end
 
     properties(Constant, Access=private)
@@ -97,6 +99,8 @@ classdef ExpSeq < RootSeq
             self.bseq_id = 1;
             self.zero_time = SeqTime.zero(self);
             self.curSeqTime = self.zero_time;
+%             self.ardnoTimer = ArduinoDelayF.get("serial","COM14");
+            self.warnCount = 0;
         end
 
         function bseq = newBasicSeq(self, cb, varargin)
@@ -359,8 +363,35 @@ classdef ExpSeq < RootSeq
                 cb{:}(self);
             end
 %             before_seq_cb = toc
+
+            if self.C.b.syncClock(0)
+                newOutput = self.ardnoTimer.servoDelay()/1e6;
+                measDelay =  self.ardnoTimer.PrevDelay;
+%                 res = self.ardnoTimer.getDelayP();
+%                 tPoll = res(1);
+%                 PrevDelay = res(2)/1e6;
+%                 if tPoll < 5
+%                     delay = 0;
+%                 else
+%                     delay = self.ardnoTimer.getDelayN()/1e6;
+%                     disp(['meas delay',num2str(delay)])
+%                 end
+                if min(measDelay,abs(8333 - measDelay)) > 2000
+                    self.warnCount = self.warnCount+1;
+                    if self.warnCount > 10
+                        warning('off','backtrace');
+                        warning('60 Hz sync error > 2 ms for at least 10 shots','backtrace','off')
+                        warning('on','backtrace');
+                        self.warnCount = 0;
+                    end
+                else
+                    self.warnCount = 0;
+                end
+%                 disp(['meas delay',num2str(measDelay)])
+            end
             pre_run(self.pyseq);
 %             after_pre_run = toc
+%             tic
             if ~isempty(self.ni_channels)
                 ni_nchns = length(self.ni_channels);
                 ni_data_raw = get_nidaq_data(self.pyseq, 'NiDAQ');
@@ -373,14 +404,21 @@ classdef ExpSeq < RootSeq
 %                 end
             end
 %             after_nidaq = toc
+%             tic
+            if self.C.b.syncClock(0)
+                t1 = GetSecs();
+                WaitSecs(min(0.05 - rem(t1,0.05) + newOutput,0.1));
+            end
             start(self.pyseq);
 %             after_start = toc
             while ~wait(self.pyseq, uint64(100))
             end
+%             toc
 %             after_pyseq_wait = toc
             if ~isempty(self.ni_channels)
                 NiDAQRunner.wait();
             end
+%             toc
 %             after_nidaq_wait = toc
             for cb = bseq.after_bseq_cbs
                 cb{:}(self);
@@ -408,6 +446,7 @@ classdef ExpSeq < RootSeq
                 while idx ~= 0
                     start_t = now() * 86400;
                     [idx, bseq_len] = run_bseq(self, idx);
+%                     disp(bseq_len/1e12)
                 end
                 end_restarts = double(SeqManager.get_device_restart('AWG1'));
                 if (end_restarts ~= begin_restarts)
