@@ -455,6 +455,106 @@ classdef ExpSeq < RootSeq
             end
             res = double(refresh_device_restart(self.pyseq, dev_name));
         end
+        
+        function [res_ts, res_datas] = getChnOutput(self, chn_name, cbs)
+            if ~exist('cbs', 'var')
+                 cbs_set = 0;
+%                 n_basic_seqs = length(self.basic_seqs) + 1;
+%                 cbs = cell(1, n_basic_seqs);
+%                 for i = 1:n_basic_seqs
+%                     cbs{i} = @(s) disp([]); % callback that does nothing
+%                 end
+            else
+                cbs_set = 1;
+            end
+            self.generate(1); % preserve channel names
+            % get channel id
+            if ~isKey(self.cid_cache, chn_name)
+                error('Channel not found')
+            else
+                cid = self.cid_cache(chn_name);
+            end
+            trans_name = self.channel_names{cid};
+            daq_channel = 0;
+            if ~startsWith(trans_name, 'NiDAQ') && ~startsWith(trans_name, 'FPGA')
+                error('Plotting for non NiDAQ/FPGA not yet implemented');
+            elseif startsWith(trans_name, 'NiDAQ')
+                daq_channel = 1;
+                split_name = strsplit(trans_name, '/');
+                chn_num = split_name{3}; % hard coded
+                chn_idx = 0;
+                for i = 1:length(self.ni_channels)
+                    if self.ni_channels(i).chn == str2double(chn_num)
+                        chn_idx = i;
+                        break;
+                    end
+                end
+                if chn_idx == 0
+                    error('NiDAQ channel not found');
+                end
+            else
+                % FPGA Channel
+                split_name = strsplit(trans_name, '/');
+            end
+            init_run(self.pyseq);
+            res_ts = {};
+            res_datas = {};
+            idx = 1;
+            while idx ~= 0
+                if ~cbs_set
+                    if idx == 1
+                        bseq = self;
+                    else
+                        bseq = self.basic_seqs{idx - 1};
+                    end
+                    for cb = bseq.before_bseq_cbs
+                        cb{:}(self);
+                    end
+                end
+                pre_run(self.pyseq);
+                if daq_channel
+                    SeqManager.enable_dump();
+                    clock = self.get_zynq_clock('FPGA1'); % hard coded
+                    data = self.get_nidaq_data('NiDAQ'); % hard coded
+                    
+                    ts = [];
+                    if mod(length(clock), 2) ~= 0
+                        error('Number of clock commands are not even');
+                    end
+                    for i = 1:2:length(clock)
+                        start_t = double(clock(i).time) / self.time_scale + 2e-6; % hard coded offset
+                        if clock(i).period == 0
+                            error('Non zero clock period expected');
+                        end
+                        interval = double(clock(i).period) * 20e-9; % 20 ns hard coded FPGA time scale
+                        if clock(i + 1).period ~= 0
+                            error('Zero clock period expected');
+                        end
+                        end_t = double(clock(i + 1).time) / self.time_scale;
+                        ts = [ts, start_t:interval:end_t];
+                    end
+                    res_ts{end + 1} = ts;
+                    res_datas{end + 1} = data(:, chn_idx); 
+                else
+                    res = self.get_zynq_val(split_name{1}, trans_name);
+                    res_ts{end + 1} = res{1};
+                    res_datas{end + 1} = res{2};
+                end
+                if cbs_set
+                    cbs{idx}(self);
+                else
+                    for cb = bseq.after_bseq_cbs
+                        cb{:}(self);
+                    end
+                end
+                idx = double(post_run(self.pyseq));
+                if ~cbs_set
+                    for cb = bseq.after_branch_cbs
+                        cb{:}(self);
+                    end
+                end
+            end
+        end
 
         % For debug use only
         function res = get_builder_dump(self)
@@ -491,6 +591,16 @@ classdef ExpSeq < RootSeq
         end
         function res = get_zynq_bytecode(self, name)
             res = uint8(get_zynq_bytecode(self.pyseq, name));
+        end
+        function res = get_zynq_val(self, name, chn_name)
+            if ~isKey(self.cid_cache, chn_name)
+                error('Zynq Channel not found');
+            end
+            chn_id = self.cid_cache(chn_name);
+            tup = cell(get_zynq_val(self.pyseq, name, uint32(chn_id)));
+            ts = double(tup{1}) * 10e-9; % 10 ns units
+            vals = double(tup{2});
+            res = {ts, vals};
         end
     end
 
