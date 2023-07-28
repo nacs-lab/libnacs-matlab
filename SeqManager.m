@@ -49,6 +49,10 @@ classdef SeqManager < handle
         function load_config_string(config)
             load_config_string(SeqManager.get(), config);
         end
+        function res = get_config_string(name)
+            conf_str = string(get_config_string(SeqManager.get(), name));
+            res = yaml.load(conf_str);
+        end
         function new_run()
             new_run(SeqManager.get());
         end
