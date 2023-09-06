@@ -44,7 +44,14 @@ Scan = getfields(scanp, 'AndorCenter', 'BoxSize', 'FrameSize', ...
                  'ImgsToSave');
 
 % Name of parameter to scan over
-Scan.ParamName = p.ParamName('');
+if isa(scangroup, 'ScanGroup')
+    def_param_name = '';
+    try
+        [~, def_param_name] = scangroup.get_scanaxis(1,1,1);
+    catch exception
+    end
+end
+Scan.ParamName = p.ParamName(def_param_name);
 % Units of the parameter
 Scan.ParamUnits = p.ParamUnits('');
 % x-axis scale for plots.  Enter 1e-6 for micro, 1e3 for kilo, etc.
