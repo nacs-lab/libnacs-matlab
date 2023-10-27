@@ -28,6 +28,13 @@ classdef FnOps < handle
             end
             res = @fn;
         end
+        function res = nn_all(idxs1, idxs2)
+            function result = fn(logs)
+                result = transpose(~logs(idxs1)) * ~logs(idxs2);
+                result = reshape(result, [1, length(idxs1) * length(idxs2)]);
+            end
+            res = @fn;
+        end
         function res = zz(i, j)
             % evaluates logical(i) on site i
             function result = fn(logs)
@@ -183,6 +190,7 @@ classdef FnOps < handle
             res = @fn;
         end
         function res = MaxRydCluster(site_idxs, periodic)
+            % 1D version
             function result = fn(logs)
                 if ~exist('site_idxs', 'var')
                     site_idxs = 1:length(logs);
@@ -209,6 +217,19 @@ classdef FnOps < handle
                     end
                 end
                 result = cluster_sz;
+            end
+            res = @fn;
+        end
+        function res = GenMaxRydCluster(coords, blockade_r, sites_to_consider)
+            function result = fn(logs)
+                aa = AtomArray.calcArray(coords, blockade_r, ~logs, sites_to_consider);
+                sets = aa.getConnSets();
+                szs = cellfun(@(x) length(x), sets);
+                if isempty(sets)
+                    result = 0;
+                else
+                    result = max(szs);
+                end
             end
             res = @fn;
         end
