@@ -30,7 +30,7 @@ classdef FnOps < handle
         end
         function res = nn_all(idxs1, idxs2)
             function result = fn(logs)
-                result = transpose(~logs(idxs1)) * ~logs(idxs2);
+                result = double(transpose(~logs(idxs1))) * double(~logs(idxs2));
                 result = reshape(result, [1, length(idxs1) * length(idxs2)]);
             end
             res = @fn;
