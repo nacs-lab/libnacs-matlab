@@ -15,7 +15,6 @@ classdef ExptControl < matlab.apps.AppBase
         RefreshRateinsEditField       matlab.ui.control.NumericEditField
         LastSavedFileLabel            matlab.ui.control.Label
         OpenAnalysisPanelButton       matlab.ui.control.Button
-        
     end
 
     
@@ -24,6 +23,7 @@ classdef ExptControl < matlab.apps.AppBase
         refresh_rate % for AU 
         cur_seq_id = 0
         cur_scan_id = 0
+        flush_error = 0
         
         ImgTimer;
         StatusTimer;
@@ -57,7 +57,7 @@ classdef ExptControl < matlab.apps.AppBase
                     return
                 end
                 start_idx = 1;
-                if app.cur_scan_id ~= 0 && app.cur_scan_id ~= info.scan_ids(1)
+                if app.cur_scan_id ~= 0 && app.cur_scan_id ~= info.scan_ids(1) && ~app.flush_error
                     % if next batch consists of a new scan. Flush out the data
                     % manager associated with the scan. 
                     if app.cur_scan_id > 0
@@ -68,6 +68,9 @@ classdef ExptControl < matlab.apps.AppBase
                     DM.process_data(1);
                     DM.plot_data(1);
                     DM.save_data(1);
+                end
+                if app.flush_error
+                    app.flush_error = 0;
                 end
                 while start_idx <= nseqs
                     end_idx = nseqs;
@@ -101,6 +104,7 @@ classdef ExptControl < matlab.apps.AppBase
                 app.LastSavedFileLabel.Text = ['Last Saved File: ' fname];
             catch me
                 disp(getReport(me, 'extended', 'hyperlinks', 'on'))
+                app.flushError();
             end
         end
         
@@ -120,6 +124,7 @@ classdef ExptControl < matlab.apps.AppBase
                 app.StatusLabel.Text = ['Status: ' state_str];
             catch me
                 disp(getReport(me, 'extended', 'hyperlinks', 'on'))
+                app.flushError();
             end
         end
 
@@ -148,6 +153,10 @@ classdef ExptControl < matlab.apps.AppBase
               DM.process_data(1);
               DM.plot_data(1);
               DM.save_data(1);
+        end
+        
+        function flushError(app)
+            app.flush_error = 1;
         end
 
         % Value changed function: RefreshRateinsEditField
