@@ -50,7 +50,7 @@ classdef DataProcessTools
             res.survival_logical = survival_logical;
         end
 
-        function res = getLoadsByParam(params, logicals)
+        function res = getLoadsByParam(params, logicals, sites_to_avg)
             % params is a list of params in a group
             num_seq = size(logicals, 3);
 
@@ -59,6 +59,17 @@ classdef DataProcessTools
             param_list_all = repmat(params, 1, ceil(num_seq / length(params)));
             num_loading = size(logicals, 1);
             num_sites = size(logicals, 2);
+            if ~exist('sites_to_avg', 'var')
+                sites_to_avg = 1:num_sites;
+            end
+            
+            if ~iscell(sites_to_avg)
+                tmpIdx = cell(num_loading,1);
+                for i = 1:num_loading
+                    tmpIdx{i} = sites_to_avg;
+                end
+                sites_to_avg = tmpIdx;
+            end
             
             param_loads(num_loading, num_sites, num_params) = 0;
             param_loads_err(num_loading, num_sites, num_params) = 0;
@@ -74,7 +85,7 @@ classdef DataProcessTools
                     [param_loads(i,j,:), param_loads_err(i,j,:), param_loads_prob(i,j,:), param_loads_err_prob(i,j,:), num_attempts] = find_param_loads(logicals(i, j, :), param_list_all);
                 end
                 [param_loads_all(i,:), param_loads_err_all(i,:), param_loads_all_prob(i,:), param_loads_err_all_prob(i,:)] = ...
-                    find_param_loads(reshape(permute(logicals(i,:,:), [1,3,2]), 1, numel(logicals(i,:,:))), repmat(param_list_all, [1, num_sites]));
+                    find_param_loads(reshape(permute(logicals(i,sites_to_avg{i},:), [1,3,2]), 1, numel(logicals(i,sites_to_avg{i},:))), repmat(param_list_all, [1, length(sites_to_avg{i})]));
             end
             res = struct();
             res.param_loads = param_loads;
@@ -88,13 +99,25 @@ classdef DataProcessTools
             res.num_attempts_by_param = num_attempts;
         end
 
-        function res = getSurvivalByParam(param_list, survival_loading_logical, survival_logical)
+        function res = getSurvivalByParam(param_list, survival_loading_logical, survival_logical, sites_to_avg)
             % param_list is a list of parameters of the same size as the
             % third dimension of survival_loading_logical, survival_logical
             unique_params = unique(param_list);
             num_params = length(unique(param_list));
             num_survival = size(survival_loading_logical, 1);
             num_sites = size(survival_loading_logical, 2);
+            
+            if ~exist('sites_to_avg', 'var')
+                sites_to_avg = 1:num_sites;
+            end
+            
+            if ~iscell(sites_to_avg)
+                tmpIdx = cell(num_survival,1);
+                for i = 1:num_loading
+                    tmpIdx{i} = sites_to_avg;
+                end
+                sites_to_avg = tmpIdx;
+            end
 
             p_survival_all(num_survival, num_params) = 0;
             p_survival_err_all(num_survival, num_params) = 0;
@@ -104,9 +127,9 @@ classdef DataProcessTools
             for n = 1:num_survival
             % combine different sites
                 [p_survival_all(n,:), p_survival_err_all(n,:)] = ...
-                    find_survival(reshape(permute(survival_logical(n,:,:), [1,3,2]), 1, numel(survival_logical(n,:,:))),...
-                        reshape(permute(survival_loading_logical(n,:,:), [1,3,2]), 1, numel(survival_loading_logical(n,:,:))),...
-                        repmat(param_list, 1, num_sites), unique_params, num_params);
+                    find_survival(reshape(permute(survival_logical(n,sites_to_avg{n},:), [1,3,2]), 1, numel(survival_logical(n,sites_to_avg{n},:))),...
+                        reshape(permute(survival_loading_logical(n,sites_to_avg{n},:), [1,3,2]), 1, numel(survival_loading_logical(n,sites_to_avg{n},:))),...
+                        repmat(param_list, 1, length(sites_to_avg{n})), unique_params, num_params);
 
                 if num_sites > 0
                     for i = 1:num_sites

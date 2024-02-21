@@ -237,7 +237,7 @@ classdef PlotProcessTools
             
             box on
             xlabel({param_name_unit},'interpreter','none')
-            ylabel('Loading rate')
+            ylabel(['# Loads, Tot: ' num2str(num_seq/num_params)])
             set(gca,'ygrid','on')
             if length(unique_params) > 1
                 xlim([unique_params(1)- 0.1*(unique_params(end)-unique_params(1)),unique_params(end)+ 0.1*(unique_params(end)-unique_params(1))]/plot_scale)  ;
@@ -245,6 +245,7 @@ classdef PlotProcessTools
             ylim([0, num_seq / num_params]); % yl(2)]); %set y min to 0.
 
             yyaxis right
+            ylabel('Loading rate')
             ylim([0, 1])
             if isfield(figInfo, 'fname')
                 annotation('textbox', [0.1, 0, 0.9, 0.05], 'string', figInfo.fname, 'EdgeColor', 'none', 'Interpreter', 'none')
