@@ -113,7 +113,7 @@ classdef DataProcessTools
             
             if ~iscell(sites_to_avg)
                 tmpIdx = cell(num_survival,1);
-                for i = 1:num_loading
+                for i = 1:num_survival
                     tmpIdx{i} = sites_to_avg;
                 end
                 sites_to_avg = tmpIdx;
