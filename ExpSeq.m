@@ -362,7 +362,7 @@ classdef ExpSeq < RootSeq
             if isempty(self.pyseq)
                 error('Sequence must be generated before running.');
             end
-%             if idx == 1
+%             if idx == 2
 %                 tic;
 %             end
             % Basic sequence 1 is the `ExpSeq`, the rest are in the `basic_seqs` array.
@@ -371,6 +371,7 @@ classdef ExpSeq < RootSeq
             else
                 bseq = self.basic_seqs{idx - 1};
             end
+%             before_anything = toc
             for cb = bseq.before_bseq_cbs
                 cb{:}(self);
             end
@@ -426,6 +427,9 @@ classdef ExpSeq < RootSeq
             while ~wait(self.pyseq, uint64(100))
             end
 %             toc
+%             if idx == 2
+%                 tic;
+%             end
 %             after_pyseq_wait = toc
             if ~isempty(self.ni_channels)
                 NiDAQRunner.wait();
@@ -443,6 +447,7 @@ classdef ExpSeq < RootSeq
                 cb{:}(self);
             end
 %             after_after_branch = toc
+
         end
 
         function run_real(self)
@@ -539,9 +544,9 @@ classdef ExpSeq < RootSeq
         function res = get_zynq_bytecode(self, name)
             res = uint8(get_zynq_bytecode(self.pyseq, name));
         end
-    end
-
-    methods(Access=?TimeSeq)
+        end
+        
+        methods(Access=?TimeSeq)
         function g = newGlobalReal(self, persist, type, init_val)
             if ~exist('init_val', 'var')
                 init_val = 0;

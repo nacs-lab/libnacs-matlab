@@ -57,6 +57,8 @@ if Scan.Rearrangement
     Scan.Rearr.cutoffs = {RearrConsts.cutoffs}; % TODO: generalize this to more images.
     Scan.Rearr.imgForCutoff = RearrConsts.imgForCutoff;
 end
+Scan.RearrMolecules = scanp.RearrMolecules(0);
+
 % Parameter values to scan over.  Some helpful custom functions might be
 % stack, scramble, QuasirandomList.  Parameter values are in the units used
 % in the sequence.
