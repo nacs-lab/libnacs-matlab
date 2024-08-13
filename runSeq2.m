@@ -331,6 +331,7 @@ function params = runSeq2(func, varargin)
             if (cur_seq.C.RESTART(0))
                 retry = true;
                 fprintf("Really retrying sequence in runSeq2!\n");
+                pause(1);
             end
     %         % If we are using NumGroup to run sequences in groups, pause every
     %         % NumGroup sequences.

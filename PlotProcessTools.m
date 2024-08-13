@@ -299,6 +299,8 @@ classdef PlotProcessTools
                         if n == 3 || n ==5 || n ==7
                             legend(legend_string3n1,'Location','Best')
                         end
+                    else
+                        legend(legend_string3n1,'Location','Best')
                     end
                 end
 
