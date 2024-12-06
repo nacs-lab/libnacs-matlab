@@ -70,6 +70,13 @@ end
 % in the sequence.
 Params = 1:nseqs;
 
+%% Get slm config
+
+Cs_client = SLMClient.get(Consts().CsSLMURL);
+Na_client = SLMClient.get(Consts().NaSLMURL);
+Scan.CsSLMConfig = Cs_client.get_status();
+Scan.NaSLMConfig = Na_client.get_status();
+
 %%
 % Number of sequences to run between acquisitions of images from the
 % camera.  Must be >1.  Set this to be such that the time delay between
