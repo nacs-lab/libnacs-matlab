@@ -22,7 +22,7 @@ end
 
 param_loads = histcounts(param_list(loads_ind), edges);
 param_loading = param_loads ./ (num_attempts);
-param_loading_err = sqrt(param_loading .* (1-param_loading));
+param_loading_err = sqrt(param_loading .* (1-param_loading) ./num_attempts);
 % resolve NaN in case no attempts were made
 param_loading(isnan(param_loading)) = 0;
 param_loads_err = num_attempts .* sqrt(param_loading.*(1-param_loading)./(num_attempts));
