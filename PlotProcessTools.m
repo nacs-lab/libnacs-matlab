@@ -181,9 +181,27 @@ classdef PlotProcessTools
             
             param_name_unit = figInfo.param_name_unit('');
             
-            plot_scale = figInfo.plot_scale(1);
-            num_params = length(unique_params);
             num_loading = size(param_loads, 1);
+            plot_scale = figInfo.plot_scale(1);
+            % for unique_params, backwards compatibility, check if not a
+            % cell array for each image
+            if ~iscell(unique_params)
+                unique_params_temp = cell(1, num_loading);
+                for i = 1:num_loading
+                    unique_params_temp{i} = unique_params;
+                end
+                unique_params = unique_params_temp;
+            end
+            % same for param_name_unit
+            if ~iscell(param_name_unit)
+                param_name_unit_temp = cell(1, num_loading);
+                for i = 1:num_loading
+                    param_name_unit_temp{i} = param_name_unit;
+                end
+                param_name_unit = param_name_unit_temp;
+            end
+            num_params = length(unique_params{1});
+            
             
             if ~iscell(site_idx)
                 tmpIdx = cell(num_loading,1);
@@ -201,6 +219,7 @@ classdef PlotProcessTools
             %line_specs = {'rs','bs','ms','cs','gs','ys'};
             %ColorSet=nacstools.display.varycolor(num_sites);
             for i = 1:num_loading
+                this_unique_params = unique_params{i};
                 if any(num_sites > 1)
                     param_loads_crop = param_loads(:, site_idx{i}, :);
                     legend_string22{sum(num_sites) + num_loading} = '';
@@ -211,14 +230,14 @@ classdef PlotProcessTools
                 for j = 1:num_sites(i)
                     if num_params == 1
                         hold on;
-                        errorbar(unique_params/plot_scale, squeeze(param_loads_crop(i,j)), abs(param_loads_err(i,j)), 's','Linewidth',0.7);
+                        errorbar(this_unique_params/plot_scale, squeeze(param_loads_crop(i,j)), abs(param_loads_err(i,j)), 's','Linewidth',0.7);
                         hold off;
                         legend_string22{(i-1)*(num_sites(i) + 1)+j} = [logical_cond_2str(loading_logical_cond{i}, single_atom_species) '(site ' int2str(site_idx{i}(j)) ')'];
                     elseif num_sites == 1
-                        errorbar(unique_params/plot_scale, squeeze(param_loads_crop(i,:)), abs(param_loads_err(i,:)), 's','Linewidth',0.7);
+                        errorbar(this_unique_params/plot_scale, squeeze(param_loads_crop(i,:)), abs(param_loads_err(i,:)), 's','Linewidth',0.7);
                     else
                         hold on;
-                        errorbar(unique_params/plot_scale, squeeze(param_loads_crop(i,j,:)), squeeze(param_loads_err(i,j,:)), 's','Color',ColorSet2(num_sites(i) * (i - 1) + j,:),'Linewidth',0.7);
+                        errorbar(this_unique_params/plot_scale, squeeze(param_loads_crop(i,j,:)), squeeze(param_loads_err(i,j,:)), 's','Color',ColorSet2(num_sites(i) * (i - 1) + j,:),'Linewidth',0.7);
                         hold off
                         legend_string22{(i-1)*(num_sites(i) + 1)+j} = [logical_cond_2str(loading_logical_cond{i}, single_atom_species) '(site ' int2str(site_idx{i}(j)) ')'];
                     end
@@ -236,11 +255,11 @@ classdef PlotProcessTools
             end
             
             box on
-            xlabel({param_name_unit},'interpreter','none')
+            xlabel({param_name_unit{i}},'interpreter','none')
             ylabel(['# Loads, Tot: ' num2str(num_seq/num_params)])
             set(gca,'ygrid','on')
-            if length(unique_params) > 1
-                xlim([unique_params(1)- 0.1*(unique_params(end)-unique_params(1)),unique_params(end)+ 0.1*(unique_params(end)-unique_params(1))]/plot_scale)  ;
+            if length(this_unique_params) > 1
+                xlim([this_unique_params(1)- 0.1*(this_unique_params(end)-this_unique_params(1)),this_unique_params(end)+ 0.1*(this_unique_params(end)-this_unique_params(1))]/plot_scale)  ;
             end
             ylim([0, num_seq / num_params]); % yl(2)]); %set y min to 0.
 
