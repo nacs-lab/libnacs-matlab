@@ -234,7 +234,7 @@ classdef PlotProcessTools
                         hold off;
                         legend_string22{(i-1)*(num_sites(i) + 1)+j} = [logical_cond_2str(loading_logical_cond{i}, single_atom_species) '(site ' int2str(site_idx{i}(j)) ')'];
                     elseif num_sites == 1 && ndims(param_loads_crop) == 2 % check this
-                        errorbar(unique_params/plot_scale, squeeze(param_loads_crop(i,:)), abs(param_loads_err(i,:)), 's','Linewidth',0.7);
+                        errorbar(this_unique_params/plot_scale, squeeze(param_loads_crop(i,:)), abs(param_loads_err(i,:)), 's','Linewidth',0.7);
                     else
                         hold on;
                         errorbar(this_unique_params/plot_scale, squeeze(param_loads_crop(i,j,:)), squeeze(param_loads_err(i,j,:)), 's','Color',ColorSet2(num_sites(i) * (i - 1) + j,:),'Linewidth',0.7);
