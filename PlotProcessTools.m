@@ -17,6 +17,8 @@ classdef PlotProcessTools
                 num_sites = size(single_atom_sites{n},1);
                 if bSquare
                     subplot(ceil(sqrt(num_col)), ceil(sqrt(num_col)), n);
+                elseif size(av_imgs, 2) > size(av_imgs, 1)
+                    subplot(num_col, 1, n);
                 else
                     subplot(1, num_col, n);
                 end
@@ -101,6 +103,7 @@ classdef PlotProcessTools
             end
         end
         function plotLoadingInTime(figInfo, logicals, num_seq_per_grp, loading_logical_cond, single_atom_species, site_idxs)
+            % This plots the loading as a function of time
             num = figInfo.fignum(1);
             figstr = figInfo.figstr('');
             bClear = figInfo.bClear(1);
@@ -165,7 +168,8 @@ classdef PlotProcessTools
                 annotation('textbox', [0.1, 0, 0.9, 0.05], 'string', figInfo.fname, 'EdgeColor', 'none', 'Interpreter', 'none')
             end
         end
-        function plotLoadsInTime(figInfo, unique_params, param_loads, param_loads_err, loading_logical_cond, single_atom_species, num_seq, site_idx)
+        function plotLoadsForParameter(figInfo, unique_params, param_loads, param_loads_err, loading_logical_cond, single_atom_species, num_seq, site_idx)
+            % This function loading as a function of parameter
             num = figInfo.fignum(1);
             figstr = figInfo.figstr('');
             bClear = figInfo.bClear(1);
