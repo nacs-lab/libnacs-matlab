@@ -286,7 +286,29 @@ classdef PlotProcessTools
             param_name_unit = figInfo.param_name_unit('');
             fname = figInfo.fname('');
             num_survival = size(surv_prob{1}, 1);
+
+            %% Block for determining unique_params for plotting x axis
+
+            % for unique_params, backwards compatibility, check if not a
+            % cell array for each image
+            if ~iscell(unique_params)
+                unique_params_temp = cell(1, num_survival);
+                for i = 1:num_loading
+                    unique_params_temp{i} = unique_params;
+                end
+                unique_params = unique_params_temp;
+            end
+            % same for param_name_unit
+            if ~iscell(param_name_unit)
+                param_name_unit_temp = cell(1, num_survival);
+                for i = 1:num_loading
+                    param_name_unit_temp{i} = param_name_unit;
+                end
+                param_name_unit = param_name_unit_temp;
+            end
+            num_params = length(unique_params{1});
             
+            %% Block for choosing sites to plot
             if ~iscell(site_idx)
                 tmpIdx = cell(num_survival,1);
                 for i = 1:num_survival
@@ -300,10 +322,12 @@ classdef PlotProcessTools
                 num_sites(i) = length(site_idx{i});
             end
             
+            %%
             ColorSet = nacstools.display.varycolorrainbow(max(num_sites));
             ncol = num_survival;
             nrow = 1;
-            for n = 1 : num_survival
+            for n = 1:num_survival
+                this_unique_params = unique_params{n};
                 if num_sites(n) > 0
                     subplot(nrow, ncol, (nrow-1)*ncol+n); hold on;
                     title({['survive: image ' logical_cond_2str(survival_logical_cond{n}, single_atom_species)], ...
@@ -312,37 +336,37 @@ classdef PlotProcessTools
                     %legend_string3n1{num_sites+1} = '';
                     legend_string3n1{num_sites(n)} = ''; %if not plotting average
                     for i = 1:num_sites(n)
-                     errorbar(unique_params/plot_scale, squeeze(surv_prob{site_idx{n}(i)}(n,:)), ...
+                     errorbar(this_unique_params/plot_scale, squeeze(surv_prob{site_idx{n}(i)}(n,:)), ...
                             surv_err{site_idx{n}(i)}(n,:), 'Color', ColorSet(i,:),'Linewidth',1.0);
                         legend_string3n1{i} = ['site #',num2str(site_idx{n}(i))];
                     end
                     hold off;
 
                     ylim([0 1])
-                    if length(unique_params) > 1
-                        lims = sort([unique_params(1)- 0.1*(unique_params(end)-unique_params(1)), unique_params(end)+ 0.1*(unique_params(end)-unique_params(1))]/plot_scale);
+                    if length(this_unique_params) > 1
+                        lims = sort([this_unique_params(1)- 0.1*(this_unique_params(end)-this_unique_params(1)), this_unique_params(end)+ 0.1*(this_unique_params(end)-this_unique_params(1))]/plot_scale);
                         xlim(lims);
                     end
                     grid on; box on;
                     if n == cld(num_survival, 2)
-                        xlabel({param_name_unit, fname}, 'interpreter', 'none')
+                        xlabel({param_name_unit{n}, fname}, 'interpreter', 'none')
                     else
-                        xlabel({param_name_unit})
+                        xlabel({param_name_unit{n}})
                     end
                     ylabel('Survival probability')
                     legend(legend_string3n1)
                 end
 
                 ylim([0 1])
-                if length(unique_params) > 1
-                    lims = sort([unique_params(1)- 0.1*(unique_params(end)-unique_params(1)), unique_params(end)+ 0.1*(unique_params(end)-unique_params(1))]/plot_scale);
+                if length(this_unique_params) > 1
+                    lims = sort([this_unique_params(1)- 0.1*(this_unique_params(end)-this_unique_params(1)), this_unique_params(end)+ 0.1*(this_unique_params(end)-this_unique_params(1))]/plot_scale);
                     xlim(lims);
                 end
                 grid on; box on;
                 if n == cld(num_survival, 2)
-                    xlabel({param_name_unit, fname}, 'interpreter','none')
+                    xlabel({param_name_unit{n}, fname}, 'interpreter','none')
                 else
-                    xlabel({param_name_unit})
+                    xlabel({param_name_unit{n}})
                 end
                 ylabel('Survival probability')
                 title({['survive: ' logical_cond_2str(survival_logical_cond{n}, single_atom_species)], ...
