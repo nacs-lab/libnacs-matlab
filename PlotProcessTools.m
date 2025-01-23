@@ -23,7 +23,7 @@ classdef PlotProcessTools
                     subplot(1, num_col, n);
                 end
                 imagesc(-ceil(frame_size(2)/2) + 1, -floor(frame_size(1)/2), av_imgs(:,:,n));
-                colormap gray; shading flat; pbaspect([1,1,1]);   %axis equal;
+                colormap gray; shading flat; %pbaspect([1,1,1]);   axis equal;
                 if bTitle
                     title(['Image #',num2str(n),' ',single_atom_species{n}])
                 end
@@ -38,6 +38,8 @@ classdef PlotProcessTools
                         y = site(2) - 0.5 - rad;%site(2)+round(frame_size/2)-0.5-rad;
                         if bSquare
                             subplot(ceil(sqrt(num_col)), ceil(sqrt(num_col)), n);
+                        elseif size(av_imgs, 2) > size(av_imgs, 1)
+                            subplot(num_col, 1, n);
                         else
                             subplot(1, num_col, n); %(n-1)*num_col+1);
                         end
@@ -293,7 +295,7 @@ classdef PlotProcessTools
             % cell array for each image
             if ~iscell(unique_params)
                 unique_params_temp = cell(1, num_survival);
-                for i = 1:num_loading
+                for i = 1:num_survival
                     unique_params_temp{i} = unique_params;
                 end
                 unique_params = unique_params_temp;
@@ -301,7 +303,7 @@ classdef PlotProcessTools
             % same for param_name_unit
             if ~iscell(param_name_unit)
                 param_name_unit_temp = cell(1, num_survival);
-                for i = 1:num_loading
+                for i = 1:num_survival
                     param_name_unit_temp{i} = param_name_unit;
                 end
                 param_name_unit = param_name_unit_temp;
