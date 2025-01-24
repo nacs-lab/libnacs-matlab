@@ -1,6 +1,6 @@
 function cond_atom_logical = find_logical(logical_spec, single_atom_logical, num_sites, num_seq)
 
-%% finds logical given images to condition on
+%% finds logical given images to condition on, processes the logical condition syntax, such as negative numbers and the implicit AND relationship
 
 
 N = length(logical_spec);

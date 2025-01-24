@@ -468,7 +468,7 @@ classdef PlotProcessTools
                     legendstr{j} = sprintf('%s: %f', param_name_unit, unique_params(j) / plot_scale);
                 end
                 if ismember(i,AuxPlotIdx)
-                    thisInd = AuxPlotInd(AuxPlotIdx == i);
+                    thisInd = find(AuxPlotInd == i);
                     for j = 1:num_params
                         plot(1:num_sites, squeeze(AuxData(thisInd,:,j)) / num_attempts_by_param(j), 'Color', ColorSet(j,:), 'Linewidth', 1.0, 'LineStyle', '--')
                     end
