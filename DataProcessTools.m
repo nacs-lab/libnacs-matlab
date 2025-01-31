@@ -32,7 +32,7 @@ classdef DataProcessTools
                 rearr_result_cond = cond.RearrResult;
 
                 % Rearrange those in cond.RearrLogicals
-                [rearr_sal, n_loads] = Alg.getRearrangedLogicals(sal(:,:, (new_idx + 1):end), rearr_logical_cond);
+                [rearr_sal, n_loads] = Alg.getRearrangedLogicals(sal(:,:, (new_idx + 1):end), rearr_logical_cond); % this function takes in all images
                 res.n_loads = n_loads;
                 rearr_loading_logical = find_logical(loading_logical_cond, rearr_sal, num_sites, size(rearr_sal, 3));
                 rearr_loading_logical = cat(3, zeros(size(rearr_loading_logical, 1), size(rearr_loading_logical, 2), new_idx), rearr_loading_logical);
@@ -40,8 +40,8 @@ classdef DataProcessTools
                 rearr_source_logical = find_logical(rearr_logical_cond, rearr_sal, num_sites, size(rearr_sal, 3));
                 rearr_source_logical = cat(3, zeros(size(rearr_source_logical, 1), size(rearr_source_logical, 2), new_idx), rearr_source_logical);
 
-                rearr_result_logical = find_logical(rearr_result_cond, rearr_sal, num_sites, size(rearr_sal, 3));
-                rearr_result_logical = cat(3, zeros(size(rearr_result_logical, 1), size(rearr_result_logical, 2), new_idx), rearr_result_logical);
+%                 rearr_result_logical = find_logical(rearr_result_cond, rearr_sal, num_sites, size(rearr_sal, 3));
+%                 rearr_result_logical = cat(3, zeros(size(rearr_result_logical, 1), size(rearr_result_logical, 2), new_idx), rearr_result_logical);
             end
 
             % function to convert from condition and sal to actual logicals
@@ -49,6 +49,7 @@ classdef DataProcessTools
             if is_rearr
                 survival_loading_logical = find_logical(survival_loading_logical_cond, rearr_sal, num_sites, size(rearr_sal, 3));
                 survival_loading_logical = cat(3, zeros(size(survival_loading_logical, 1), size(survival_loading_logical, 2), new_idx), survival_loading_logical);
+                rearr_result_logical = find_logical(rearr_result_cond, sal, num_sites, num_seq);
             else
                 survival_loading_logical = find_logical(survival_loading_logical_cond, sal, num_sites, num_seq);
             end
@@ -56,11 +57,11 @@ classdef DataProcessTools
 
             res.loading_logical = loading_logical;
             if is_rearr
-                res.rearr_loading_logical = rearr_loading_logical;
-                res.rearr_source_logical = rearr_source_logical;
-                res.rearr_result_logical = rearr_result_logical;
+                res.rearr_loading_logical = rearr_loading_logical; % rearranged version of all loading logical conditions, only contains the most recent data
+                res.rearr_source_logical = rearr_source_logical; % rearranged version of all those specified under RearrLogicals, only contains the most recent data
+                res.rearr_result_logical = rearr_result_logical; % raw logicals for those specified under ResultLogicals
             end
-            res.survival_loading_logical = survival_loading_logical;
+            res.survival_loading_logical = survival_loading_logical; % either is rearranged loading logicals and only contains recent data, or are raw but complete survival loading logicals
             res.survival_logical = survival_logical;
         end
 
