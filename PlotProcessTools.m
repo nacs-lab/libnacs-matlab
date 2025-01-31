@@ -88,10 +88,11 @@ classdef PlotProcessTools
                     ylim([0, 2*ymax]);
                     plot([cutoff,cutoff],ylim,'-r');
                     if is_rearr
-                        ind = find(img_for_cutoff == n);
-                        if ~isempty(ind)
-                            plot([rearr_cutoff{ind}(site_idxs{n}(i)), rearr_cutoff{ind}(site_idxs{n}(i))],ylim,'-g');
-                        end
+                        % TODO
+%                         ind = find(img_for_cutoff == n);
+%                         if ~isempty(ind)
+%                             plot([rearr_cutoff{ind}(site_idxs{n}(i)), rearr_cutoff{ind}(site_idxs{n}(i))],ylim,'-g');
+%                         end
                     end
                     title(['site #',num2str(site_idxs{n}(i))]);
                     if i == num_sites
