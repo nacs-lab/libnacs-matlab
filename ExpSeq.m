@@ -397,6 +397,7 @@ classdef ExpSeq < RootSeq
 
         function run_real(self)
             begin_restarts = double(SeqManager.get_device_restart('AWG1')); % hard coded
+            begin_restarts2 = double(SeqManager.get_device_restart('AWG2')); % hard coded
             self.C.RESTART = 0;
             bseq_len = 0;
             try
@@ -413,7 +414,8 @@ classdef ExpSeq < RootSeq
 %                     after_bseq = toc
                 end
                 end_restarts = double(SeqManager.get_device_restart('AWG1'));
-                if (end_restarts ~= begin_restarts)
+                end_restarts2 = double(SeqManager.get_device_restart('AWG2'));
+                if (end_restarts ~= begin_restarts) || (end_restarts2 ~= begin_restarts2)
                     self.C.RESTART = 1;
                 end
                 for cb = self.after_end_cbs
