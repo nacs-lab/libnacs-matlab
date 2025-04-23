@@ -122,7 +122,19 @@ classdef (Sealed) TimeStep < TimeSeq
             id = ctx.obj_counter;
             ctx.obj_counter = id + uint32(1);
             if ctx.collect_dbg_info
-                ctx.obj_backtrace{id + 1} = dbstack('-completenames', 1);
+                this_fullstack = dbstack('-completenames', 1);
+                ctx.obj_backtrace{id + 1} = this_fullstack;
+                for i = 1:length(this_fullstack)
+                    this_stack = this_fullstack(i);
+                    if ~isKey(ctx.bt_filename_cache, this_stack.file)
+                        next_value = length(ctx.bt_filename_cache) + 1;
+                        ctx.bt_filename_cache(this_stack.file) = next_value;
+                    end
+                    if ~isKey(ctx.bt_name_cache, this_stack.name)
+                        next_value = length(ctx.bt_name_cache) + 1;
+                        ctx.bt_name_cache(this_stack.name) = next_value;
+                    end
+                end
             end
             self.pulses{cid} = Pulse(id, pulse, cond);
         end

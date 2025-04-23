@@ -35,6 +35,9 @@ classdef ExpSeq < RootSeq
         % Map from original channel ID to channel ID with disabled channel taken into account.
         % Disabled channels have ID 0.
         cid_map;
+        % Map from a unique backend name to all the original channel names
+        % that correspond to it
+        inverse_chn_map;
 
         %% Output related:
         % Whether the default has been overwritten and the new default value.
@@ -91,9 +94,10 @@ classdef ExpSeq < RootSeq
             self.C = DynProps(C);
             self.G = self.config.G;
             self.cid_cache = containers.Map('KeyType', 'char', 'ValueType', 'double');
-            self.seq_ctx = SeqContext();
+            self.seq_ctx = SeqContext(self.C.debug(0));
             self.disabled_channels = containers.Map('KeyType', 'char', ...
                                                     'ValueType', 'double');
+            self.inverse_chn_map = containers.Map('KeyType', 'char', 'ValueType', 'any');
             self.bseq_id = 1;
             self.zero_time = SeqTime.zero(self);
             self.curSeqTime = self.zero_time;
@@ -558,6 +562,113 @@ classdef ExpSeq < RootSeq
             end
         end
 
+        function res = get_nominal_output(self, pts_per_ramp, dump_filename)
+            if ~exist('dump_filename', 'var')
+                dump_filename = '';
+            end
+            res = self.pyseq.get_nominal_output(py.int(pts_per_ramp));
+            if length(dump_filename) ~= 0
+                % Dump output to file in the following format
+                % [nchns: 4B][[chn_name: null-terminated string]
+                %              [npts: 4B][
+                %                        [[times (int64): 8B][values (double): 8B][pulse_ids (uint32): 4B]] x npts]
+                %              x nchns]
+                % res: {'name', 'times', 'values', 'pulse_ids'}
+                output = int8([]);
+
+                nchns = length(res);
+                output = [output, typecast(uint32(nchns), 'int8')];
+                for i = 1:nchns
+                    this_output = res{i};
+                    % Now add channel aliases
+                    nominal_name = char(this_output{1});
+                    all_names = self.inverse_chn_map(nominal_name);
+                    additional_names = {};
+                    for j = 1:length(all_names)
+                        if ~strcmp(nominal_name, all_names{j})
+                            additional_names{end + 1} = all_names{j};
+                        end
+                    end
+                    if isempty(additional_names)
+                        final_name = nominal_name;
+                    else
+                        final_name = '';
+                        n_add_names = length(additional_names);
+                        for j = 1:n_add_names
+                            if j == n_add_names
+                                final_name = [final_name, additional_names{j}];
+                            else
+                                final_name = [final_name, additional_names{j}, ', '];
+                            end
+                        end
+                        final_name = [final_name, ' (', nominal_name, ')'];
+                    end
+                    output = [output, int8(char(final_name)), int8(0)];
+                    times = int64(this_output{2});
+                    values = double(this_output{3});
+                    pulse_ids = uint32(this_output{4});
+                    this_npts = length(times);
+                    output = [output, typecast(uint32(this_npts), 'int8')];
+                    for j = 1:this_npts
+                        output = [output, typecast(times(j), 'int8'), typecast(values(j), 'int8'), typecast(pulse_ids(j), 'int8')];
+                    end
+                end
+                % NOTE: pulse_ids are 0 indexed
+                % Dump backtrace to file in the following format
+                % [has_bt_info: 1B][nfilenames (uint32): 4B][[filename: nul-terminated
+                %                   string] x nfilenames]
+                %                   [nnames (uint32): 4B][[name: nul-terminated string] x
+                %                   nnames]
+                %                   [nobjs (uint32): 4B][[nframes (uint32):
+                %                   4B][[filename_id (uint32): 4B][name_id (uint32):
+                %                   4B][line_num (uint32): 4B] x nframes] x nobjs]
+
+                if self.seq_ctx.collect_dbg_info
+                    output = [output, int8(1)];
+                    % first build filename and name lists from the maps
+                    nfilenames = length(self.seq_ctx.bt_filename_cache);
+                    all_filenames = cell(1, nfilenames);
+                    fname_keys = self.seq_ctx.bt_filename_cache.keys();
+                    for key = fname_keys
+                        this_idx = self.seq_ctx.bt_filename_cache(key{1});
+                        all_filenames{this_idx} = key{1};
+                    end
+                    nnames = length(self.seq_ctx.bt_name_cache);
+                    all_names = cell(1, nnames);
+                    name_keys = self.seq_ctx.bt_name_cache.keys();
+                    for key = name_keys
+                        this_idx = self.seq_ctx.bt_name_cache(key{1});
+                        all_names{this_idx} = key{1};
+                    end
+                    output = [output, typecast(uint32(nfilenames), 'int8')];
+                    for i = 1:nfilenames
+                        output = [output, int8(char(all_filenames{i})), int8(0)];
+                    end
+                    output = [output, typecast(uint32(nnames), 'int8')];
+                    for i = 1:nnames
+                        output = [output, int8(char(all_names{i})), int8(0)];
+                    end
+                    nobjs = length(self.seq_ctx.obj_backtrace);
+                    output = [output, typecast(uint32(nobjs), 'int8')];
+                    for i = 1:nobjs
+                        these_frames = self.seq_ctx.obj_backtrace{i};
+                        nframes = length(these_frames);
+                        output = [output, typecast(uint32(nframes), 'int8')];
+                        for j = 1:nframes
+                            this_fname_id = self.seq_ctx.bt_filename_cache(these_frames(j).file) - 1;
+                            this_name_id = self.seq_ctx.bt_name_cache(these_frames(j).name) - 1;
+                            output = [output, typecast(uint32(this_fname_id), 'int8')];
+                            output = [output, typecast(uint32(this_name_id), 'int8')];
+                            output = [output, typecast(uint32(these_frames(j).line), 'int8')];
+                        end
+                    end
+                else
+                    output = [output, int8(0)];
+                end
+                dump_to_file(dump_filename, output);
+            end
+        end
+
         % For debug use only
         function res = get_builder_dump(self)
             res = char(get_builder_dump(self.pyseq));
@@ -628,6 +739,7 @@ classdef ExpSeq < RootSeq
             self.cid_cache = [];
             self.disabled_channels = [];
             self.cid_map = [];
+            self.inverse_chn_map = [];
 
             self.default_override = false(0);
             self.default_override_val = [];
@@ -704,6 +816,13 @@ classdef ExpSeq < RootSeq
             end
             orig_name = name;
             name = translateChannel(self.config, name);
+            if ~isKey(self.inverse_chn_map, name)
+                self.inverse_chn_map(name) = {orig_name};
+            else
+                if ~ismember(orig_name, self.inverse_chn_map(name))
+                    self.inverse_chn_map(name) = horzcat(self.inverse_chn_map(name), orig_name);
+                end
+            end
             if isKey(self.cid_cache, name)
                 cid = self.cid_cache(name);
                 return;
