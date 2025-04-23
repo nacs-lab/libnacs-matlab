@@ -67,6 +67,8 @@ classdef SeqContext < handle
 
         collect_dbg_info = false;
         obj_backtrace = {};
+        bt_filename_cache;
+        bt_name_cache;
         arg0;
         arg1;
     end
@@ -168,7 +170,17 @@ classdef SeqContext < handle
         end
     end
     methods
-        function self = SeqContext()
+        function self = SeqContext(debug)
+            if ~exist('debug', 'var')
+                debug = 0;
+            end
+            if debug
+                self.collect_dbg_info = true;
+                self.bt_filename_cache = containers.Map('KeyType', 'char', 'ValueType', 'uint32');
+                self.bt_name_cache = containers.Map('KeyType', 'char', 'ValueType', 'uint32');
+            else
+                self.collect_dbg_info = false;
+            end
             self.data_ids = containers.Map('KeyType', 'char', 'ValueType', 'uint32');
             self.const_f64_ids = java.util.Hashtable();
             self.const_i32_ids = java.util.Hashtable();
@@ -180,7 +192,19 @@ classdef SeqContext < handle
             res = self.obj_counter;
             self.obj_counter = res + uint32(1);
             if self.collect_dbg_info
-                self.obj_backtrace{res + 1} = dbstack('-completenames', 1);
+                this_fullstack = dbstack('-completenames', 1);
+                self.obj_backtrace{res + 1} = this_fullstack;
+                for i = 1:length(this_fullstack)
+                    this_stack = this_fullstack(i);
+                    if ~isKey(self.bt_filename_cache, this_stack.file)
+                        next_value = length(self.bt_filename_cache) + 1;
+                        self.bt_filename_cache(this_stack.file) = next_value;
+                    end
+                    if ~isKey(self.bt_name_cache, this_stack.name)
+                        next_value = length(self.bt_name_cache) + 1;
+                        self.bt_name_cache(this_stack.name) = next_value;
+                    end
+                end
             end
         end
         function res = getArg(self, i)
