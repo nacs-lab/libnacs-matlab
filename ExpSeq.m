@@ -60,6 +60,9 @@ classdef ExpSeq < RootSeq
         before_start_cbs = {};
         after_end_cbs = {};
 
+        %% Debug
+        C_def = struct();
+
         %% Runtime
         pyseq;
         ni_channels;
@@ -72,7 +75,7 @@ classdef ExpSeq < RootSeq
     end
 
     methods
-        function self = ExpSeq(C_ovr)
+        function self = ExpSeq(C_ovr, C_def)
             % As top-level `ExpSeq`.
             self.config = SeqConfig.get(1);
             self.topLevel = self;
@@ -97,6 +100,11 @@ classdef ExpSeq < RootSeq
             end
             self.time_scale = SeqManager.tick_per_sec();
             self.C = DynProps(C);
+            if exist('C_def', 'var')
+                if self.C.debug(0)
+                    self.C_def = C_def;
+                end
+            end
             self.G = self.config.G;
             self.cid_cache = containers.Map('KeyType', 'char', 'ValueType', 'double');
             self.seq_ctx = SeqContext(self.C.debug(0));
@@ -512,113 +520,206 @@ classdef ExpSeq < RootSeq
             res = double(refresh_device_restart(self.pyseq, dev_name));
         end
 
-        function res = get_nominal_output(self, pts_per_ramp, dump_filename)
-            if ~exist('dump_filename', 'var')
-                dump_filename = '';
+        function output = dump_output_to_file(self, pts_per_ramp, filename, seq_name)
+            if ~exist('pts_per_ramp', 'var')
+                pts_per_ramp = 100;
             end
-            res = self.pyseq.get_nominal_output(py.int(pts_per_ramp));
-            if length(dump_filename) ~= 0
-                % Dump output to file in the following format
-                % [nchns: 4B][[chn_name: null-terminated string]
-                %              [npts: 4B][
-                %                        [[times (int64): 8B][values (double): 8B][pulse_ids (uint32): 4B]] x npts]
-                %              x nchns]
-                % res: {'name', 'times', 'values', 'pulse_ids'}
-                output = int8([]);
-
-                nchns = length(res);
-                output = [output, typecast(uint32(nchns), 'int8')];
-                for i = 1:nchns
-                    this_output = res{i};
-                    % Now add channel aliases
-                    nominal_name = char(this_output{1});
-                    all_names = self.inverse_chn_map(nominal_name);
-                    additional_names = {};
-                    for j = 1:length(all_names)
-                        if ~strcmp(nominal_name, all_names{j})
-                            additional_names{end + 1} = all_names{j};
-                        end
-                    end
-                    if isempty(additional_names)
-                        final_name = nominal_name;
-                    else
-                        final_name = '';
-                        n_add_names = length(additional_names);
-                        for j = 1:n_add_names
-                            if j == n_add_names
-                                final_name = [final_name, additional_names{j}];
-                            else
-                                final_name = [final_name, additional_names{j}, ', '];
-                            end
-                        end
-                        final_name = [final_name, ' (', nominal_name, ')'];
-                    end
-                    output = [output, int8(char(final_name)), int8(0)];
-                    times = int64(this_output{2});
-                    values = double(this_output{3});
-                    pulse_ids = uint32(this_output{4});
-                    this_npts = length(times);
-                    output = [output, typecast(uint32(this_npts), 'int8')];
-                    for j = 1:this_npts
-                        output = [output, typecast(times(j), 'int8'), typecast(values(j), 'int8'), typecast(pulse_ids(j), 'int8')];
-                    end
+            if ~exist('filename', 'var')
+                filename = '';
+            end
+            if ~exist('seq_name', 'var')
+                seq_name = '';
+            end
+            act_seq_name = [datestr(datenum(clock),'yyyymmdd'), '_', datestr(datenum(clock),'HHMMSS'),':', seq_name];
+            SeqManager.enable_debug(1);
+            SeqManager.enable_dump(1);
+            self.generate(1);
+            init_run(self.pyseq);
+            idx = 1;
+            seq_outs = {};
+            idxs = [];
+            while idx ~= 0
+                if idx == 1
+                    bseq = self;
+                else
+                    bseq = self.basic_seqs{idx - 1};
                 end
-                % NOTE: pulse_ids are 0 indexed
-                % Dump backtrace to file in the following format
-                % [has_bt_info: 1B][nfilenames (uint32): 4B][[filename: nul-terminated
-                %                   string] x nfilenames]
-                %                   [nnames (uint32): 4B][[name: nul-terminated string] x
-                %                   nnames]
-                %                   [nobjs (uint32): 4B][[nframes (uint32):
-                %                   4B][[filename_id (uint32): 4B][name_id (uint32):
-                %                   4B][line_num (uint32): 4B] x nframes] x nobjs]
-
-                if self.seq_ctx.collect_dbg_info
+                for cb = bseq.before_bseq_cbs
+                    cb{:}(self);
+                end
+                pre_run(self.pyseq);
+                % get output
+                [~, out] = self.get_nominal_output(pts_per_ramp);
+                seq_outs{end + 1} = out;
+                idxs(end + 1) = idx;
+                for cb = bseq.after_bseq_cbs
+                    cb{:}(self);
+                end
+                idx = double(post_run(self.pyseq));
+                for cb = bseq.after_branch_cbs
+                    cb{:}(self);
+                end
+            end
+            % Now, with all sequences, we dump them to the file.
+            nseqs = length(seq_outs);
+            % seq_idx is 1 for first basic sequence and 2, etc. for additional ones
+            % [nseqs (uint32): 4B][[seq_name: null-terminated string][seq_idx (uint32): 4B][nchns: 4B][[chn_name: null-terminated string]
+            %              [npts: 4B][
+            %                        [[times (int64): 8B][values (double): 8B][pulse_ids (uint32): 4B]] x npts]
+            %              x nchns][has_params: 1B][params: json-encoded null-terminated string] x nseqs]
+            % pulse_id is zero indexed
+            output = int8([]);
+            output = [output, typecast(uint32(nseqs), 'int8')];
+            for i = 1:nseqs
+                output = [output, int8(char(act_seq_name)), int8(0)];
+                output = [output, typecast(uint32(idxs(i)), 'int8')];
+                output = [output, seq_outs{i}];
+                if self.C.debug(0)
                     output = [output, int8(1)];
-                    % first build filename and name lists from the maps
-                    nfilenames = length(self.seq_ctx.bt_filename_cache);
-                    all_filenames = cell(1, nfilenames);
-                    fname_keys = self.seq_ctx.bt_filename_cache.keys();
-                    for key = fname_keys
-                        this_idx = self.seq_ctx.bt_filename_cache(key{1});
-                        all_filenames{this_idx} = key{1};
+                    if isempty(fields(self.C_def))
+                        def_value_known = 0;
+                    else
+                        def_value_known = 1;
                     end
-                    nnames = length(self.seq_ctx.bt_name_cache);
-                    all_names = cell(1, nnames);
-                    name_keys = self.seq_ctx.bt_name_cache.keys();
-                    for key = name_keys
-                        this_idx = self.seq_ctx.bt_name_cache(key{1});
-                        all_names{this_idx} = key{1};
-                    end
-                    output = [output, typecast(uint32(nfilenames), 'int8')];
-                    for i = 1:nfilenames
-                        output = [output, int8(char(all_filenames{i})), int8(0)];
-                    end
-                    output = [output, typecast(uint32(nnames), 'int8')];
-                    for i = 1:nnames
-                        output = [output, int8(char(all_names{i})), int8(0)];
-                    end
-                    nobjs = length(self.seq_ctx.obj_backtrace);
-                    output = [output, typecast(uint32(nobjs), 'int8')];
-                    for i = 1:nobjs
-                        these_frames = self.seq_ctx.obj_backtrace{i};
-                        nframes = length(these_frames);
-                        output = [output, typecast(uint32(nframes), 'int8')];
-                        for j = 1:nframes
-                            this_fname_id = self.seq_ctx.bt_filename_cache(these_frames(j).file) - 1;
-                            this_name_id = self.seq_ctx.bt_name_cache(these_frames(j).name) - 1;
-                            output = [output, typecast(uint32(this_fname_id), 'int8')];
-                            output = [output, typecast(uint32(this_name_id), 'int8')];
-                            output = [output, typecast(uint32(these_frames(j).line), 'int8')];
-                        end
-                    end
+                    params = convert_seqval_to_string(struct(self.C).V, self.config.consts, self.C_def, self, def_value_known);
+                    param_str = jsonencode(params);
+                    output = [output, int8(char(param_str)), int8(0)];
                 else
                     output = [output, int8(0)];
                 end
-                dump_to_file(dump_filename, output);
+            end
+            % Now, we construct the backtrace
+            % NOTE: pulse_ids are 0 indexed
+            % Dump backtrace to file in the following format
+            % [has_bt_info: 1B][[bt_idx (uint32): 4B] x nseqs][n_bts (uint32): 4B][[nfilenames (uint32): 4B][[filename: nul-terminated
+            %                   string] x nfilenames]
+            %                   [nnames (uint32): 4B][[name: nul-terminated string] x
+            %                   nnames]
+            %                   [nobjs (uint32): 4B][[nframes (uint32):
+            %                   4B][[filename_id (uint32): 4B][name_id (uint32):
+            %                   4B][line_num (uint32): 4B] x nframes] x nobjs] x n_bts]
+            %                  [has_params: 1B][params: json encoded nul-terminated string]
+            % bt_idx is zero indexed
+            if self.seq_ctx.collect_dbg_info
+                output = [output, int8(1)];
+                for i = 1:nseqs
+                    output = [output, typecast(uint32(0), 'int8')]; % backtrace index for all basic sequences is zero
+                end
+                output = [output, typecast(uint32(1), 'int8')]; % one total backtrace information
+                debug_out = self.get_debug_output();
+                output = [output, debug_out];
+            else
+                output = [output, int8(0)];
+            end
+            SeqManager.enable_debug(0);
+            SeqManager.enable_dump(0);
+            if ~isempty(filename)
+                dump_to_file(filename, output);
             end
         end
 
+        function [res, output] = get_nominal_output(self, pts_per_ramp)
+            res = self.pyseq.get_nominal_output(py.int(pts_per_ramp));
+
+            % Dump output to file in the following format
+            % [nchns: 4B][[chn_name: null-terminated string]
+            %              [npts: 4B][
+            %                        [[times (int64): 8B][values (double): 8B][pulse_ids (uint32): 4B]] x npts]
+            %              x nchns]
+            % res: {'name', 'times', 'values', 'pulse_ids'}
+            output = int8([]);
+
+            nchns = length(res);
+            output = [output, typecast(uint32(nchns), 'int8')];
+            for i = 1:nchns
+                this_output = res{i};
+                % Now add channel aliases
+                nominal_name = char(this_output{1});
+                all_names = self.inverse_chn_map(nominal_name);
+                additional_names = {};
+                for j = 1:length(all_names)
+                    if ~strcmp(nominal_name, all_names{j})
+                        additional_names{end + 1} = all_names{j};
+                    end
+                end
+                if isempty(additional_names)
+                    final_name = nominal_name;
+                else
+                    final_name = '';
+                    n_add_names = length(additional_names);
+                    for j = 1:n_add_names
+                        if j == n_add_names
+                            final_name = [final_name, additional_names{j}];
+                        else
+                            final_name = [final_name, additional_names{j}, ', '];
+                        end
+                    end
+                    final_name = [final_name, ' (', nominal_name, ')'];
+                end
+                output = [output, int8(char(final_name)), int8(0)];
+                times = int64(this_output{2});
+                values = double(this_output{3});
+                pulse_ids = uint32(this_output{4});
+                this_npts = length(times);
+                output = [output, typecast(uint32(this_npts), 'int8')];
+                for j = 1:this_npts
+                    output = [output, typecast(times(j), 'int8'), typecast(values(j), 'int8'), typecast(pulse_ids(j), 'int8')];
+                end
+            end
+        end
+
+        function res = get_debug_output(self)
+            % NOTE: pulse_ids are 0 indexed
+            % Dump backtrace to file in the following format
+            % [nfilenames (uint32): 4B][[filename: nul-terminated
+            %                   string] x nfilenames]
+            %                   [nnames (uint32): 4B][[name: nul-terminated string] x
+            %                   nnames]
+            %                   [nobjs (uint32): 4B][[nframes (uint32):
+            %                   4B][[filename_id (uint32): 4B][name_id (uint32):
+            %                   4B][line_num (uint32): 4B] x nframes] x nobjs]
+            output = int8([]);
+            if self.seq_ctx.collect_dbg_info
+                % first build filename and name lists from the maps
+                nfilenames = length(self.seq_ctx.bt_filename_cache);
+                all_filenames = cell(1, nfilenames);
+                fname_keys = self.seq_ctx.bt_filename_cache.keys();
+                for key = fname_keys
+                    this_idx = self.seq_ctx.bt_filename_cache(key{1});
+                    all_filenames{this_idx} = key{1};
+                end
+                nnames = length(self.seq_ctx.bt_name_cache);
+                all_names = cell(1, nnames);
+                name_keys = self.seq_ctx.bt_name_cache.keys();
+                for key = name_keys
+                    this_idx = self.seq_ctx.bt_name_cache(key{1});
+                    all_names{this_idx} = key{1};
+                end
+                output = [output, typecast(uint32(nfilenames), 'int8')];
+                for i = 1:nfilenames
+                    output = [output, int8(char(all_filenames{i})), int8(0)];
+                end
+                output = [output, typecast(uint32(nnames), 'int8')];
+                for i = 1:nnames
+                    output = [output, int8(char(all_names{i})), int8(0)];
+                end
+                nobjs = length(self.seq_ctx.obj_backtrace);
+                output = [output, typecast(uint32(nobjs), 'int8')];
+                for i = 1:nobjs
+                    these_frames = self.seq_ctx.obj_backtrace{i};
+                    nframes = length(these_frames);
+                    output = [output, typecast(uint32(nframes), 'int8')];
+                    for j = 1:nframes
+                        this_fname_id = self.seq_ctx.bt_filename_cache(these_frames(j).file) - 1;
+                        this_name_id = self.seq_ctx.bt_name_cache(these_frames(j).name) - 1;
+                        output = [output, typecast(uint32(this_fname_id), 'int8')];
+                        output = [output, typecast(uint32(this_name_id), 'int8')];
+                        output = [output, typecast(uint32(these_frames(j).line), 'int8')];
+                    end
+                end
+            end
+            res = output;
+        end
         % For debug use only
         function res = get_builder_dump(self)
             res = char(get_builder_dump(self.pyseq));
