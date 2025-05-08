@@ -25,10 +25,10 @@ classdef PlotProcessTools
                         % plot ROI for atom detection
                         site = sites(i,:);
 %                         rad = ceil((box_size-1)/2);
-                        rad =box_size/2;
+                        rad = box_size/2;
 %                         x = site(1) - 0.5 - rad;%site(1)+round(frame_size/2)-0.5-rad;
 %                         y = site(2) - 0.5 - rad;%site(2)+round(frame_size/2)-0.5-rad;
-                         x = ceil(site(1) - rad) - 0.5;%site(1)+round(frame_size/2)-0.5-rad;
+                        x = ceil(site(1) - rad) - 0.5;%site(1)+round(frame_size/2)-0.5-rad;
                         y = ceil(site(2) -rad) - 0.5;%site(2)+round(frame_size/2)-0.5-rad;
 
 %                         subplot(ceil(num_col/5), 5, n); %(n-1)*num_col+1);
