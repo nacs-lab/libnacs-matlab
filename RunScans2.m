@@ -50,12 +50,14 @@ Scan.ParamUnits = p.ParamUnits('');
 Scan.PlotScale = p.PlotScale(1);
 Scan.ScanGroup = scangroup.dump();
 Scan.Rearrangement = scanp.Rearrangement(0);
+AC = ArrayConsts();
+algs = AC.rearrAlgorithms;
 if Scan.Rearrangement
-    Scan.Rearr.Algo = func2str(RearrConsts.Algo);
-    Scan.Rearr.locs = RearrConsts.locs;
-    Scan.Rearr.AlgoCbArgs = RearrConsts.AlgoCbArgs;
-    Scan.Rearr.cutoffs = {RearrConsts.cutoffs}; % TODO: generalize this to more images.
-    Scan.Rearr.imgForCutoff = RearrConsts.imgForCutoff;
+    Scan.Rearr.Algo = func2str(algs{1});
+    Scan.Rearr.locs = AC().rearr_locs;
+    Scan.Rearr.AlgoCbArgs = AC().rearr_AlgoCbArgs;
+    Scan.Rearr.cutoffs = {AC().rearr_cutoffs}; % TODO: generalize this to more images.
+    Scan.Rearr.imgForCutoff = AC().rearr_imgForCutoff;
 end
 Scan.RearrMolecules = scanp.RearrMolecules(0);
 
