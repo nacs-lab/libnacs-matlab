@@ -35,9 +35,15 @@ classdef ExptControl < matlab.apps.AppBase
 
         % Code that executes after component creation
         function startupFcn(app)
-            app.AU = AnalysisUser.get(Consts().MatlabURL);
+            MatlabURLFromCache = app.getMatlabURLFromCache(); % Get MatlabURL with port increased by 1.
+%             app.AU = AnalysisUser.get(Consts().MatlabURL);
+            app.AU = AnalysisUser.get(MatlabURLFromCache);
             
-            app.RefreshRateinsEditField.Value = app.AU.get_refresh_rate;
+%             app.RefreshRateinsEditField.Value = app.AU.get_refresh_rate; % Commented out 2025.11.11
+            value = 14; % A temporary fix to change the default refresh time from 60 to 15 seconds. 2025.11.11.
+            app.AU.set_refresh_rate(value);
+            app.RefreshRateinsEditField.Value = value;
+            
             % start timers if needed
             app.ImgTimer = timer('ExecutionMode', 'fixedSpacing', 'Period', 2, ...
                                 'TimerFcn', {@(obj, event, app_obj) app_obj.processImgLoop(), app});
@@ -61,7 +67,14 @@ classdef ExptControl < matlab.apps.AppBase
                     % if next batch consists of a new scan. Flush out the data
                     % manager associated with the scan. 
                     if app.cur_scan_id > 0
-                        DM = ScanDataMgr.get(app.cur_scan_id);
+                        IC = ImageConsts();
+                        if IC.bWidefield
+                            DM = WidefieldDataMgr.get(app.cur_scan_id);
+                        elseif IC.bSignal
+                            DM = SignalDataMgr.get(app.cur_scan_id);
+                        else
+                            DM = ScanDataMgr.get(app.cur_scan_id);
+                        end
                     else
                         DM = SingleShotDataMgr.get(app.cur_scan_id);
                     end
@@ -82,7 +95,14 @@ classdef ExptControl < matlab.apps.AppBase
                     end
                     % process, plot and save cur_scan_id images
                     if app.cur_scan_id > 0
-                        DM = ScanDataMgr.get(app.cur_scan_id);
+                        IC = ImageConsts();
+                        if IC.bWidefield
+                            DM = WidefieldDataMgr.get(app.cur_scan_id);
+                        elseif IC.bSignal
+                            DM = SignalDataMgr.get(app.cur_scan_id);
+                        else
+                            DM = ScanDataMgr.get(app.cur_scan_id);
+                        end
                     else
                         DM = SingleShotDataMgr.get(app.cur_scan_id);
                     end
@@ -147,7 +167,14 @@ classdef ExptControl < matlab.apps.AppBase
 %             app.AU.abort_seq();
               AbortRunSeq();
               if app.cur_scan_id > 0
-                DM = ScanDataMgr.get(app.cur_scan_id);
+                  IC = ImageConsts();
+                  if IC.bWidefield
+                      DM = WidefieldDataMgr.get(app.cur_scan_id);
+                  elseif IC.bSignal
+                      DM = SignalDataMgr.get(app.cur_scan_id);
+                  else
+                      DM = ScanDataMgr.get(app.cur_scan_id);
+                  end
               else
                 DM = SingleShotDataMgr.get(app.cur_scan_id);
               end
@@ -165,6 +192,34 @@ classdef ExptControl < matlab.apps.AppBase
         % Button pushed function: OpenAnalysisPanelButton
         function OpenAnalysisPanelButtonPushed(app, event)
             
+        end
+        
+        
+        function url = getMatlabURLFromCache(app)
+            % Define the path to the file that stores the last port number
+            portFilePath = 'C:\experiment-control\matlab_new\ExpConfigPortCache.txt';
+
+            % Read the last used port number
+            if exist(portFilePath, 'file')
+                fid = fopen(portFilePath, 'r');
+                lastPort = fscanf(fid, '%d');
+                fclose(fid);
+            else
+                %lastPort = 9173; % Default starting port if file doesn't exist
+                error('Cannot read MatlabURL port number')
+            end
+
+            % Increment the port number
+            newPort = lastPort + 1;
+
+            % Save the new port number back to the file
+            fid = fopen(portFilePath, 'w');
+            fprintf(fid, '%d', newPort);
+            fclose(fid);
+
+            % Use the new port number
+            url = ['tcp://127.0.0.1:' num2str(newPort)];
+            disp(['Using port: ' num2str(newPort)]);
         end
     end
 
@@ -289,5 +344,7 @@ classdef ExptControl < matlab.apps.AppBase
             % Delete UIFigure when app is deleted
             delete(app.UIFigure)
         end
+        
+
     end
 end
