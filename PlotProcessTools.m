@@ -9,8 +9,9 @@ classdef PlotProcessTools
                 clf(fig1);
             end
             num_col = size(av_imgs, 3);
-            tiledlayout(ceil(num_col/5), 5, 'Padding', 'none', 'TileSpacing', 'compact'); 
+            tiledlayout(ceil(num_col/2), 2, 'Padding', 'none', 'TileSpacing', 'compact'); 
             for n = 1:num_col
+                nexttile;
                 num_sites = size(single_atom_sites{n},1);
 %                 subplot(ceil(num_col/5), 5, n);
 %                 subplot(2, 4, n);
@@ -41,9 +42,7 @@ classdef PlotProcessTools
                         axis tight
                     end 
                 end
-                if n~= num_col
-                    nexttile
-                end
+
             end
             if isfield(figInfo, 'fname')
                 annotation('textbox', [0.1, 0, 0.9, 0.05], 'string', figInfo.fname, 'EdgeColor', 'none', 'Interpreter', 'none')
@@ -187,38 +186,31 @@ classdef PlotProcessTools
             end
             
             ColorSet2 = nacstools.display.varycolorrainbow(sum(num_sites));
-            %line_specs = {'rs','bs','ms','cs','gs','ys'};
-            %ColorSet=nacstools.display.varycolor(num_sites);
+            legend_string22 = {};
             for i = 1:num_loading
-                if any(num_sites > 1)
-                    param_loads = param_loads(:, site_idx{i}, :);
-                    legend_string22{sum(num_sites) + num_loading} = '';
-                else
-                    legend_string22{num_loading} = '';
-                end
+                label_base = logical_cond_2str(loading_logical_cond{i}, single_atom_species);
                 for j = 1:num_sites(i)
                     if num_params == 1
                         hold on;
                         errorbar(unique_params/plot_scale, squeeze(param_loads(i,j)), abs(param_loads_err(i,j)), 's','Linewidth',0.7);
                         hold off;
-                        legend_string22{(i-1)*(num_sites(i) + 1)+j} = [logical_cond_2str(loading_logical_cond{i}, single_atom_species) '(site ' int2str(site_idx{i}(j)) ')'];
-                    elseif num_sites == 1
+                    elseif num_sites(i) == 1
+                        hold on;
                         errorbar(unique_params/plot_scale, squeeze(param_loads(i,:)), abs(param_loads_err(i,:)), 's','Linewidth',0.7);
+                        hold off;
                     else
                         hold on;
-                        errorbar(unique_params/plot_scale, squeeze(param_loads(i,j,:)), squeeze(param_loads_err(i,j,:)), 's','Color',ColorSet2(num_sites(i) * (i - 1) + j,:),'Linewidth',0.7);
-                        hold off
-                        legend_string22{(i-1)*(num_sites(i) + 1)+j} = [logical_cond_2str(loading_logical_cond{i}, single_atom_species) '(site ' int2str(site_idx{i}(j)) ')'];
+                        errorbar(unique_params/plot_scale, squeeze(param_loads(i,j,:)), squeeze(param_loads_err(i,j,:)), 's','Color',ColorSet2(sum(num_sites(1:i-1)) + j,:),'Linewidth',0.7);
+                        hold off;
+                    end
+                    if num_sites(i) > 1
+                        legend_string22{end+1} = [label_base ' (site ' int2str(site_idx{i}(j)) ')'];
+                    else
+                        legend_string22{end+1} = label_base;
                     end
                 end
-
-                if num_sites(i) > 1
-                    legend_string22{i*(num_sites(i)+1)} = logical_cond_2str(loading_logical_cond{i}, single_atom_species);
-                else
-                    legend_string22{i} = logical_cond_2str(loading_logical_cond{i}, single_atom_species);
-                end
             end
-            if bLeg
+            if bLeg && ~isempty(legend_string22)
                 lgnd22=legend(legend_string22,'Location','eastoutside');
                 set(lgnd22,'color','none');
             end
@@ -318,6 +310,71 @@ classdef PlotProcessTools
                 ylabel('Survival probability')
                 title({['survive: ' logical_cond_2str(survival_logical_cond{n}, single_atom_species)], ...
                     ['load: ' logical_cond_2str(survival_loading_logical_cond{n}, single_atom_species)]})
+            end
+        end
+        function plotSurvivalInTime(figInfo, survival_logical, survival_loading_logical, survival_logical_cond, survival_loading_logical_cond, single_atom_species, num_seq)
+            num = figInfo.fignum(1);
+            bClear = figInfo.bClear(0);
+            fig1 = figure(num); 
+            if bClear
+                clf(fig1);
+            end
+            num_survival = size(survival_logical, 1);
+            if num_survival == 0
+                return;
+            end
+            num_time_bins = min(10, num_seq);
+            if num_time_bins <= 0
+                return;
+            end
+            time_bins_edges = round(linspace(1, num_seq + 1, num_time_bins + 1));
+            
+            p_survival_time = zeros(num_survival, num_time_bins);
+            p_survival_err_time = zeros(num_survival, num_time_bins);
+            x_time = zeros(1, num_time_bins);
+            
+            for t = 1:num_time_bins
+                idx_start = time_bins_edges(t);
+                idx_end = time_bins_edges(t+1) - 1;
+                seq_idx = idx_start:idx_end;
+                x_time(t) = mean(seq_idx);
+                
+                for n = 1:num_survival
+                    surv_log_time = survival_logical(n, :, seq_idx);
+                    surv_load_log_time = survival_loading_logical(n, :, seq_idx);
+                    
+                    % Combine all sites.
+                    [p_surv, p_err] = find_survival( ...
+                        reshape(permute(surv_log_time, [1,3,2]), 1, numel(surv_log_time)), ...
+                        reshape(permute(surv_load_log_time, [1,3,2]), 1, numel(surv_load_log_time)), ...
+                        ones(1, numel(surv_log_time)), 1, 1);
+                    
+                    p_survival_time(n, t) = p_surv(1);
+                    p_survival_err_time(n, t) = p_err(1);
+                end
+            end
+            
+            for n = 1:num_survival
+                subplot(1, num_survival, n);
+                hold on;
+                ep = errorbar(x_time, p_survival_time(n,:), p_survival_err_time(n,:), 'ks-');
+                ep.LineStyle = '-';
+                hold off;
+                ylim([0 1]);
+                xlim([0, max(num_seq, 1)]);
+                grid on; box on;
+                xlabel('Sequence number');
+                if n == 1
+                    ylabel('Survival probability (all sites)');
+                else
+                    ylabel('Survival probability');
+                end
+                title({['survive: ' logical_cond_2str(survival_logical_cond{n}, single_atom_species)], ...
+                       ['load: ' logical_cond_2str(survival_loading_logical_cond{n}, single_atom_species)]}, ...
+                       'interpreter', 'none')
+            end
+            if isfield(figInfo, 'fname')
+                annotation('textbox', [0.1, 0, 0.9, 0.05], 'string', figInfo.fname, 'EdgeColor', 'none', 'Interpreter', 'none')
             end
         end
         function plotRearrSuc(figInfo, unique_params, sData)

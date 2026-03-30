@@ -38,6 +38,11 @@ classdef ExpSeq < RootSeq
         % Map from a unique backend name to all the original channel names
         % that correspond to it
         inverse_chn_map;
+        
+        DSI = struct();
+        Valon = struct();
+        AFG = struct();
+        RTS100 = struct();
 
         %% Output related:
         % Whether the default has been overwritten and the new default value.
@@ -53,6 +58,8 @@ classdef ExpSeq < RootSeq
 
         seq_ctx;
         basic_seqs = {};
+%         seq_outsPlot = {};
+
         time_scale = 1e12;
         globals = struct('id', {}, 'persist', {}, 'init_val', {});
 
@@ -114,7 +121,7 @@ classdef ExpSeq < RootSeq
             self.bseq_id = 1;
             self.zero_time = SeqTime.zero(self);
             self.curSeqTime = self.zero_time;
-%             self.ardnoTimer = ArduinoDelayF.get("serial","COM14");
+%             self.ardnoTimer = ArduinoDelayF.get("serial","COM9");
             self.warnCount = 0;
         end
 
@@ -389,6 +396,7 @@ classdef ExpSeq < RootSeq
             end
 %             before_seq_cb = toc
 
+%             sync60Hz_cb(self.ardnoTimer);
             if self.C.b.syncClock(0)
                 newOutput = self.ardnoTimer.servoDelay()/1e6;
                 measDelay =  self.ardnoTimer.PrevDelay;
@@ -617,7 +625,70 @@ classdef ExpSeq < RootSeq
                 dump_to_file(filename, output);
             end
         end
-
+%      function  get_seqValues(self, pts_per_ramp)
+%             if ~exist('pts_per_ramp', 'var')
+%                 pts_per_ramp = 100;
+%             end
+%             SeqManager.enable_debug(1);
+%             SeqManager.enable_dump(1);
+%             self.generate(1);
+%             init_run(self.pyseq);
+%             idx = 1;
+%             idxs = [];
+%             while idx ~= 0
+%                 if idx == 1
+%                     bseq = self;
+%                 else
+%                     bseq = self.basic_seqs{idx - 1};
+%                 end
+%                 for cb = bseq.before_bseq_cbs
+%                     cb{:}(self);
+%                 end
+%                 pre_run(self.pyseq);
+%                 % get output
+%                 [res, ~] = self.get_nominal_output(pts_per_ramp);
+%                 self.seq_outsPlot{end + 1} = res;
+%                 idxs(end + 1) = idx;
+%                 for cb = bseq.after_bseq_cbs
+%                     cb{:}(self);
+%                 end
+%                 idx = double(post_run(self.pyseq));
+%                 for cb = bseq.after_branch_cbs
+%                     cb{:}(self);
+%                 end
+%             end
+%             SeqManager.enable_debug(0);
+%             SeqManager.enable_dump(0);
+%             % Now, with all sequences, we dump them to the file.
+%         end
+%         function plot(self,  chnNamePlot, basicSeq)
+%             if ~exist('basicSeq', 'var')
+%                 basicSeq = 1;
+%             end
+%             if isempty(self.seq_outsPlot)
+%                 self.get_seqValues();
+%             end
+%             res = self.seq_outsPlot{1};
+%             nchns = length(res);
+% 
+%             for i = 1:nchns
+%                 res = self.seq_outsPlot{basicSeq};
+%                 this_output = res{i};
+%                 % Now add channel aliases
+%                 nominal_name = char(this_output{1});
+%                 all_names = self.inverse_chn_map(nominal_name);
+%                
+%                 if strcmp(all_names(1), chnNamePlot)
+%                    
+%                     times = int64(this_output{2})*1e-9;
+%                     values = double(this_output{3});
+%                    
+%                     plot(times, values)
+%                     return
+%                 end
+%             end
+%             disp("Channel not found :(");
+%         end
         function [res, output] = get_nominal_output(self, pts_per_ramp)
             res = self.pyseq.get_nominal_output(py.int(pts_per_ramp));
 
