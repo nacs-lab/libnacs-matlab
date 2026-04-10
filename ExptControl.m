@@ -66,18 +66,7 @@ classdef ExptControl < matlab.apps.AppBase
                 if app.cur_scan_id ~= 0 && app.cur_scan_id ~= info.scan_ids(1)
                     % if next batch consists of a new scan. Flush out the data
                     % manager associated with the scan. 
-                    if app.cur_scan_id > 0
-                        IC = ImageConsts();
-                        if IC.bWidefield
-                            DM = WidefieldDataMgr.get(app.cur_scan_id);
-                        elseif IC.bSignal
-                            DM = SignalDataMgr.get(app.cur_scan_id);
-                        else
-                            DM = ScanDataMgr.get(app.cur_scan_id);
-                        end
-                    else
-                        DM = SingleShotDataMgr.get(app.cur_scan_id);
-                    end
+                    DM = ScanDataMgr.get(app.cur_scan_id);
                     DM.process_data(1);
                     DM.plot_data(1);
                     DM.save_data(1);
@@ -94,18 +83,7 @@ classdef ExptControl < matlab.apps.AppBase
                         end_idx = start_idx + new_scan_idx - 2;
                     end
                     % process, plot and save cur_scan_id images
-                    if app.cur_scan_id > 0
-                        IC = ImageConsts();
-                        if IC.bWidefield
-                            DM = WidefieldDataMgr.get(app.cur_scan_id);
-                        elseif IC.bSignal
-                            DM = SignalDataMgr.get(app.cur_scan_id);
-                        else
-                            DM = ScanDataMgr.get(app.cur_scan_id);
-                        end
-                    else
-                        DM = SingleShotDataMgr.get(app.cur_scan_id);
-                    end
+                    DM = ScanDataMgr.get(app.cur_scan_id);
                     this_info = struct();
                     this_info.imgs = info.imgs(start_idx:end_idx);
                     this_info.seq_ids = info.seq_ids(start_idx:end_idx);
@@ -166,18 +144,7 @@ classdef ExptControl < matlab.apps.AppBase
         function AbortSeqButtonPushed(app, event)
 %             app.AU.abort_seq();
               AbortRunSeq();
-              if app.cur_scan_id > 0
-                  IC = ImageConsts();
-                  if IC.bWidefield
-                      DM = WidefieldDataMgr.get(app.cur_scan_id);
-                  elseif IC.bSignal
-                      DM = SignalDataMgr.get(app.cur_scan_id);
-                  else
-                      DM = ScanDataMgr.get(app.cur_scan_id);
-                  end
-              else
-                DM = SingleShotDataMgr.get(app.cur_scan_id);
-              end
+              DM = ScanDataMgr.get(app.cur_scan_id);
               DM.process_data(1);
               DM.plot_data(1);
               DM.save_data(1);
