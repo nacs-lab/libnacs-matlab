@@ -72,10 +72,10 @@ Params = 1:nseqs;
 
 %% Get slm config
 
-Cs_client = SLMClient.get(Consts().CsSLMURL);
-Na_client = SLMClient.get(Consts().NaSLMURL);
-Scan.CsSLMConfig = Cs_client.get_status();
-Scan.NaSLMConfig = Na_client.get_status();
+% Cs_client = SLMClient.get(Consts().CsSLMURL);
+% Na_client = SLMClient.get(Consts().NaSLMURL);
+% Scan.CsSLMConfig = Cs_client.get_status();
+% Scan.NaSLMConfig = Na_client.get_status();
 
 %%
 % Number of sequences to run between acquisitions of images from the

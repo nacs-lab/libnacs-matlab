@@ -14,7 +14,7 @@
 % Save a MAT file atomically
 % Print a warning instead of aborting if the saving failed.
 function save_atomic(filename, s)
-    if ~endsWith(filename, '.mat')
+    if ~endsWith(filename, '.mat') 
         filename = [filename, '.mat'];
     end
     tmpf = [tempname(), '.mat'];

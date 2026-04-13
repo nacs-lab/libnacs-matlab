@@ -17,10 +17,10 @@ while req ~= 2
         continue
     else
         fprintf("Running sequence %i\n", seq_id);
-        pause(0.25) % sequence running
+        pause(1) % sequence running
         imgs = rand(110, 50, 2);
         ES.store_imgs(imgs, scan_id, seq_id);
-        pause(0.1) % sequence running
+        pause(1) % sequence running
         imgs = rand(110, 50, 2);
         ES.store_imgs(imgs, scan_id, seq_id);
         ES.seq_finish();
