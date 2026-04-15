@@ -176,17 +176,9 @@ classdef ExptControl < matlab.apps.AppBase
                 error('Cannot read MatlabURL port number')
             end
 
-            % Increment the port number
-            newPort = lastPort + 1;
-
-            % Save the new port number back to the file
-            fid = fopen(portFilePath, 'w');
-            fprintf(fid, '%d', newPort);
-            fclose(fid);
-
-            % Use the new port number
-            url = ['tcp://127.0.0.1:' num2str(newPort)];
-            disp(['Using port: ' num2str(newPort)]);
+            % Use the same port as the ExptServer (no increment)
+            url = ['tcp://127.0.0.1:' num2str(lastPort)];
+            disp(['Using port: ' num2str(lastPort)]);
         end
     end
 
