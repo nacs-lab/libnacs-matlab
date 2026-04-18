@@ -571,9 +571,9 @@ classdef ExpSeq < RootSeq
                 devname = devs{i};
                 ttl_mgr = device_ttl_managers(devname);
                 % [magic <"ZYNQZYNQ">: 8B]
-                % [version <0>: 1B]
-                % [nttl_mgrs: 1B][[chn_id: 4B][off_delay: 4B][on_delay: 4B]
-                %                 [skip_time: 4B][min_time: 4B][off_val: 1B] x nttl_mgrs]
+                % [version <1>: 1B]
+                % [nttl_mgrs: 1B][[chn_id: 4B][off_delay: 8B][on_delay: 8B]
+                %                 [skip_time: 8B][min_time: 8B][off_val: 1B] x nttl_mgrs]
                 dev_serialized = [int8('ZYNQZYNQ'), int8(1), ...
                                   int8(length(ttl_mgr)), ttl_mgr{:}];
                 % [device_name: NUL-terminated string][size: 4B][data: size B]
