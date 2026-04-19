@@ -11,10 +11,10 @@
 % You should have received a copy of the GNU Lesser General Public
 % License along with this library.
 
+% Det in angular freq units
+% t is 1/freq units
+% Omega is angular freq units
 function res = rabiLine(det, t, Omega)
-    % det in angular freq units
-    % t is 1/freq units
-    % omega is angular freq units
     Omega2 = Omega.^2;
     OmegaG2 = det.^2 + Omega2;
     res = Omega2 ./ OmegaG2 .* sin(sqrt(OmegaG2) .* t ./ 2).^2;
