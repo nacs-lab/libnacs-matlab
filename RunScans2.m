@@ -199,7 +199,8 @@ argparse.Results.prescan_cb(fname);
 
 % Run the sequences.  This will run forever until the average number of
 % loads per point is NumPerParamAvg.
-runSeq2(seq, 0, scangroup, Scan.Params, Email{:}, 'scan_id', scan_id, 'scan_struct', Scan);
+nRep = 0;
+runSeq2(seq, nRep, scangroup, Scan.Params, Email{:}, 'scan_id', scan_id, 'scan_struct', Scan);
 
 argparse.Results.postscan_cb(fname);
 
