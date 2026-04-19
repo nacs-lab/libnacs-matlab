@@ -1,5 +1,5 @@
 classdef DataProcessTools
-   
+
     methods(Static)
         function res = getCondLogicals(cond, sal, is_rearr, Alg)
             res = struct();
@@ -41,7 +41,7 @@ classdef DataProcessTools
             param_list_all = repmat(params, 1, ceil(num_seq / length(params)));
             num_loading = size(logicals, 1);
             num_sites = size(logicals, 2);
-            
+
             param_loads(num_loading, num_sites, num_params) = 0;
             param_loads_err(num_loading, num_sites, num_params) = 0;
             param_loads_all(num_loading, num_params) = 0;
@@ -50,7 +50,7 @@ classdef DataProcessTools
             param_loads_err_prob(num_loading, num_sites, num_params) = 0;
             param_loads_all_prob(num_loading, num_params) = 0;
             param_loads_err_all_prob(num_loading, num_params) = 0;
-            
+
             for i = 1:num_loading
                 for j = 1:num_sites
                     [param_loads(i,j,:), param_loads_err(i,j,:), param_loads_prob(i,j,:), param_loads_err_prob(i,j,:), num_attempts] = find_param_loads(logicals(i, j, :), param_list_all);
@@ -84,7 +84,7 @@ classdef DataProcessTools
             p_survival_err{num_sites} = [];
 
             for n = 1:num_survival
-            % combine different sites
+                % combine different sites
                 [p_survival_all(n,:), p_survival_err_all(n,:)] = ...
                     find_survival(reshape(permute(survival_logical(n,:,:), [1,3,2]), 1, numel(survival_logical(n,:,:))),...
                         reshape(permute(survival_loading_logical(n,:,:), [1,3,2]), 1, numel(survival_loading_logical(n,:,:))),...
@@ -110,5 +110,5 @@ classdef DataProcessTools
             res.p_survival_err = p_survival_err;
         end
     end
-    
+
 end
