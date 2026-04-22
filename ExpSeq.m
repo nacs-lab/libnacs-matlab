@@ -593,10 +593,11 @@ classdef ExpSeq < RootSeq
             for i = 1:length(devs)
                 devname = devs{i};
                 ttl_mgr = device_ttl_managers(devname);
-                has_trigger = strcmp(devname, self.trigger_device) == 0
+                has_trigger = strcmp(devname, self.trigger_device)
                 if has_trigger
                     ver = 2;
                     trig_serialized = serializeTriggerData(self);
+                    found_trigger = true;
                 else
                     ver = 1;
                     trig_serialized = [];
