@@ -546,13 +546,8 @@ classdef ExpSeq < RootSeq
             res = [int8(trig_type), int8(self.trigger_config.channel), ...
                    typecast(trig_timeout_ns, 'int8')];
         end
-        function res = serializeBackendData(self)
-            % [nbackenddatas: 4B][[device_name: NUL-terminated string]
-            %                     [size: 4B][data: size B] x nbackenddatas]
-            if isempty(self.ttl_managers)
-                res = int8([0, 0, 0, 0]);
-                return;
-            end
+        function res = collectBackendData(self)
+            res = {};
             device_ttl_managers = containers.Map();
             cid_map = self.cid_map;
             for i = 1:length(self.ttl_managers)
@@ -586,8 +581,6 @@ classdef ExpSeq < RootSeq
                     device_ttl_managers(devname) = {ttl_mgr_serialized};
                 end
             end
-            % [nbackenddatas: 4B]
-            res = typecast(int32(length(device_ttl_managers)), 'int8');
             devs = keys(device_ttl_managers);
             found_trigger = false;
             for i = 1:length(devs)
@@ -610,15 +603,27 @@ classdef ExpSeq < RootSeq
                                   int8(length(ttl_mgr)), ttl_mgr{:}, ...
                                   trig_serialized];
                 % [device_name: NUL-terminated string][size: 4B][data: size B]
-                res = [res, int8(devname), int8(0), ...
-                       typecast(int32(length(dev_serialized)), 'int8'), dev_serialized];
+                res{end + 1} = [int8(devname), int8(0), ...
+                                typecast(int32(length(dev_serialized)), 'int8'), ...
+                                dev_serialized]
             end
             if ~found_trigger && ~isempty(self.trigger_device)
                 dev_serialized = [int8('ZYNQZYNQ'), int8(2), ...
                                   int8(0), ...
                                   serializeTriggerData(self)];
-                res = [res, int8(self.trigger_device), int8(0), ...
-                       typecast(int32(length(dev_serialized)), 'int8'), dev_serialized];
+                res{end + 1} = [int8(self.trigger_device), int8(0), ...
+                                typecast(int32(length(dev_serialized)), 'int8'), ...
+                                dev_serialized];
+            end
+        end
+        function res = serializeBackendData(self)
+            % [nbackenddatas: 4B][[device_name: NUL-terminated string]
+            %                     [size: 4B][data: size B] x nbackenddatas]
+            datas = collectBackendData(self);
+            ndata = length(datas);
+            res = typecast(int32(ndata), 'int8');
+            for i = 1:ndata
+                res = [res, datas{i}];
             end
         end
         function cid = getChannelId(self, name)
