@@ -1,4 +1,4 @@
-classdef PlotProcessTools
+classdef PlotProcessTools 
     methods(Static)
         function plotAvgImg(figInfo, av_imgs, single_atom_sites, frame_size, box_size, single_atom_species)
             % figInfo is a DynProps to allow for default value settings
@@ -9,7 +9,6 @@ classdef PlotProcessTools
             bTitle = figInfo.bTitle(1);
             fig1 = figure(num);
             fig1.Name = figstr;
-
             if bClear
                 clf(fig1);
             end
@@ -49,7 +48,7 @@ classdef PlotProcessTools
                         t = text(x-1, y-1, num2str(i));
                         t.Color = 'red';
                         hold off;
-                    end
+                    end 
                 end
                 axis equal
                 axis tight

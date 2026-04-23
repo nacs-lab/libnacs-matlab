@@ -156,7 +156,7 @@ function params = runSeq(func, varargin)
         end
         use_scan_tracker = seq_config.warnUnusedScan;
         if use_scan_tracker
-            scan_tracker = ScanAccessTracker(scangroup);
+            scan_tracker = ScanAccessTracker(scangroup, seq_config.warnUnusedScanFixed);
         end
         scanvariables = cell(1, nseq);
         scanvariable_values = cell(1, nseq);

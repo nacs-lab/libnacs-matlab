@@ -48,6 +48,9 @@ classdef ExpSeq < RootSeq
         ttl_managers = struct('chn', {}, 'off_delay', {}, 'on_delay', {}, ...
                               'skip_time', {}, 'min_time', {}, 'off_val', {});
 
+        trigger_device = '';
+        trigger_config = struct('channel', 0, 'raise', 0, 'timeout', 0);
+
         seq_ctx;
         basic_seqs = {};
         time_scale = 1e12;
@@ -134,6 +137,15 @@ classdef ExpSeq < RootSeq
             self.ttl_managers(end + 1) = struct('chn', chn, 'off_delay', off_delay, ...
                                                 'on_delay', on_delay, 'skip_time', skip_time, ...
                                                 'min_time', min_time, 'off_val', off_val);
+        end
+
+        function enableGlobalWaitTrigger(self, devname, channel, raise, timeout)
+            if ~isempty(self.trigger_device)
+                error("Wait trigger already enabled")
+            end
+            self.trigger_device = devname;
+            self.trigger_config = struct('channel', channel, 'raise', raise, ...
+                                         'timeout', timeout);
         end
 
         function cid = translateChannel(self, name)
@@ -853,13 +865,18 @@ classdef ExpSeq < RootSeq
     end
 
     methods(Access=private)
-        function res = serializeBackendData(self)
-            % [nbackenddatas: 4B][[device_name: NUL-terminated string]
-            %                     [size: 4B][data: size B] x nbackenddatas]
-            if isempty(self.ttl_managers)
-                res = int8([0, 0, 0, 0]);
-                return;
+        function res = serializeTriggerData(self)
+            if self.trigger_config.raise
+                trig_type = 2;
+            else
+                trig_type = 1;
             end
+            trig_timeout_ns = int64(self.trigger_config.timeout * 1e9);
+            res = [int8(trig_type), int8(self.trigger_config.channel), ...
+                   typecast(trig_timeout_ns, 'int8')];
+        end
+        function res = collectBackendData(self)
+            res = {};
             device_ttl_managers = containers.Map();
             cid_map = self.cid_map;
             for i = 1:length(self.ttl_managers)
@@ -893,21 +910,49 @@ classdef ExpSeq < RootSeq
                     device_ttl_managers(devname) = {ttl_mgr_serialized};
                 end
             end
-            % [nbackenddatas: 4B]
-            res = typecast(int32(length(device_ttl_managers)), 'int8');
             devs = keys(device_ttl_managers);
+            found_trigger = false;
             for i = 1:length(devs)
                 devname = devs{i};
                 ttl_mgr = device_ttl_managers(devname);
+                has_trigger = strcmp(devname, self.trigger_device);
+                if has_trigger
+                    ver = 2;
+                    trig_serialized = serializeTriggerData(self);
+                    found_trigger = true;
+                else
+                    ver = 1;
+                    trig_serialized = [];
+                end
                 % [magic <"ZYNQZYNQ">: 8B]
-                % [version <0>: 1B]
-                % [nttl_mgrs: 1B][[chn_id: 4B][off_delay: 4B][on_delay: 4B]
-                %                 [skip_time: 4B][min_time: 4B][off_val: 1B] x nttl_mgrs]
-                dev_serialized = [int8('ZYNQZYNQ'), int8(1), ...
-                                  int8(length(ttl_mgr)), ttl_mgr{:}];
+                % [version <1/2>: 1B]
+                % [nttl_mgrs: 1B][[chn_id: 4B][off_delay: 8B][on_delay: 8B]
+                %                 [skip_time: 8B][min_time: 8B][off_val: 1B] x nttl_mgrs]
+                dev_serialized = [int8('ZYNQZYNQ'), int8(ver), ...
+                                  int8(length(ttl_mgr)), ttl_mgr{:}, ...
+                                  trig_serialized];
                 % [device_name: NUL-terminated string][size: 4B][data: size B]
-                res = [res, int8(devname), int8(0), ...
-                       typecast(int32(length(dev_serialized)), 'int8'), dev_serialized];
+                res{end + 1} = [int8(devname), int8(0), ...
+                                typecast(int32(length(dev_serialized)), 'int8'), ...
+                                dev_serialized]
+            end
+            if ~found_trigger && ~isempty(self.trigger_device)
+                dev_serialized = [int8('ZYNQZYNQ'), int8(2), ...
+                                  int8(0), ...
+                                  serializeTriggerData(self)];
+                res{end + 1} = [int8(self.trigger_device), int8(0), ...
+                                typecast(int32(length(dev_serialized)), 'int8'), ...
+                                dev_serialized];
+            end
+        end
+        function res = serializeBackendData(self)
+            % [nbackenddatas: 4B][[device_name: NUL-terminated string]
+            %                     [size: 4B][data: size B] x nbackenddatas]
+            datas = collectBackendData(self);
+            ndata = length(datas);
+            res = typecast(int32(ndata), 'int8');
+            for i = 1:ndata
+                res = [res, datas{i}];
             end
         end
         function cid = getChannelId(self, name)

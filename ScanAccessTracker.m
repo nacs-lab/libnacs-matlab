@@ -30,6 +30,7 @@ classdef ScanAccessTracker < handle
         scan_index = [];
         % Whether a sequence has been run
         collected = logical.empty();
+        warnfixed = true;
     end
 
     methods(Access=private)
@@ -45,7 +46,9 @@ classdef ScanAccessTracker < handle
             cleanup = FacyOnCleanup(@(state) warning(state), state);
             unused_fixed = ScanAccessTracker.compute_unused(info.fixed, info.accessed);
             unused_vars = ScanAccessTracker.compute_unused(info.vars, info.accessed);
-            ScanAccessTracker.warn_unused(unused_fixed, scan_idx, true);
+            if self.warn_unused
+                ScanAccessTracker.warn_unused(unused_fixed, scan_idx, true);
+            end
             ScanAccessTracker.warn_unused(unused_vars, scan_idx, false);
         end
     end
@@ -140,7 +143,7 @@ classdef ScanAccessTracker < handle
     end
 
     methods
-        function self = ScanAccessTracker(sg)
+        function self = ScanAccessTracker(sg, warnfixed)
             nscans = groupsize(sg);
             for i = 1:nscans
                 self.scan_infos(i).accessed = struct();
@@ -159,6 +162,9 @@ classdef ScanAccessTracker < handle
                 self.scan_infos(i).vars = vars;
             end
             self.collected(1:length(self.scan_index)) = false;
+            if exist('warnfixed', 'var')
+                self.warnfixed = warnfixed;
+            end
         end
 
         function record_access(self, idx, accessed)

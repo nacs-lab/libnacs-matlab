@@ -545,6 +545,7 @@ classdef ScanGroup < handle
             % i.e. `grp([n]). ... = ...`.
             % Therefore, if there's more than one index,
             % we need to pass those on to `ScanParam`.
+            % [YK] S contains indexing types and indices. B contains values to assign.
             nS = length(S);
             if nS >= 1 && strcmp(S(1).type, '()')
                 if isempty(S(1).subs)

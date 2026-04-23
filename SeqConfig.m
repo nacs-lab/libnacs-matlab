@@ -30,6 +30,7 @@ classdef SeqConfig < handle
         niClocks;
         niStart;
         warnUnusedScan;
+        warnUnusedScanFixed;
 
         % Global context. See `ExpSeqBase::G`.
         % Put it in the config in order to (ab)use the runSeq caching logic to share this
@@ -54,6 +55,7 @@ classdef SeqConfig < handle
             niStart = containers.Map();
             consts = struct();
             warnUnusedScan = true;
+            warnUnusedScanFixed = true;
             disableChannel = SeqConfig.getDisableChannelSetter(m_disabledChannels);
             configFile = [];
 
@@ -68,6 +70,7 @@ classdef SeqConfig < handle
             self.niStart = niStart;
             self.consts = consts;
             self.warnUnusedScan = warnUnusedScan;
+            self.warnUnusedScanFixed = warnUnusedScanFixed;
 
             for key = keys(channelAlias)
                 key = key{:};
