@@ -4,24 +4,17 @@ function cond_atom_logical = find_logical(logical_spec, single_atom_logical, num
 
 
 N = length(logical_spec);
-cond_atom_logical(N, num_sites, num_seq) = 0;
-for i = 1:length(logical_spec)
+cond_atom_logical = zeros(N, num_sites, num_seq);
+for i = 1:N
     logical_temp = ones(num_sites, num_seq);
     logical_arr = logical_spec{i};
     for n = 1:length(logical_arr)
         ind = logical_arr(n);
+        slice = reshape(single_atom_logical(abs(ind),:,:), num_sites, num_seq);
         if ind > 0
-            if num_sites > 1
-                logical_temp = logical_temp .* squeeze(single_atom_logical(ind,:,:));
-            else
-                logical_temp = logical_temp .* squeeze(single_atom_logical(ind,:,:))';
-            end
+            logical_temp = logical_temp .* slice;
         else
-            if num_sites > 1
-                logical_temp = logical_temp .* not(squeeze(single_atom_logical(-ind,:,:)));
-            else
-                logical_temp = logical_temp .* not(squeeze(single_atom_logical(-ind,:,:))');
-            end
+            logical_temp = logical_temp .* ~slice;
         end
     end
     cond_atom_logical(i,:,:) = logical_temp;
