@@ -46,7 +46,7 @@ classdef ScanAccessTracker < handle
             cleanup = FacyOnCleanup(@(state) warning(state), state);
             unused_fixed = ScanAccessTracker.compute_unused(info.fixed, info.accessed);
             unused_vars = ScanAccessTracker.compute_unused(info.vars, info.accessed);
-            if self.warn_unused
+            if self.warnfixed
                 ScanAccessTracker.warn_unused(unused_fixed, scan_idx, true);
             end
             ScanAccessTracker.warn_unused(unused_vars, scan_idx, false);
