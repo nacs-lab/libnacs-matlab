@@ -155,7 +155,7 @@ classdef ExpSeq < RootSeq
                 error("Wait trigger already enabled")
             end
             self.trigger_device = devname;
-            self.trigger_config = struct('channel', channel, 'raise', raise,
+            self.trigger_config = struct('channel', channel, 'raise', raise,...
                                          'timeout', timeout);
         end
 
