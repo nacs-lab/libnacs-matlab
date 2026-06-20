@@ -16,6 +16,23 @@ classdef ExptServer < handle
                 py.exec('from ExptServer import ExptServer', pyglob);
             end
             self.server = py.eval('ExptServer(url)', pyglob);
+            % The server may have bound a different (free) port if the requested one was
+            % taken; record the actual port so consumers (ExptControl / live daemon) find
+            % it. Best-effort -- never let a cache-write problem break the server.
+            try
+                actualUrl = char(self.server.get_url());
+                cacheFile = fullfile(fileparts(path), 'ExpConfigPortCache.txt');
+                tok = regexp(actualUrl, ':(\d+)$', 'tokens', 'once');
+                if ~isempty(tok)
+                    fid = fopen(cacheFile, 'w');
+                    if fid ~= -1
+                        fprintf(fid, '%s', tok{1});
+                        fclose(fid);
+                    end
+                end
+            catch ME
+                warning('ExptServer:portCacheWrite', 'could not record actual port: %s', ME.message);
+            end
         end
     end
 
@@ -69,9 +86,23 @@ classdef ExptServer < handle
         end
         function res = get(url)
             cache = ExptServer.cache;
+            % There is only ever one server per process (one image stream).
+            % Reuse an existing valid one REGARDLESS of the requested url:
+            % the bind-fallback may rewrite the port cache, so a later scan
+            % can arrive here with a different url. Keying strictly on the
+            % url would then spawn a new server on a new port every scan and
+            % orphan the port the live consumer is reading.
             if isKey(cache, url)
                 res = cache(url);
                 if ~isempty(res) && isvalid(res)
+                    return;
+                end
+            end
+            ks = keys(cache);
+            for i = 1:numel(ks)
+                existing = cache(ks{i});
+                if ~isempty(existing) && isvalid(existing)
+                    res = existing;
                     return;
                 end
             end

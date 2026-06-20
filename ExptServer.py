@@ -22,7 +22,19 @@ class ExptServer(object):
         if self.__sock is not None:
             self.__sock.close()
         self.__sock = self.__ctx.socket(zmq.ROUTER)
-        self.__sock.bind(self.__url)
+        try:
+            self.__sock.bind(self.__url)
+        except zmq.ZMQError:
+            # Requested port is taken (e.g. a lingering server from a previous run).
+            # Bind an OS-picked free port instead so a scan never dies on "address in
+            # use"; the actual port is recorded to the port cache (ExptServer.m) so
+            # consumers (ExptControl / the live daemon) can find it. Only the previously
+            # fatal path changes -- a free requested port still binds exactly as before.
+            self.__sock.bind("tcp://127.0.0.1:*")
+            self.__url = self.__sock.getsockopt(zmq.LAST_ENDPOINT).decode()
+
+    def get_url(self):
+        return self.__url
 
     def __init__(self, url: str):
         # network
