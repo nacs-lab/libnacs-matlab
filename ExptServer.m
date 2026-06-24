@@ -23,11 +23,24 @@ classdef ExptServer < handle
                 actualUrl = char(self.server.get_url());
                 cacheFile = fullfile(fileparts(path), 'ExpConfigPortCache.txt');
                 tok = regexp(actualUrl, ':(\d+)$', 'tokens', 'once');
+                reqTok = regexp(char(url), ':(\d+)$', 'tokens', 'once');
                 if ~isempty(tok)
                     fid = fopen(cacheFile, 'w');
                     if fid ~= -1
                         fprintf(fid, '%s', tok{1});
                         fclose(fid);
+                    end
+                    % Authoritative port message: the port the server ACTUALLY bound
+                    % (get_url), not the requested cache value the readers print before
+                    % the bind. If the requested port was taken the server fell back to
+                    % a free one -- say so loudly so the change is never silent and the
+                    % consumer (ExptControl / live view) knows to re-resolve.
+                    if ~isempty(reqTok) && ~strcmp(reqTok{1}, tok{1})
+                        fprintf(['Using port: %s  (requested %s was busy -- fell back; ' ...
+                            'reconnect the live view / restart consumers on this port)\n'], ...
+                            tok{1}, reqTok{1});
+                    else
+                        fprintf('Using port: %s  (bound)\n', tok{1});
                     end
                 end
             catch ME
