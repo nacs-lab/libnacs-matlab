@@ -39,7 +39,21 @@ classdef SeqManager < handle
         end
         function res = create_sequence(data)
 %             SeqManager.enable_debug();
-            res = create_sequence(SeqManager.get(), PythonHack.convert_array(data));
+            mgr = SeqManager.get();
+            try
+                res = create_sequence(mgr, PythonHack.convert_array(data));
+            catch ME
+                % MATLAB R2025b can hand Python a read-only buffer for the
+                % int8 sequence bytecode. libnacs' Python layer expects a
+                % writable buffer, so retry with an explicit Python
+                % bytearray while preserving the older conversion path for
+                % MATLAB/Python combinations that still need it.
+                if contains(ME.message, 'underlying buffer is not writable')
+                    res = create_sequence(mgr, py.bytearray(uint8(typecast(data, 'uint8'))));
+                else
+                    rethrow(ME);
+                end
+            end
         end
         function res = get_device_restart(dev_name)
             res = get_device_restart(SeqManager.get(), dev_name);

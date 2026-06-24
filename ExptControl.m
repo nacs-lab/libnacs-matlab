@@ -15,7 +15,8 @@ classdef ExptControl < matlab.apps.AppBase
         RefreshRateinsEditField       matlab.ui.control.NumericEditField
         LastSavedFileLabel            matlab.ui.control.Label
         OpenAnalysisPanelButton       matlab.ui.control.Button
-        
+        ScanStampLabel                matlab.ui.control.Label
+
     end
 
     
@@ -35,6 +36,7 @@ classdef ExptControl < matlab.apps.AppBase
 
         % Code that executes after component creation
         function startupFcn(app)
+            addpath('C:\experiment-control\Experiments\Constants');
             MatlabURLFromCache = app.getMatlabURLFromCache(); % Get MatlabURL with port increased by 1.
 %             app.AU = AnalysisUser.get(Consts().MatlabURL);
             app.AU = AnalysisUser.get(MatlabURLFromCache);
@@ -103,6 +105,14 @@ classdef ExptControl < matlab.apps.AppBase
                 app.LastScanIDLabel.Text = ['Last Scan ID: ' num2str(app.cur_scan_id)];
                 app.LastSeqIDLabel.Text = ['Last Seq ID: ' num2str(app.cur_seq_id)];
                 app.LastSavedFileLabel.Text = ['Last Saved File: ' fname];
+                % Big readable date/time banner, parsed from the saved filename
+                % (data_YYYYMMDD_HHMMSS). Leaves the banner as-is if no match.
+                stamp = regexp(fname, 'data_(\d{8})_(\d{6})', 'tokens', 'once');
+                if ~isempty(stamp)
+                    d = stamp{1}; t = stamp{2};
+                    app.ScanStampLabel.Text = sprintf('%s-%s-%s   %s:%s:%s', ...
+                        d(1:4), d(5:6), d(7:8), t(1:2), t(3:4), t(5:6));
+                end
             catch me
                 disp(getReport(me, 'extended', 'hyperlinks', 'on'))
             end
@@ -190,8 +200,20 @@ classdef ExptControl < matlab.apps.AppBase
 
             % Create UIFigure and hide until all components are created
             app.UIFigure = uifigure('Visible', 'off');
-            app.UIFigure.Position = [100 100 536 455];
+            % Window grown 75px taller than the original 455 to make room for
+            % the large date/time banner at the top; every other component
+            % keeps its bottom-anchored position unchanged.
+            app.UIFigure.Position = [100 100 536 530];
             app.UIFigure.Name = 'MATLAB App';
+
+            % Create ScanStampLabel - large, readable date/time of the current
+            % (last-saved) scan, parsed from the saved filename in processImgLoop.
+            app.ScanStampLabel = uilabel(app.UIFigure);
+            app.ScanStampLabel.HorizontalAlignment = 'center';
+            app.ScanStampLabel.FontSize = 36;
+            app.ScanStampLabel.FontWeight = 'bold';
+            app.ScanStampLabel.Position = [13 455 510 66];
+            app.ScanStampLabel.Text = '----.--.--   --:--:--';
 
             % Create PauseSeqButton
             app.PauseSeqButton = uibutton(app.UIFigure, 'push');

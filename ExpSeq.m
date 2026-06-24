@@ -914,7 +914,7 @@ classdef ExpSeq < RootSeq
             for i = 1:length(devs)
                 devname = devs{i};
                 ttl_mgr = device_ttl_managers(devname);
-                has_trigger = strcmp(devname, self.trigger_device)
+                has_trigger = strcmp(devname, self.trigger_device);
                 if has_trigger
                     ver = 2;
                     trig_serialized = serializeTriggerData(self);
@@ -933,7 +933,7 @@ classdef ExpSeq < RootSeq
                 % [device_name: NUL-terminated string][size: 4B][data: size B]
                 res{end + 1} = [int8(devname), int8(0), ...
                                 typecast(int32(length(dev_serialized)), 'int8'), ...
-                                dev_serialized]
+                                dev_serialized];
             end
             if ~found_trigger && ~isempty(self.trigger_device)
                 dev_serialized = [int8('ZYNQZYNQ'), int8(2), ...

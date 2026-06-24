@@ -51,7 +51,7 @@ classdef PlotProcessTools
         function plotHistograms(figInfo, signals, cutoffs, site_idxs, is_rearr, rearr_cutoff, img_for_cutoff)
             num = figInfo.fignum(1);
             bClear = figInfo.bClear(1);
-            fig1 = figure(num); 
+            fig1 = figure(num);
             if bClear
                 clf(fig1);
             end
@@ -63,30 +63,35 @@ classdef PlotProcessTools
                 end
                 site_idxs = tmpIdx;
             end
+            num_rows_max = max(cellfun(@length, site_idxs));
+            tl = tiledlayout(fig1, num_rows_max, num_cols, ...
+                'TileSpacing','none','Padding','compact');
             for n = 1:num_cols
                 num_rows = length(site_idxs{n});
                 num_sites = num_rows;
                 for i = 1:num_rows
-                    plot_idx = (i-1)*num_cols + n;
+                    tile_idx = (i-1)*num_cols + n;
                     cutoff = cutoffs{n}(site_idxs{n}(i));
-                    subplot(num_rows, num_cols, plot_idx);
-                    hold on;
-                    h_counts = histogram(signals(n,site_idxs{n}(i),:),40);
+                    ax = nexttile(tl, tile_idx);
+                    hold(ax, 'on');
+                    h_counts = histogram(ax, signals(n,site_idxs{n}(i),:),40);
                     ymax = max(h_counts.Values(10:end)); % approx single atom hump
-                    ylim([0, 2*ymax]);
-                    plot([cutoff,cutoff],ylim,'-r');
+                    ylim(ax, [0, 2*ymax]);
+                    plot(ax, [cutoff,cutoff], ylim(ax),'-r');
                     if is_rearr
                         ind = find(img_for_cutoff == n);
                         if ~isempty(ind)
-                            plot([rearr_cutoff{ind}(site_idxs{n}(i)), rearr_cutoff{ind}(site_idxs{n}(i))],ylim,'-g');
+                            plot(ax, [rearr_cutoff{ind}(site_idxs{n}(i)), rearr_cutoff{ind}(site_idxs{n}(i))], ylim(ax),'-g');
                         end
                     end
-                    title(['site #',num2str(site_idxs{n}(i))]);
-                    if i == num_sites
-                        xlabel('Counts');
+                    text(ax, 0.98, 0.90, ['#' num2str(site_idxs{n}(i))], ...
+                        'Units','normalized','HorizontalAlignment','right', ...
+                        'VerticalAlignment','top','FontSize',7,'Color',[0.25 0.25 0.25]);
+                    ax.FontSize = 7;
+                    if i ~= num_sites
+                        ax.XTickLabel = [];
                     end
-%                     ylabel('Frequency')
-                    box on
+                    box(ax, 'on');
                 end
             end
             if isfield(figInfo, 'fname')
@@ -475,6 +480,67 @@ classdef PlotProcessTools
                     legend(legendstr,'Location','Best');
                 end
             end
+            if isfield(figInfo, 'fname')
+                annotation('textbox', [0.1, 0, 0.9, 0.05], 'string', figInfo.fname, 'EdgeColor', 'none', 'Interpreter', 'none')
+            end
+        end
+        function plotSurvivalBySite(figInfo, unique_params, surv_prob, surv_err, survival_logical_cond, survival_loading_logical_cond, single_atom_species, site_idx)
+            num = figInfo.fignum(1);
+            bClear = figInfo.bClear(1);
+            bLeg = figInfo.bLeg(1);
+            fig1 = figure(num); 
+            if bClear
+                clf(fig1);
+            end
+            plot_scale = figInfo.plot_scale(1);
+            param_name_unit = figInfo.param_name_unit('');
+            fname = figInfo.fname('');
+            num_survival = size(surv_prob{1}, 1);
+            
+            if ~iscell(site_idx)
+                tmpIdx = cell(num_survival,1);
+                for i = 1:num_survival
+                    tmpIdx{i} = site_idx;
+                end
+                site_idx = tmpIdx;
+            end
+            
+            num_sites = [];
+            for i = 1:num_survival
+                num_sites(i) = length(site_idx{i});
+            end
+            
+            num_params = length(unique_params);
+            ColorSet = nacstools.display.varycolorrainbow(num_params);
+            
+            for i = 1:num_survival
+                subplot(num_survival, 1, i);
+                hold on;
+                legendstr = cell(1, num_params);
+                title({['survive: ' logical_cond_2str(survival_logical_cond{i}, single_atom_species)], ...
+                    ['load: ' logical_cond_2str(survival_loading_logical_cond{i}, single_atom_species)]});
+                
+                for j = 1:num_params
+                    % Collect survival prob for each site at param j
+                    param_site_prob = zeros(1, num_sites(i));
+                    param_site_err = zeros(1, num_sites(i));
+                    for s = 1:num_sites(i)
+                        param_site_prob(s) = surv_prob{site_idx{i}(s)}(i, j);
+                        param_site_err(s) = surv_err{site_idx{i}(s)}(i, j);
+                    end
+                    
+                    errorbar(1:num_sites(i), param_site_prob, param_site_err, 'Color', ColorSet(j,:), 'Linewidth', 1.0);
+                    legendstr{j} = sprintf('%s: %f', param_name_unit, unique_params(j) / plot_scale);
+                end
+                
+                xlabel('Site index')
+                ylabel('Survival probability');
+                ylim([0, 1]);
+                if bLeg
+                    legend(legendstr,'Location','Best');
+                end
+            end
+            
             if isfield(figInfo, 'fname')
                 annotation('textbox', [0.1, 0, 0.9, 0.05], 'string', figInfo.fname, 'EdgeColor', 'none', 'Interpreter', 'none')
             end

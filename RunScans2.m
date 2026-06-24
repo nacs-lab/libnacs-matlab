@@ -41,6 +41,10 @@ Scan = getfields(scanp, 'AndorCenter', 'BoxSize', 'FrameSize', ...
                  'NumImages', 'NumSites', 'SingleAtomSpecies', ...
                  'SingleAtomSites', 'Cutoffs', 'LoadingLogicals', ...
                  'SurvivalLoadingLogicals', 'SurvivalLogicals', 'RearrSurvLoadingLogicals');
+% imageLabels (per-image label strings from ImageManifest, e.g. 'loading',
+% 'survival', 'background'). Backward compatible: defaults to {} when the
+% scan does not populate it (e.g. older scans not using ImageManifest).
+Scan.imageLabels = scanp.imageLabels({});
 
 % Name of parameter to scan over
 Scan.ParamName = p.ParamName('');
