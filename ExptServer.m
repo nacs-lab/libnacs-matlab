@@ -16,35 +16,39 @@ classdef ExptServer < handle
                 py.exec('from ExptServer import ExptServer', pyglob);
             end
             self.server = py.eval('ExptServer(url)', pyglob);
-            % The server may have bound a different (free) port if the requested one was
-            % taken; record the actual port so consumers (ExptControl / live daemon) find
-            % it. Best-effort -- never let a cache-write problem break the server.
+            % Record the bound port only when we actually got the requested
+            % one. A leftover / offline MATLAB that falls back to a random
+            % port used to overwrite ExpConfigPortCache.txt and steal live
+            % view from the generation publisher (s3329, s3284). Fallback
+            % binds stay local until start_scan -- only a real scan rewrites
+            % the rendezvous. Best-effort -- never let a cache-write problem
+            % break the server.
             try
                 actualUrl = char(self.server.get_url());
-                cacheFile = fullfile(fileparts(path), 'ExpConfigPortCache.txt');
                 tok = regexp(actualUrl, ':(\d+)$', 'tokens', 'once');
                 reqTok = regexp(char(url), ':(\d+)$', 'tokens', 'once');
                 if ~isempty(tok)
-                    fid = fopen(cacheFile, 'w');
-                    if fid ~= -1
-                        fprintf(fid, '%s', tok{1});
-                        fclose(fid);
-                    end
-                    % Authoritative port message: the port the server ACTUALLY bound
-                    % (get_url), not the requested cache value the readers print before
-                    % the bind. If the requested port was taken the server fell back to
-                    % a free one -- say so loudly so the change is never silent and the
-                    % consumer (ExptControl / live view) knows to re-resolve.
-                    if ~isempty(reqTok) && ~strcmp(reqTok{1}, tok{1})
+                    fellBack = ~isempty(reqTok) && ~strcmp(reqTok{1}, tok{1});
+                    if fellBack
                         fprintf(['Using port: %s  (requested %s was busy -- fell back; ' ...
-                            'reconnect the live view / restart consumers on this port)\n'], ...
+                            'NOT rewriting port cache so a leftover cannot steal live view)\n'], ...
                             tok{1}, reqTok{1});
                     else
+                        self.writePortCache(tok{1});
                         fprintf('Using port: %s  (bound)\n', tok{1});
                     end
                 end
             catch ME
                 warning('ExptServer:portCacheWrite', 'could not record actual port: %s', ME.message);
+            end
+        end
+        function writePortCache(self, portStr)
+            [path, ~, ~] = fileparts(mfilename('fullpath'));
+            cacheFile = fullfile(fileparts(path), 'ExpConfigPortCache.txt');
+            fid = fopen(cacheFile, 'w');
+            if fid ~= -1
+                fprintf(fid, '%s', portStr);
+                fclose(fid);
             end
         end
     end
@@ -58,6 +62,16 @@ classdef ExptServer < handle
         end
         function res = start_scan(self)
             res = int64(self.server.start_scan());
+            % This process is the live publisher now -- point the rendezvous
+            % here even if the constructor fell back and refused to steal.
+            try
+                actualUrl = char(self.server.get_url());
+                tok = regexp(actualUrl, ':(\d+)$', 'tokens', 'once');
+                if ~isempty(tok)
+                    self.writePortCache(tok{1});
+                end
+            catch
+            end
         end
         function store_imgs(self, imgs, scan_id, seq_id)
 %             disp('storing imgs');
@@ -101,10 +115,10 @@ classdef ExptServer < handle
             cache = ExptServer.cache;
             % There is only ever one server per process (one image stream).
             % Reuse an existing valid one REGARDLESS of the requested url:
-            % the bind-fallback may rewrite the port cache, so a later scan
-            % can arrive here with a different url. Keying strictly on the
-            % url would then spawn a new server on a new port every scan and
-            % orphan the port the live consumer is reading.
+            % start_scan may rewrite the port cache after a bind-fallback, so
+            % a later scan can arrive here with a different url. Keying
+            % strictly on the url would then spawn a new server on a new
+            % port every scan and orphan the port the live consumer is reading.
             if isKey(cache, url)
                 res = cache(url);
                 if ~isempty(res) && isvalid(res)
