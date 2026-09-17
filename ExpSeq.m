@@ -358,6 +358,13 @@ classdef ExpSeq < RootSeq
                     releaseGeneration(self);
                 end
                 reset_globals(self, true);
+                % Feshbach thermal gate: compiled Dev1/7, not param flags.
+                % Experiments/ on the path (generation + compileScanPoint).
+                % Misses other usevar points of this skeleton -- runSeq2
+                % calls assertFbScanGridBudget after this generate().
+                if exist('assertFbSeqBudget', 'file') == 2
+                    assertFbSeqBudget(self);
+                end
             end
         end
 

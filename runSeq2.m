@@ -262,6 +262,10 @@ function params = runSeq2(func, varargin)
         delete(disabler);
         fprintf('|');
         seqlist{idx}.generate();
+        if is_scangroup && exist('assertFbScanGridBudget', 'file') == 2
+            assertFbScanGridBudget(seqlist{idx}, scangroup, seqid, ...
+                scanvariables{idx});
+        end
     end
 
     function run_cb(cbs, idx)
